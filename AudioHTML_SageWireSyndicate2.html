@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF to Speech Console</title>
+    
+    <link rel="stylesheet" href="https://pyscript.net/releases/2024.1.1/core.css">
+    <script type="module" src="https://pyscript.net/releases/2024.1.1/core.js"></script>
+    
+    <script type="application/json" config>
+        {
+          "packages": ["pypdf"] 
+        }
+    </script>
+    
+
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #1a1a2e; color: #fff; }
+        .container { max-width: 600px; margin: 0 auto; background: #2c3e50; padding: 30px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; }
+        input[type="file"], button { margin: 15px 0; padding: 10px; border-radius: 4px; display: block; width: 100%; font-size: 16px; }
+        input[type="file"] { background: #34495e; color: white; border: 1px solid #3498db; }
+        button { background-color: #27ae60; color: white; border: none; cursor: pointer; }
+        button:hover { background-color: #2ecc71; }
+        #log-area { margin-top: 20px; padding: 10px; border: 1px solid #3498db; background-color: #34495e; white-space: pre-wrap; font-size: 0.9em; min-height: 50px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔊 PDF-to-Speech Console</h1>
+    <p>Upload a PDF. The text will be extracted and spoken aloud using your browser's voice.</p>
+
+    <label for="pdf-file">Select PDF:</label>
+    <input type="file" id="pdf-file" accept=".pdf">
+
+    <button id="process-button" onclick="startProcessing()">Extract & Speak</button>
+
+    <div id="log-area">Ready. Please ensure your volume is up.</div>
+
+    <script type="py">
+        from pyscript import document, display
+        from pypdf import PdfReader # <-- Using pypdf (since JSON is fixed)
+        import io
+        from datetime import datetime # <-- Corrected datetime import
+
+        def log(message):
+            log_area = document.getElementById("log-area")
+            # Uses the imported datetime class
+            log_area.innerHTML = f"[{datetime.now().strftime('%H:%M:%S')}] {message}"
+        
+        def extract_text_from_file(uploaded_file):
+            """Uses pypdf to read the PDF file's content in memory."""
+            try:
+                # Read the file into memory as bytes
+                file_reader = io.BytesIO(uploaded_file.arrayBuffer.to_py())
+                
+                reader = PdfReader(file_reader)
+                text = ""
+                # Loop through pages, but limit to a reasonable number to prevent browser lag
+                for i, page in enumerate(reader.pages):
+                    if i >= 5: # Limit to 5 pages for speed and stability
+                        text += f"\n... (Extraction stopped after {i} pages)"
+                        break
+                    text += page.extract_text() or " "
+                
+                return text
+            except Exception as e:
+                log(f"❌ PDF Reading Failed: {e}")
+                log("💡 Ensure the file is unencrypted or not image-only.")
+                return None
+
+    </script>
+
+    <script>
+        // Get the Python module object to call Python functions
+        const py_module = document.querySelector('script[type="py"]')._script_object;
+        
+        function speakText(text) {
+            if ('speechSynthesis' in window) {
+                // Remove extra whitespace and trim the text
+                const cleanedText = text.replace(/\s+/g, ' ').trim();
+                
+                if (cleanedText.length === 0) {
+                    py_module.exports.log("⚠️ No text extracted to speak.");
+                    return;
+                }
+                
+                py_module.exports.log(`🔊 Speaking ${cleanedText.length} characters of text...`);
+                
+                const utterance = new SpeechSynthesisUtterance(cleanedText);
+                utterance.pitch = 1.0;
+                utterance.rate = 1.0;
+                window.speechSynthesis.speak(utterance);
+            } else {
+                py_module.exports.log("❌ Your browser does not support Web Speech Synthesis.");
+            }
+        }
+
+        async function startProcessing() {
+            const file_input = document.getElementById("pdf-file");
+            if (!file_input.files || file_input.files.length === 0) {
+                py_module.exports.log("⚠️ Please select a PDF file first.");
+                return;
+            }
+
+            py_module.exports.log("⏳ Extracting text from PDF...");
+
+            // Get the first uploaded file object
+            const uploaded_file = file_input.files[0];
+
+            // 3. Call the Python function from JavaScript
+            // py_module.exports waits for the Python runtime to fully initialize
+            const extractedText = await py_module.exports.extract_text_from_file(uploaded_file);
+
+            if (extractedText) {
+                py_module.exports.log("✅ Text extracted. Passing to speech API.");
+                // 4. Pass the Python result to the JavaScript speech function
+                speakText(extractedText);
+            }
+        }
+    </script>
+</div>
+</body>
+</html>

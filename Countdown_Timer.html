@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Countdown Timer</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0c0e14; color: #f4f6f7; }
+        .container { max-width: 500px; margin: 0 auto; background: #1a1e2b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        .time-display {
+            font-size: 4em;
+            color: #2ecc71;
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 3px solid #5dade2;
+            border-radius: 10px;
+            background-color: #2c3e50;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .controls button {
+            flex-grow: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+
+        #start-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        #start-btn:hover { background-color: #27ae60; }
+        
+        #stop-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        #stop-btn:hover { background-color: #c0392b; }
+
+        #reset-btn {
+            background-color: #3498db;
+            color: white;
+        }
+        #reset-btn:hover { background-color: #2980b9; }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #f39c12;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>⏱️ Countdown Timer</h1>
+    <p>A simple Pomodoro and task timer. Set your time and hit start.</p>
+
+    <div class="time-display" id="time-display">25:00</div>
+
+    <div class="input-group">
+        <input type="number" id="minutes-input" value="25" min="0" max="60" placeholder="Minutes">
+        <input type="number" id="seconds-input" value="0" min="0" max="59" placeholder="Seconds">
+    </div>
+
+    <div class="controls">
+        <button id="start-btn">▶️ Start</button>
+        <button id="stop-btn">⏸️ Pause</button>
+        <button id="reset-btn">🔄 Reset</button>
+    </div>
+
+    <div class="note">
+        Set the time using the input boxes above, then click Start. (Alert sound requires user interaction first, like clicking Start.)
+    </div>
+</div>
+
+<script>
+    const TIME_DISPLAY = document.getElementById('time-display');
+    const MINUTES_INPUT = document.getElementById('minutes-input');
+    const SECONDS_INPUT = document.getElementById('seconds-input');
+    const START_BTN = document.getElementById('start-btn');
+    const STOP_BTN = document.getElementById('stop-btn');
+    const RESET_BTN = document.getElementById('reset-btn');
+    
+    let timerInterval = null;
+    let totalSeconds = 0;
+    let isRunning = false;
+    let defaultMinutes = 25;
+    let defaultSeconds = 0;
+
+    // Create a simple AudioContext for the alert sound
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    // --- Sound Alert Function ---
+    function playAlarm() {
+        // Simple function to generate a quick beep sound
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(440, audioContext.currentTime); // A4 note
+        
+        gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1); // Fade out over 1 second
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 1);
+    }
+
+    // --- Core Timer Logic ---
+
+    function updateDisplay() {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        
+        const minutesStr = String(minutes).padStart(2, '0');
+        const secondsStr = String(seconds).padStart(2, '0');
+        
+        TIME_DISPLAY.textContent = `${minutesStr}:${secondsStr}`;
+
+        if (totalSeconds <= 0) {
+            stopTimer();
+            playAlarm();
+            TIME_DISPLAY.textContent = "TIME'S UP!";
+            TIME_DISPLAY.style.color = '#e74c3c';
+        }
+    }
+
+    function startTimer() {
+        if (isRunning) return;
+        
+        // Ensure the context is running to enable sound
+        if (audioContext.state === 'suspended') {
+            audioContext.resume();
+        }
+
+        // Load the time from inputs if the timer is at 0 (reset state)
+        if (totalSeconds <= 0) {
+            const minutes = parseInt(MINUTES_INPUT.value) || 0;
+            const seconds = parseInt(SECONDS_INPUT.value) || 0;
+            totalSeconds = (minutes * 60) + seconds;
+            
+            if (totalSeconds <= 0) {
+                TIME_DISPLAY.textContent = "00:00";
+                return;
+            }
+        }
+        
+        TIME_DISPLAY.style.color = '#2ecc71';
+        isRunning = true;
+        
+        timerInterval = setInterval(() => {
+            totalSeconds--;
+            updateDisplay();
+        }, 1000); // Update every 1 second
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+    }
+
+    function resetTimer() {
+        stopTimer();
+        totalSeconds = (defaultMinutes * 60) + defaultSeconds;
+        TIME_DISPLAY.style.color = '#2ecc71';
+        updateDisplay(); // Display the default time
+    }
+
+    // --- Event Listeners and Initialization ---
+
+    START_BTN.addEventListener('click', startTimer);
+    STOP_BTN.addEventListener('click', stopTimer);
+    RESET_BTN.addEventListener('click', resetTimer);
+    
+    // Reset inputs update the default minutes/seconds
+    MINUTES_INPUT.addEventListener('input', () => {
+        defaultMinutes = parseInt(MINUTES_INPUT.value) || 0;
+        resetTimer();
+    });
+    SECONDS_INPUT.addEventListener('input', () => {
+        defaultSeconds = parseInt(SECONDS_INPUT.value) || 0;
+        resetTimer();
+    });
+
+    // Initialize the display on load
+    window.onload = function() {
+        // Set the initial total seconds based on input defaults
+        totalSeconds = (defaultMinutes * 60) + defaultSeconds;
+        updateDisplay();
+    };
+</script>
+</body>
+</html>

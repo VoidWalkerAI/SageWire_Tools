@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Base64 Encoder / Decoder</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0c0e14; color: #f4f6f7; }
+        .container { max-width: 800px; margin: 0 auto; background: #1a1e2b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { text-align: center; color: #aeb6bf; margin-bottom: 25px; }
+
+        .editor-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-panel h3 {
+            color: #5dade2;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            resize: vertical;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+            flex-grow: 1;
+        }
+
+        #encode-btn {
+            background-color: #2ecc71;
+            color: white;
+        }
+        #encode-btn:hover { background-color: #27ae60; }
+
+        #decode-btn {
+            background-color: #e74c3c;
+            color: white;
+        }
+        #decode-btn:hover { background-color: #c0392b; }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔑 Base64 Encoder / Decoder</h1>
+    <p>Convert plain text to Base64 (encoding) or Base64 back to plain text (decoding).</p>
+
+    <div class="editor-grid">
+        <div class="editor-panel">
+            <h3>Input Text / Base64 String</h3>
+            <textarea id="input-area" placeholder="Paste your text or Base64 string here..."></textarea>
+            
+            <div class="controls">
+                <button id="encode-btn" onclick="processConversion('encode')">⬆️ Encode to Base64</button>
+                <button id="decode-btn" onclick="processConversion('decode')">⬇️ Decode from Base64</button>
+            </div>
+        </div>
+        
+        <div class="editor-panel">
+            <h3>Output Result</h3>
+            <textarea id="output-area" readonly placeholder="Result will appear here..."></textarea>
+        </div>
+    </div>
+    
+    <div class="note">
+        Base64 is NOT encryption, it is encoding. It is used to safely transmit data across the web. This tool runs entirely in your browser.
+    </div>
+</div>
+
+<script>
+    const inputArea = document.getElementById('input-area');
+    const outputArea = document.getElementById('output-area');
+    
+    function processConversion(mode) {
+        const input = inputArea.value.trim();
+        let result = '';
+
+        if (!input) {
+            outputArea.value = 'Input field is empty!';
+            return;
+        }
+
+        try {
+            if (mode === 'encode') {
+                // btoa() converts a string to a base-64 encoded ASCII string
+                // We use encodeURIComponent to handle special characters safely
+                result = btoa(encodeURIComponent(input));
+                outputArea.style.color = '#90ee90'; // Green for success
+            } else if (mode === 'decode') {
+                // atob() decodes the base-64 encoded string
+                // decodeURIComponent converts the URI-safe characters back
+                result = decodeURIComponent(atob(input));
+                outputArea.style.color = '#90ee90';
+            }
+        } catch (e) {
+            result = 'Error: Invalid Base64 string for decoding.';
+            outputArea.style.color = '#ff6347'; // Red for error
+        }
+
+        outputArea.value = result;
+    }
+
+    // Clear color on input change
+    inputArea.addEventListener('input', () => {
+        outputArea.style.color = '#fff';
+    });
+    
+    window.onload = function() {
+        outputArea.value = '';
+    };
+</script>
+</body>
+</html>

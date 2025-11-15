@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Case Converter</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0c0e14; color: #f4f6f7; }
+        .container { max-width: 800px; margin: 0 auto; background: #1a1e2b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 8px; color: #5dade2; font-weight: bold; }
+        textarea {
+            width: 100%;
+            height: 150px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            resize: vertical;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .output-box {
+            background-color: #34495e;
+            padding: 15px;
+            border-radius: 5px;
+            border: 1px solid #2ecc71;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .output-box:hover {
+            background-color: #3e5670;
+        }
+
+        .output-box h4 {
+            margin-top: 0;
+            margin-bottom: 5px;
+            color: #f39c12;
+            font-size: 1em;
+            text-transform: uppercase;
+        }
+
+        .output-text {
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+            word-wrap: break-word;
+        }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔡 Text Case Transformer</h1>
+    <p>Paste text below and instantly convert it into various standard formats for publishing or coding.</p>
+
+    <label for="text-input">Paste Your Text Here</label>
+    <textarea id="text-input" oninput="convertCases()">here is the headline you want to be able to transform for various purposes</textarea>
+
+    <div class="output-grid">
+        <div class="output-box" onclick="copyToClipboard('uppercase')">
+            <h4>UPPERCASE</h4>
+            <div id="uppercase" class="output-text"></div>
+        </div>
+        <div class="output-box" onclick="copyToClipboard('lowercase')">
+            <h4>lowercase</h4>
+            <div id="lowercase" class="output-text"></div>
+        </div>
+        <div class="output-box" onclick="copyToClipboard('titlecase')">
+            <h4>Title Case</h4>
+            <div id="titlecase" class="output-text"></div>
+        </div>
+        <div class="output-box" onclick="copyToClipboard('sentencecase')">
+            <h4>Sentence case</h4>
+            <div id="sentencecase" class="output-text"></div>
+        </div>
+        <div class="output-box" onclick="copyToClipboard('camelcase')">
+            <h4>camelCase</h4>
+            <div id="camelcase" class="output-text"></div>
+        </div>
+        <div class="output-box" onclick="copyToClipboard('snakecase')">
+            <h4>snake_case</h4>
+            <div id="snakecase" class="output-text"></div>
+        </div>
+    </div>
+
+    <div class="note">
+        Click on any output box to copy its content to your clipboard.
+    </div>
+</div>
+
+<script>
+    const textInput = document.getElementById('text-input');
+
+    // --- Conversion Functions ---
+
+    function toUpperCase(text) {
+        return text.toUpperCase();
+    }
+
+    function toLowerCase(text) {
+        return text.toLowerCase();
+    }
+
+    function toTitleCase(text) {
+        // Exclude small words from being capitalized in the middle of a title
+        const smallWords = /^(a|an|and|as|at|but|by|for|in|nor|of|on|or|the|to|up|with)$/i;
+        
+        return text.replace(/\w\S*/g, (txt, offset) => {
+            if (offset !== 0 && txt.match(smallWords)) {
+                return txt.toLowerCase();
+            }
+            return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();
+        });
+    }
+
+    function toSentenceCase(text) {
+        // Converts all text to lowercase, then capitalizes the first letter
+        const lower = text.toLowerCase();
+        return lower.charAt(0).toUpperCase() + lower.slice(1);
+    }
+
+    function toCamelCase(text) {
+        // Removes non-alphanumeric characters, then capitalizes words, except the first one
+        let cleaned = text.replace(/[^a-zA-Z0-9\s]/g, ' '); // Replace symbols with spaces
+        cleaned = cleaned.toLowerCase();
+        
+        return cleaned.trim().replace(/\s+(.)/g, (match, chr) => chr.toUpperCase());
+    }
+
+    function toSnakeCase(text) {
+        // Converts to lowercase, replaces spaces/symbols with underscores
+        return text.toLowerCase().replace(/[^a-z0-9]/g, '_').replace(/_+/g, '_').replace(/^_|_$/g, '');
+    }
+
+    function convertCases() {
+        const text = textInput.value;
+
+        document.getElementById('uppercase').textContent = toUpperCase(text);
+        document.getElementById('lowercase').textContent = toLowerCase(text);
+        document.getElementById('titlecase').textContent = toTitleCase(text);
+        document.getElementById('sentencecase').textContent = toSentenceCase(text);
+        document.getElementById('camelcase').textContent = toCamelCase(text);
+        document.getElementById('snakecase').textContent = toSnakeCase(text);
+    }
+
+    function copyToClipboard(id) {
+        const textToCopy = document.getElementById(id).textContent;
+        
+        if (!textToCopy) return;
+
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            // Briefly change the background color of the box to signal success
+            const box = document.getElementById(id).parentNode;
+            const originalColor = box.style.backgroundColor;
+            box.style.backgroundColor = '#5cb85c'; // Success green
+            
+            setTimeout(() => {
+                box.style.backgroundColor = originalColor; // Revert color
+            }, 300);
+        }).catch(err => {
+            console.error('Could not copy text: ', err);
+            alert('Failed to copy. Please copy manually.');
+        });
+    }
+
+    // Initialize the conversion on page load
+    window.onload = function() {
+        convertCases();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Character and Line Counter</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0d1a2b; color: #fff; }
+        .container { max-width: 800px; margin: 0 auto; background: #1c2e4a; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { text-align: center; color: #aeb6bf; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 8px; color: #5dade2; font-weight: bold; }
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            resize: vertical;
+            font-size: 16px;
+            font-family: monospace; /* Monospace is good for counting */
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .output-box {
+            background-color: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2ecc71;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #f39c12;
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔢 Character & Line Counter</h1>
+    <p>Check your content against strict limits for social media, headlines, or subject lines.</p>
+
+    <label for="content-input">Content Draft (Paste Your Text Here)</label>
+    <textarea id="content-input" oninput="calculateStats()">Here is a sample tweet to test the character limits for a content creator. This tool is fast and entirely private.</textarea>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <span class="value" id="char-count">0</span>
+            <span class="label">Total Characters (With Spaces)</span>
+        </div>
+        <div class="output-box">
+            <span class="value" id="no-space-count">0</span>
+            <span class="label">Total Characters (No Spaces)</span>
+        </div>
+        <div class="output-box">
+            <span class="value" id="line-count">0</span>
+            <span class="label">Total Lines</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        This app uses JavaScript and runs instantly within your browser.
+    </div>
+</div>
+
+<script>
+    const contentInput = document.getElementById('content-input');
+    const charCountEl = document.getElementById('char-count');
+    const noSpaceCountEl = document.getElementById('no-space-count');
+    const lineCountEl = document.getElementById('line-count');
+
+    function calculateStats() {
+        const text = contentInput.value;
+        
+        // 1. Total Characters (All characters, including spaces and newlines)
+        const totalChars = text.length;
+        
+        // 2. Characters without spaces (removes all whitespace characters)
+        const charsNoSpaces = text.replace(/\s/g, '').length;
+
+        // 3. Line Count (splits the text by newline character)
+        // If the text is empty, the count should be 0, otherwise it's 1 + number of newlines
+        const lineCount = text.trim() === '' ? 0 : text.split('\n').length;
+
+        // 4. Update the HTML elements
+        charCountEl.textContent = totalChars;
+        noSpaceCountEl.textContent = charsNoSpaces;
+        lineCountEl.textContent = lineCount;
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateStats();
+    };
+</script>
+</body>
+</html>

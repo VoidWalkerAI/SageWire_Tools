@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Adjusted 205-Day Weaning Weight</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0d1a2b; color: #fff; }
+        .container { max-width: 700px; margin: 0 auto; background: #1c2e4a; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { text-align: center; color: #aeb6bf; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 5px; color: #5dade2; font-weight: bold; }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2ecc71;
+            background-color: #34495e;
+        }
+
+        .output-box .value {
+            font-size: 3em;
+            color: #f39c12;
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 1em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧬 Calf Weaning Weight Adjuster</h1>
+    <p>Calculate the Adjusted 205-Day Weaning Weight for fair comparison and genetic selection.</p>
+
+    <div class="input-group">
+        <label for="actual-weight-input">Actual Weaning Weight (Lbs)</label>
+        <input type="number" id="actual-weight-input" value="600" min="50" oninput="calculateAdjustedWW()">
+    </div>
+
+    <div class="input-group">
+        <label for="weaning-age-input">Calf Age at Weaning (Days)</label>
+        <input type="number" id="weaning-age-input" value="190" min="60" oninput="calculateAdjustedWW()">
+    </div>
+    
+    <div class="input-group">
+        <label for="birth-weight-input">Birth Weight (Lbs)</label>
+        <input type="number" id="birth-weight-input" value="85" min="40" oninput="calculateAdjustedWW()">
+    </div>
+
+    <div class="output-box">
+        <span class="value" id="adjusted-ww-output">0.0</span>
+        <span class="label">Adjusted 205-Day Weaning Weight (Lbs)</span>
+    </div>
+    
+    <div class="note">
+        This standardized weight is used by breed associations to evaluate cow productivity and bull genetics.
+    </div>
+</div>
+
+<script>
+    const ACTUAL_WW_INPUT = document.getElementById('actual-weight-input');
+    const WEANING_AGE_INPUT = document.getElementById('weaning-age-input');
+    const BIRTH_WEIGHT_INPUT = document.getElementById('birth-weight-input');
+    const ADJUSTED_WW_OUTPUT = document.getElementById('adjusted-ww-output');
+
+    // Constant for the standard adjustment period
+    const STANDARD_DAYS = 205;
+
+    function calculateAdjustedWW() {
+        const actualWW = parseFloat(ACTUAL_WW_INPUT.value);
+        const weaningAge = parseFloat(WEANING_AGE_INPUT.value);
+        const birthWeight = parseFloat(BIRTH_WEIGHT_INPUT.value);
+        
+        // Validation: Ensure all inputs are positive and age is sufficient
+        if (isNaN(actualWW) || isNaN(weaningAge) || isNaN(birthWeight) || 
+            actualWW <= birthWeight || weaningAge <= 0) {
+            ADJUSTED_WW_OUTPUT.textContent = '0.0';
+            return;
+        }
+
+        // --- 1. Calculate Average Daily Gain (ADG) ---
+        // Formula: ADG = (Actual WW - Birth Weight) / Age at Weaning
+        const gain = actualWW - birthWeight;
+        const averageDailyGain = gain / weaningAge;
+
+        // --- 2. Calculate Adjusted 205-Day Weaning Weight ---
+        // Formula: Adj. 205 WW = (ADG * 205) + Birth Weight
+        const adjustedWW = (averageDailyGain * STANDARD_DAYS) + birthWeight;
+
+        // --- Output Result ---
+        
+        // Display result (rounded to 1 decimal place)
+        ADJUSTED_WW_OUTPUT.textContent = adjustedWW.toFixed(1);
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateAdjustedWW();
+    };
+</script>
+</body>
+</html>

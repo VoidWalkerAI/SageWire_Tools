@@ -1,0 +1,1085 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Black Ember Clip Console</title>
+<style>
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Courier New', monospace;
+    background-color: #0f0f23;
+    color: #e8e8e8;
+    margin: 0;
+    padding: 0;
+    line-height: 1.4;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.header {
+    text-align: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 2px solid #ff4500;
+}
+
+.header h1 {
+    color: #ff6b35;
+    margin-bottom: 8px;
+    font-size: 2.2em;
+    text-shadow: 0 0 10px rgba(255, 107, 53, 0.3);
+}
+
+.header p {
+    color: #bbb;
+    font-style: italic;
+    margin: 0;
+}
+
+.nav-buttons {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.btn {
+    background-color: #ff4500;
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    margin: 5px;
+    cursor: pointer;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    display: inline-block;
+    text-decoration: none;
+}
+
+.btn:hover {
+    background-color: #ff6b35;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(255, 69, 0, 0.3);
+}
+
+.btn:active {
+    transform: translateY(0);
+}
+
+.btn-secondary {
+    background-color: #2c3e50;
+}
+
+.btn-secondary:hover {
+    background-color: #34495e;
+}
+
+.btn-danger {
+    background-color: #c0392b;
+}
+
+.btn-danger:hover {
+    background-color: #e74c3c;
+}
+
+.section {
+    background-color: #1a1a2e;
+    border: 1px solid #333;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.section h2 {
+    color: #ff6b35;
+    margin-top: 0;
+    margin-bottom: 20px;
+    border-bottom: 1px solid #444;
+    padding-bottom: 10px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    color: #ff6b35;
+    font-weight: bold;
+    font-size: 14px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 12px;
+    background-color: #000;
+    border: 1px solid #444;
+    border-radius: 4px;
+    color: #e8e8e8;
+    font-family: 'Courier New', monospace;
+    font-size: 14px;
+    transition: border-color 0.2s ease;
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: #ff4500;
+    box-shadow: 0 0 5px rgba(255, 69, 0, 0.3);
+}
+
+textarea.form-control {
+    height: 120px;
+    resize: vertical;
+    min-height: 80px;
+}
+
+.clip-item {
+    background-color: #1a1a2e;
+    border: 1px solid #ff4500;
+    border-radius: 6px;
+    padding: 20px;
+    margin-bottom: 20px;
+    transition: all 0.2s ease;
+}
+
+.clip-item:hover {
+    border-color: #ff6b35;
+    box-shadow: 0 4px 12px rgba(255, 69, 0, 0.2);
+}
+
+.clip-title {
+    color: #ff6b35;
+    font-weight: bold;
+    font-size: 18px;
+    margin-bottom: 8px;
+    word-wrap: break-word;
+}
+
+.clip-timestamp {
+    color: #999;
+    font-size: 12px;
+    margin-bottom: 12px;
+}
+
+.clip-content {
+    background-color: #000;
+    padding: 15px;
+    border-left: 4px solid #ff4500;
+    border-radius: 4px;
+    margin: 12px 0;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+    font-family: 'Courier New', monospace;
+    font-size: 13px;
+    line-height: 1.5;
+}
+
+.clip-tags {
+    margin: 12px 0;
+}
+
+.clip-tag {
+    background-color: #2a1500;
+    color: #ff6b35;
+    padding: 4px 8px;
+    margin-right: 8px;
+    margin-bottom: 4px;
+    border-radius: 12px;
+    font-size: 11px;
+    display: inline-block;
+    border: 1px solid #ff4500;
+}
+
+.clip-actions {
+    margin-top: 15px;
+    text-align: right;
+}
+
+.clip-actions .btn {
+    margin-left: 8px;
+    padding: 8px 16px;
+    font-size: 13px;
+}
+
+.alert {
+    padding: 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    font-weight: bold;
+    animation: slideIn 0.3s ease;
+}
+
+@keyframes slideIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.alert-success {
+    background-color: #2d5016;
+    color: #4CAF50;
+    border: 1px solid #4CAF50;
+}
+
+.alert-error {
+    background-color: #5d1a1a;
+    color: #f44336;
+    border: 1px solid #f44336;
+}
+
+.alert-info {
+    background-color: #1a3d5d;
+    color: #2196F3;
+    border: 1px solid #2196F3;
+}
+
+.hidden {
+    display: none;
+}
+
+.stats {
+    text-align: center;
+    margin-bottom: 20px;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.stat-item {
+    background-color: #2a1500;
+    padding: 20px;
+    border: 2px solid #ff4500;
+    border-radius: 8px;
+    text-align: center;
+    min-width: 120px;
+    transition: all 0.2s ease;
+}
+
+.stat-item:hover {
+    border-color: #ff6b35;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(255, 69, 0, 0.3);
+}
+
+.stat-value {
+    color: #ff6b35;
+    font-weight: bold;
+    font-size: 24px;
+    display: block;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    color: #bbb;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.search-container {
+    position: relative;
+    margin-bottom: 20px;
+}
+
+.search-clear {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #ff4500;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 5px;
+}
+
+.no-clips {
+    text-align: center;
+    padding: 40px;
+    color: #999;
+    font-style: italic;
+}
+
+@media (max-width: 768px) {
+    .container {
+        width: 95%;
+        padding: 10px;
+    }
+    
+    .btn {
+        padding: 10px 15px;
+        font-size: 13px;
+    }
+    
+    .stats {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .stat-item {
+        min-width: 100px;
+    }
+    
+    .clip-actions {
+        text-align: center;
+    }
+    
+    .clip-actions .btn {
+        margin: 5px;
+    }
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>🔥 Black Ember Clip Console</h1>
+        <p><em>Your mythic scroll chamber for forging and storing memory fragments</em></p>
+    </div>
+    
+    <div id="alert-container"></div>
+    
+    <div class="nav-buttons">
+        <button class="btn" onclick="showSection('view')" id="view-btn">📜 View Scrolls</button>
+        <button class="btn" onclick="showSection('create')" id="create-btn">⚔️ Forge New</button>
+        <button class="btn btn-secondary" onclick="showSection('stats')" id="stats-btn">📊 Vault Stats</button>
+        <button class="btn btn-secondary" onclick="exportData()" id="export-btn">💾 Export</button>
+    </div>
+    
+    <div id="stats-section" class="section hidden">
+        <h2>🏛️ Ember Vault Statistics</h2>
+        <div class="stats">
+            <div class="stat-item">
+                <span class="stat-value" id="total-clips">0</span>
+                <span class="stat-label">Scrolls Forged</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="total-size">0KB</span>
+                <span class="stat-label">Vault Size</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="avg-length">0</span>
+                <span class="stat-label">Avg Length</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-value" id="total-tags">0</span>
+                <span class="stat-label">Tags Used</span>
+            </div>
+        </div>
+    </div>
+    
+    <div id="view-section" class="section">
+        <h2>📜 Memory Scrolls</h2>
+        
+        <div class="search-container">
+            <input type="text" class="form-control" placeholder="Search scrolls by title, content, or tags..." 
+                   id="search-input" onkeyup="filterClips()" autocomplete="off">
+            <button class="search-clear" onclick="clearSearch()" id="search-clear" style="display: none;">✖</button>
+        </div>
+        
+        <div id="clips-container">
+            <div class="no-clips">
+                <h3>🌅 No scrolls found in the vault</h3>
+                <p>Forge your first memory scroll to begin building your digital grimoire.</p>
+                <button class="btn" onclick="showSection('create')">⚔️ Forge First Scroll</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="create-section" class="section hidden">
+        <h2>⚔️ Forge a New Memory Scroll</h2>
+        
+        <form onsubmit="createClip(event)" id="create-form">
+            <div class="form-group">
+                <label for="title">🏷️ Scroll Title</label>
+                <input type="text" class="form-control" id="title" 
+                       placeholder="Name your memory fragment..." required maxlength="100">
+            </div>
+            
+            <div class="form-group">
+                <label for="content">📝 Scroll Content</label>
+                <textarea class="form-control" id="content" 
+                          placeholder="Write your thoughts, code snippets, notes, or any wisdom to preserve..." 
+                          required maxlength="10000"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="tags">🏷️ Tags (comma-separated)</label>
+                <input type="text" class="form-control" id="tags" 
+                       placeholder="memory, code, notes, wisdom..." maxlength="200">
+            </div>
+            
+            <button type="submit" class="btn" id="forge-btn">⚔️ Forge Scroll</button>
+            <button type="button" class="btn btn-secondary" onclick="clearForm()">🗑️ Clear Form</button>
+        </form>
+    </div>
+    
+    <div id="edit-section" class="section hidden">
+        <h2>🔧 Reforge Memory Scroll</h2>
+        
+        <form onsubmit="updateClip(event)" id="edit-form">
+            <input type="hidden" id="edit-id">
+            
+            <div class="form-group">
+                <label for="edit-title">🏷️ Scroll Title</label>
+                <input type="text" class="form-control" id="edit-title" required maxlength="100">
+            </div>
+            
+            <div class="form-group">
+                <label for="edit-content">📝 Scroll Content</label>
+                <textarea class="form-control" id="edit-content" required maxlength="10000"></textarea>
+            </div>
+            
+            <div class="form-group">
+                <label for="edit-tags">🏷️ Tags</label>
+                <input type="text" class="form-control" id="edit-tags" maxlength="200">
+            </div>
+            
+            <button type="submit" class="btn">💾 Save Changes</button>
+            <button type="button" class="btn btn-secondary" onclick="showSection('view')">❌ Cancel</button>
+        </form>
+    </div>
+</div>
+
+<script>
+var STORAGE_KEY = 'blackEmberClips';
+var MAX_CLIPS = 1000;
+
+// Safe helper functions first
+function safeString(value) {
+    if (value === null || value === undefined) return '';
+    return String(value);
+}
+
+function safeArray(value) {
+    if (!value || !Array.isArray(value)) return [];
+    return value;
+}
+
+function safeGet(obj, prop, defaultValue) {
+    if (!obj || typeof obj !== 'object') return defaultValue;
+    if (obj[prop] === null || obj[prop] === undefined) return defaultValue;
+    return obj[prop];
+}
+
+// Initialize application
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        loadClips();
+        updateStats();
+        showSection('view');
+    } catch (e) {
+        console.error('Initialization error:', e);
+        showAlert('Failed to initialize vault', 'error');
+    }
+});
+
+function showSection(section) {
+    var sections = ['view-section', 'create-section', 'edit-section', 'stats-section'];
+    var buttons = ['view-btn', 'create-btn', 'stats-btn'];
+    
+    try {
+        // Hide all sections
+        for (var i = 0; i < sections.length; i++) {
+            var element = document.getElementById(sections[i]);
+            if (element) {
+                element.classList.add('hidden');
+            }
+        }
+        
+        // Reset button states
+        for (var i = 0; i < buttons.length; i++) {
+            var btn = document.getElementById(buttons[i]);
+            if (btn) {
+                btn.classList.remove('btn-secondary');
+            }
+        }
+        
+        // Show target section
+        var targetSection = document.getElementById(section + '-section');
+        if (targetSection) {
+            targetSection.classList.remove('hidden');
+        }
+        
+        // Highlight active button
+        var activeBtn = document.getElementById(section + '-btn');
+        if (activeBtn) {
+            activeBtn.classList.add('btn-secondary');
+        }
+        
+        if (section === 'stats') {
+            updateStats();
+        }
+    } catch (e) {
+        console.error('Error showing section:', e);
+    }
+}
+
+function getClips() {
+    try {
+        if (typeof localStorage === 'undefined' || !localStorage) {
+            return [];
+        }
+        
+        var clips = localStorage.getItem(STORAGE_KEY);
+        if (!clips || clips === null || clips === 'null' || clips === 'undefined') {
+            return [];
+        }
+        
+        var parsed = JSON.parse(clips);
+        if (!Array.isArray(parsed)) {
+            return [];
+        }
+        
+        return parsed;
+    } catch (e) {
+        console.error('Error reading clips:', e);
+        return [];
+    }
+}
+
+function saveClips(clips) {
+    try {
+        if (typeof localStorage === 'undefined' || !localStorage) {
+            showAlert('Local storage not available', 'error');
+            return false;
+        }
+        
+        if (!clips || !Array.isArray(clips)) {
+            clips = [];
+        }
+        
+        if (clips.length > MAX_CLIPS) {
+            clips = clips.slice(0, MAX_CLIPS);
+            showAlert('Vault capacity reached. Only ' + MAX_CLIPS + ' scrolls allowed.', 'error');
+        }
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(clips));
+        return true;
+    } catch (e) {
+        console.error('Save error:', e);
+        showAlert('Could not save to vault: ' + e.message, 'error');
+        return false;
+    }
+}
+
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 9);
+}
+
+function formatTimestamp(timestamp) {
+    try {
+        if (!timestamp) return 'Unknown';
+        var date = new Date(timestamp);
+        if (isNaN(date.getTime())) return 'Unknown';
+        return date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+    } catch (e) {
+        return 'Unknown';
+    }
+}
+
+function showAlert(message, type) {
+    try {
+        if (!message) return;
+        
+        type = type || 'success';
+        var alertContainer = document.getElementById('alert-container');
+        if (!alertContainer) return;
+        
+        var alert = document.createElement('div');
+        alert.className = 'alert alert-' + type;
+        alert.textContent = safeString(message);
+        
+        alertContainer.appendChild(alert);
+        
+        setTimeout(function() {
+            try {
+                if (alert.parentNode) {
+                    alert.parentNode.removeChild(alert);
+                }
+            } catch (e) {
+                console.error('Error removing alert:', e);
+            }
+        }, 5000);
+    } catch (e) {
+        console.error('Error showing alert:', e);
+    }
+}
+
+function escapeHtml(text) {
+    try {
+        var div = document.createElement('div');
+        div.textContent = safeString(text);
+        return div.innerHTML;
+    } catch (e) {
+        return '';
+    }
+}
+
+function escapeForAttribute(text) {
+    try {
+        return safeString(text).replace(/'/g, '&#39;').replace(/"/g, '&#34;');
+    } catch (e) {
+        return '';
+    }
+}
+
+function loadClips() {
+    try {
+        var clips = getClips();
+        var container = document.getElementById('clips-container');
+        
+        if (!container) {
+            console.error('Clips container not found');
+            return;
+        }
+        
+        if (!clips || clips.length === 0) {
+            container.innerHTML = '<div class="no-clips"><h3>🌅 No scrolls found in the vault</h3><p>Forge your first memory scroll to begin building your digital grimoire.</p><button class="btn" onclick="showSection(\'create\')">⚔️ Forge First Scroll</button></div>';
+            return;
+        }
+        
+        // Sort by timestamp (newest first)
+        clips.sort(function(a, b) {
+            try {
+                if (!a || !b) return 0;
+                var aTime = safeGet(a, 'timestamp', 0);
+                var bTime = safeGet(b, 'timestamp', 0);
+                if (!aTime || !bTime) return 0;
+                return new Date(bTime) - new Date(aTime);
+            } catch (e) {
+                return 0;
+            }
+        });
+        
+        var html = '';
+        for (var i = 0; i < clips.length; i++) {
+            var clip = clips[i];
+            if (!clip || !safeGet(clip, 'id', '')) continue;
+            
+            var tagsHtml = '';
+            var tags = safeArray(safeGet(clip, 'tags', []));
+            if (tags.length > 0) {
+                tagsHtml = '<div class="clip-tags">';
+                for (var j = 0; j < tags.length; j++) {
+                    var tag = safeString(tags[j]);
+                    if (tag) {
+                        tagsHtml += '<span class="clip-tag">' + escapeHtml(tag) + '</span>';
+                    }
+                }
+                tagsHtml += '</div>';
+            }
+            
+            var modifiedText = '';
+            var modified = safeGet(clip, 'modified', '');
+            if (modified) {
+                modifiedText = ' (Modified: ' + formatTimestamp(modified) + ')';
+            }
+            
+            var searchText = safeString(safeGet(clip, 'title', '')) + ' ' + 
+                           safeString(safeGet(clip, 'content', '')) + ' ' + 
+                           tags.join(' ');
+            var searchData = escapeHtml(searchText.toLowerCase());
+            
+            var clipId = safeString(safeGet(clip, 'id', ''));
+            var clipTitle = safeString(safeGet(clip, 'title', 'Untitled Scroll'));
+            var clipContent = safeString(safeGet(clip, 'content', ''));
+            var clipTimestamp = safeGet(clip, 'timestamp', '');
+            
+            html += '<div class="clip-item" data-id="' + escapeForAttribute(clipId) + '" data-search="' + searchData + '">' +
+                '<div class="clip-title">' + escapeHtml(clipTitle) + '</div>' +
+                '<div class="clip-timestamp">Forged: ' + formatTimestamp(clipTimestamp) + modifiedText + '</div>' +
+                '<div class="clip-content">' + escapeHtml(clipContent) + '</div>' +
+                tagsHtml +
+                '<div class="clip-actions">' +
+                    '<button class="btn btn-secondary" onclick="editClip(\'' + escapeForAttribute(clipId) + '\')">✏️ Edit</button>' +
+                    '<button class="btn btn-danger" onclick="deleteClip(\'' + escapeForAttribute(clipId) + '\', \'' + escapeForAttribute(clipTitle) + '\')">🗑️ Delete</button>' +
+                '</div>' +
+            '</div>';
+        }
+        
+        container.innerHTML = html;
+    } catch (e) {
+        console.error('Load error:', e);
+        var container = document.getElementById('clips-container');
+        if (container) {
+            container.innerHTML = '<div class="alert alert-error">Error loading scrolls from vault.</div>';
+        }
+    }
+}
+
+function filterClips() {
+    try {
+        var searchInput = document.getElementById('search-input');
+        var clearBtn = document.getElementById('search-clear');
+        var clips = document.querySelectorAll('.clip-item');
+        
+        if (!searchInput || !clearBtn) return;
+        
+        var searchTerm = safeString(searchInput.value).toLowerCase().trim();
+        
+        clearBtn.style.display = searchTerm ? 'block' : 'none';
+        
+        var visibleCount = 0;
+        for (var i = 0; i < clips.length; i++) {
+            var clip = clips[i];
+            var searchData = safeString(clip.getAttribute('data-search'));
+            
+            if (!searchTerm || searchData.indexOf(searchTerm) !== -1) {
+                clip.style.display = 'block';
+                visibleCount++;
+            } else {
+                clip.style.display = 'none';
+            }
+        }
+        
+        // Show no results message if needed
+        var container = document.getElementById('clips-container');
+        if (container && searchTerm && visibleCount === 0) {
+            var existing = container.querySelector('.no-results');
+            if (!existing) {
+                var noResults = document.createElement('div');
+                noResults.className = 'alert alert-info no-results';
+                noResults.textContent = 'No scrolls found matching "' + searchTerm + '"';
+                container.appendChild(noResults);
+            }
+        } else {
+            var noResults = document.querySelector('.no-results');
+            if (noResults && noResults.parentNode) {
+                noResults.parentNode.removeChild(noResults);
+            }
+        }
+    } catch (e) {
+        console.error('Filter error:', e);
+    }
+}
+
+function clearSearch() {
+    try {
+        var searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.value = '';
+            filterClips();
+            searchInput.focus();
+        }
+    } catch (e) {
+        console.error('Clear search error:', e);
+    }
+}
+
+function clearForm() {
+    try {
+        var titleInput = document.getElementById('title');
+        var contentInput = document.getElementById('content');
+        var tagsInput = document.getElementById('tags');
+        
+        if (titleInput) titleInput.value = '';
+        if (contentInput) contentInput.value = '';
+        if (tagsInput) tagsInput.value = '';
+    } catch (e) {
+        console.error('Clear form error:', e);
+    }
+}
+
+function createClip(event) {
+    try {
+        event.preventDefault();
+        
+        var titleInput = document.getElementById('title');
+        var contentInput = document.getElementById('content');
+        var tagsInput = document.getElementById('tags');
+        
+        if (!titleInput || !contentInput) {
+            showAlert('Form elements not found', 'error');
+            return;
+        }
+        
+        var title = safeString(titleInput.value).trim();
+        var content = safeString(contentInput.value).trim();
+        var tags = tagsInput ? safeString(tagsInput.value).trim() : '';
+        
+        if (!title || !content) {
+            showAlert('Both title and content are required to forge a scroll!', 'error');
+            return;
+        }
+        
+        var clips = getClips();
+        
+        // Check for duplicate titles
+        for (var i = 0; i < clips.length; i++) {
+            var existingClip = clips[i];
+            if (existingClip && safeString(safeGet(existingClip, 'title', '')).toLowerCase() === title.toLowerCase()) {
+                if (!confirm('A scroll with this title already exists. Forge anyway?')) {
+                    return;
+                }
+                break;
+            }
+        }
+        
+        var tagArray = [];
+        if (tags) {
+            var splitTags = tags.split(',');
+            for (var i = 0; i < splitTags.length; i++) {
+                var tag = safeString(splitTags[i]).trim();
+                if (tag) {
+                    tagArray.push(tag);
+                }
+            }
+        }
+        
+        var newClip = {
+            id: generateId(),
+            title: title,
+            content: content,
+            tags: tagArray,
+            timestamp: new Date().toISOString()
+        };
+        
+        clips.push(newClip);
+        
+        if (saveClips(clips)) {
+            clearForm();
+            showAlert('Scroll forged successfully! ⚔️');
+            loadClips();
+            updateStats();
+            showSection('view');
+        }
+    } catch (e) {
+        console.error('Create clip error:', e);
+        showAlert('Error creating scroll', 'error');
+    }
+}
+
+function editClip(id) {
+    try {
+        var clips = getClips();
+        var clip = null;
+        
+        for (var i = 0; i < clips.length; i++) {
+            if (clips[i] && safeGet(clips[i], 'id', '') === id) {
+                clip = clips[i];
+                break;
+            }
+        }
+        
+        if (!clip) {
+            showAlert('Scroll not found in vault!', 'error');
+            return;
+        }
+        
+        var editIdInput = document.getElementById('edit-id');
+        var editTitleInput = document.getElementById('edit-title');
+        var editContentInput = document.getElementById('edit-content');
+        var editTagsInput = document.getElementById('edit-tags');
+        
+        if (!editIdInput || !editTitleInput || !editContentInput) {
+            showAlert('Edit form not found', 'error');
+            return;
+        }
+        
+        editIdInput.value = safeString(safeGet(clip, 'id', ''));
+        editTitleInput.value = safeString(safeGet(clip, 'title', ''));
+        editContentInput.value = safeString(safeGet(clip, 'content', ''));
+        
+        if (editTagsInput) {
+            var tags = safeArray(safeGet(clip, 'tags', []));
+            editTagsInput.value = tags.join(', ');
+        }
+        
+        showSection('edit');
+        editTitleInput.focus();
+    } catch (e) {
+        console.error('Edit clip error:', e);
+        showAlert('Error editing scroll', 'error');
+    }
+}
+
+function updateClip(event) {
+    try {
+        event.preventDefault();
+        
+        var editIdInput = document.getElementById('edit-id');
+        var editTitleInput = document.getElementById('edit-title');
+        var editContentInput = document.getElementById('edit-content');
+        var editTagsInput = document.getElementById('edit-tags');
+        
+        if (!editIdInput || !editTitleInput || !editContentInput) {
+            showAlert('Edit form elements not found', 'error');
+            return;
+        }
+        
+        var id = safeString(editIdInput.value);
+        var title = safeString(editTitleInput.value).trim();
+        var content = safeString(editContentInput.value).trim();
+        var tags = editTagsInput ? safeString(editTagsInput.value).trim() : '';
+        
+        if (!title || !content) {
+            showAlert('Both title and content are required!', 'error');
+            return;
+        }
+        
+        var clips = getClips();
+        var clipIndex = -1;
+        
+        for (var i = 0; i < clips.length; i++) {
+            if (clips[i] && safeGet(clips[i], 'id', '') === id) {
+                clipIndex = i;
+                break;
+            }
+        }
+        
+        if (clipIndex === -1) {
+            showAlert('Scroll not found in vault!', 'error');
+            return;
+        }
+        
+        var tagArray = [];
+        if (tags) {
+            var splitTags = tags.split(',');
+            for (var i = 0; i < splitTags.length; i++) {
+                var tag = safeString(splitTags[i]).trim();
+                if (tag) {
+                    tagArray.push(tag);
+                }
+            }
+        }
+        
+        clips[clipIndex] = {
+            id: safeGet(clips[clipIndex], 'id', ''),
+            title: title,
+            content: content,
+            tags: tagArray,
+            timestamp: safeGet(clips[clipIndex], 'timestamp', ''),
+            modified: new Date().toISOString()
+        };
+        
+        if (saveClips(clips)) {
+            showAlert('Scroll reforged successfully! 🔧');
+            loadClips();
+            updateStats();
+            showSection('view');
+        }
+    } catch (e) {
+        console.error('Update clip error:', e);
+        showAlert('Error updating scroll', 'error');
+    }
+}
+
+function deleteClip(id, title) {
+    try {
+        if (!confirm('Are you sure you want to destroy "' + title + '"?\n\nThis action cannot be undone.')) {
+            return;
+        }
+        
+        var clips = getClips();
+        var filteredClips = [];
+        
+        for (var i = 0; i < clips.length; i++) {
+            if (!clips[i] || safeGet(clips[i], 'id', '') !== id) {
+                filteredClips.push(clips[i]);
+            }
+        }
+        
+        if (saveClips(filteredClips)) {
+            showAlert('Scroll destroyed 🔥');
+            loadClips();
+            updateStats();
+        }
+    } catch (e) {
+        console.error('Delete clip error:', e);
+        showAlert('Error deleting scroll', 'error');
+    }
+}
+
+function exportData() {
+    try {
+        var clips = getClips();
+        
+        if (!clips || clips.length === 0) {
+            showAlert('No scrolls to export', 'error');
+            return;
+        }
+        
+        var dataStr = JSON.stringify(clips, null, 2);
+        var dataBlob = new Blob([dataStr], {type: 'application/json'});
+        
+        var link = document.createElement('a');
+        link.href = URL.createObjectURL(dataBlob);
+        link.download = 'ember-vault-export-' + new Date().toISOString().slice(0, 10) + '.json';
+        
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        showAlert('Vault exported successfully! 💾');
+    } catch (e) {
+        console.error('Export error:', e);
+        showAlert('Error exporting vault', 'error');
+    }
+}
+
+function updateStats() {
+    try {
+        var clips = getClips();
+        var totalClips = clips ? clips.length : 0;
+        
+        var totalSize = 0;
+        var totalLength = 0;
+        var allTags = {};
+        
+        for (var i = 0; i < clips.length; i++) {
+            var clip = clips[i];
+            if (!clip) continue;
+            
+            try {
+                var clipData = JSON.stringify(clip);
+                totalSize += new Blob([clipData]).size;
+            } catch (e) {
+                // Skip if can't calculate size
+            }
+            
+            var content = safeString(safeGet(clip, 'content', ''));
+            totalLength += content.length;
+            
+            var tags = safeArray(safeGet(clip, 'tags', []));
+            for (var j = 0; j < tags.length; j++) {
+                var tag = safeString(tags[j]).toLowerCase();
+                if (tag) {
+                    allTags[tag] = true;
+                }
+            }
+        }
+        
+        var avgLength = totalClips > 0 ? Math.round(totalLength / totalClips) : 0;
+        var uniqueTags = Object.keys(allTags).length;
+        
+        var totalClipsEl = document.getElementById('total-clips');
+        var totalSizeEl = document.getElementById('total-size');
+        var avgLengthEl = document.getElementById('avg-length');
+        var totalTagsEl = document.getElementById('total-tags');
+        
+        if (totalClipsEl) totalClipsEl.textContent = totalClips;
+        if (totalSizeEl) totalSizeEl.textContent = (totalSize / 1024).toFixed(1) + 'KB';
+        if (avgLengthEl) avgLengthEl.textContent = avgLength;
+        if (totalTagsEl) totalTagsEl.textContent = uniqueTags;
+    } catch (e) {
+        console.error('Update stats error:', e);
+    }
+}
+</script>
+</body>
+</html>

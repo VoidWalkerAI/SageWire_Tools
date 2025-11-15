@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article Idea Generator</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0d1a2b; color: #fff; }
+        .container { max-width: 800px; margin: 0 auto; background: #1c2e4a; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { text-align: center; color: #aeb6bf; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 8px; color: #5dade2; font-weight: bold; }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+            margin-bottom: 25px;
+        }
+        button:hover { background-color: #27ae60; }
+
+        .output-box {
+            background-color: #2c3e50;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid #f39c12;
+        }
+
+        .output-box h3 {
+            color: #e74c3c;
+            margin-top: 0;
+            border-bottom: 1px solid #e74c3c;
+            padding-bottom: 5px;
+            margin-bottom: 10px;
+        }
+
+        .idea {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-bottom: 1px dashed #3498db;
+        }
+
+        .idea:last-child {
+            border-bottom: none;
+        }
+
+        .idea strong {
+            color: #f39c12;
+        }
+        
+        ul {
+            list-style: disc;
+            margin-left: 20px;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>💡 Article Idea Factory</h1>
+    <p>Enter a core topic and instantly generate headlines and structures for your next piece of content.</p>
+
+    <label for="topic-input">Core Topic / Keyword (e.g., "AI Tools" or "Freelancing")</label>
+    <input type="text" id="topic-input" placeholder="Type your topic here..." value="Personal Knowledge Management">
+
+    <button onclick="generateIdeas()">Forge Content Ideas</button>
+
+    <div id="output-container">
+        </div>
+</div>
+
+<script>
+    const topicInput = document.getElementById('topic-input');
+    const outputContainer = document.getElementById('output-container');
+    
+    // --- Article Templates (Simplified from your original code) ---
+    const ARTICLE_TEMPLATES = [
+        {
+            type: 'How-To Guide',
+            structure: ['Problem Hook', 'Why This Matters (The Cost of Failure)', 'Step-by-Step Solution (3-5 Steps)', 'Common Mistakes to Avoid', 'Conclusion & Call to Action'],
+            headlines: [
+                "How to {topic} Without {common_mistake}",
+                "The {number} Step Guide to Mastering {topic}",
+                "Stop {doing_wrong_thing} - Do This Instead to {achieve_outcome}",
+                "A Beginner's Guide to {topic} That Actually Works"
+            ]
+        },
+        {
+            type: 'Controversial Opinion',
+            structure: ['Shocking Statement', 'Why Conventional Wisdom is Wrong', 'My Personal Experience/Data', 'The Real Truth (The Counter-Intuitive Lesson)', 'What You Should Do Now'],
+            headlines: [
+                "Unpopular Opinion: {topic} is Completely Wrong",
+                "Why Everyone is Wasting Time on {popular_thing}",
+                "I'm Done Pretending {topic} Isn't {reality}",
+                "The Biggest Lie People Believe About {topic}"
+            ]
+        },
+        {
+            type: 'Personal Story/Case Study',
+            structure: ['The Problem/Failure', 'The Journey/Struggle', 'The Breakthrough Moment', 'The Lesson Learned (The Takeaway)', 'How to Apply This Lesson to Your Life'],
+            headlines: [
+                "How {topic} Led to My Biggest Failure (and Success)",
+                "The {time_period} That Changed Everything I Knew About {topic}",
+                "What My Worst Day in {field} Taught Me",
+                "From {before_state} to {after_state} with {topic}"
+            ]
+        },
+        {
+            type: 'Listicle/List Post',
+            structure: ['Introduction & Value Proposition', 'Item 1: [Strongest Point]', 'Item 2: [Unexpected Point]', 'Item 3: [Actionable Point]', 'Summary & Final Tip'],
+            headlines: [
+                "{number} {topic} Tips That Will Save You {time_or_money}",
+                "The Only {number} {topic} Tools You'll Ever Need",
+                "{number} Lessons I Learned from {topic} After {time_period}",
+                "The Ultimate Checklist for {topic} Success"
+            ]
+        }
+    ];
+
+    // --- Helper Functions for Headline Filling ---
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
+    function fillerWord(topic) {
+        // Basic function to generate context-specific filler words
+        const words = {
+            'common_mistake': ['Outdated Advice', 'Over-Optimization', 'Ignoring the Basics'],
+            'doing_wrong_thing': ['Following Generic Plans', 'Copying Others', 'Quitting Too Early'],
+            'achieve_outcome': ['Get Better Results', 'Save Time', 'Make More Money'],
+            'number': [3, 5, 7, 10],
+            'popular_thing': ['Conventional Wisdom', 'The Latest Fad', 'What Everyone Else is Doing'],
+            'reality': ['A Waste of Time', 'A Massive Scam', 'The Real Advantage'],
+            'time_period': ['Year', 'Month', 'Difficult Challenge'],
+            'field': ['Content Creation', 'Freelancing', 'Tech'],
+            'before_state': ['Struggling', 'Confused', 'Broke'],
+            'after_state': ['Mastery', 'Clarity', 'Success'],
+            'time_or_money': ['10 Hours', '20%', '30 Minutes']
+        };
+
+        const key = arguments[1]; // Get the name of the placeholder
+        const list = words[key] || [key];
+        return list[Math.floor(Math.random() * list.length)];
+    }
+
+    function fillHeadline(headline, topic) {
+        // Replace {topic} first
+        let filled = headline.replace(/{topic}/g, topic);
+
+        // Replace all other placeholders
+        filled = filled.replace(/{([a-zA-Z_]+)}/g, (match, key) => {
+            return fillerWord(topic, key);
+        });
+
+        return filled;
+    }
+
+    // --- Main Generation Function ---
+    function generateIdeas() {
+        const topic = topicInput.value.trim();
+        if (!topic) {
+            outputContainer.innerHTML = '<div id="status-message">⚠️ Please enter a core topic or keyword.</div>';
+            return;
+        }
+
+        let html = '';
+        
+        ARTICLE_TEMPLATES.forEach(template => {
+            html += `<div class="output-box">
+                        <h3>Template: ${template.type}</h3>
+                        
+                        <div class="idea">
+                            <strong>Suggested Headlines:</strong>
+                            <ul>`;
+            
+            // Generate 3 unique headlines for this template
+            const generatedHeadlines = new Set();
+            while (generatedHeadlines.size < 3) {
+                const headlineFormula = template.headlines[Math.floor(Math.random() * template.headlines.length)];
+                const filled = fillHeadline(headlineFormula, topic);
+                generatedHeadlines.add(filled);
+            }
+
+            generatedHeadlines.forEach(headline => {
+                html += `<li>${headline}</li>`;
+            });
+
+            html += `       </ul>
+                        </div>
+
+                        <div class="idea">
+                            <strong>Suggested Structure:</strong>
+                            <ol>`;
+            
+            template.structure.forEach(step => {
+                html += `<li>${step}</li>`;
+            });
+            
+            html += `       </ol>
+                        </div>
+                    </div>`;
+        });
+
+        outputContainer.innerHTML = html;
+    }
+    
+    // Run the generator with the default value on load
+    window.onload = function() {
+        generateIdeas();
+    };
+</script>
+</body>
+</html>

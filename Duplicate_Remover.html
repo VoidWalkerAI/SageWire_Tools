@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Duplicate Line Remover</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0c0e14; color: #f4f6f7; }
+        .container { max-width: 800px; margin: 0 auto; background: #1a1e2b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        .editor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-panel h3 {
+            color: #5dade2;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        textarea {
+            width: 100%;
+            height: 300px;
+            padding: 15px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            resize: vertical;
+            font-size: 14px;
+            font-family: 'Courier New', monospace; /* Monospace for data viewing */
+        }
+        
+        #input-area {
+            border-color: #f39c12; /* Unique color for input */
+        }
+        
+        #output-area {
+            border-color: #2ecc71; /* Unique color for output */
+            background-color: #000;
+            color: #90ee90;
+        }
+
+        .stats-box {
+            margin-top: 15px;
+            background-color: #34495e;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 5px solid #f39c12;
+            font-size: 0.9em;
+        }
+
+        .stats-box strong {
+            color: #f39c12;
+        }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🧹 Duplicate Line Remover</h1>
+    <p>Paste any list of data or keywords below. The tool will instantly clean the list, removing all exact duplicate lines.</p>
+
+    <div class="editor-grid">
+        <div class="editor-panel">
+            <h3>Input List (Paste Here)</h3>
+            <textarea id="input-area" oninput="removeDuplicates()">keyword a
+keyword b
+keyword c
+keyword a
+keyword b
+keyword d
+</textarea>
+            <div id="input-stats" class="stats-box"></div>
+        </div>
+        
+        <div class="editor-panel">
+            <h3>Unique Output List (Copy This)</h3>
+            <textarea id="output-area" readonly></textarea>
+            <div id="output-stats" class="stats-box"></div>
+        </div>
+    </div>
+    
+    <div class="note">
+        This tool is case-sensitive and removes duplicates based on the entire line content.
+    </div>
+</div>
+
+<script>
+    const inputArea = document.getElementById('input-area');
+    const outputArea = document.getElementById('output-area');
+    const inputStats = document.getElementById('input-stats');
+    const outputStats = document.getElementById('output-stats');
+
+    function removeDuplicates() {
+        const inputText = inputArea.value;
+        
+        // 1. Get the input lines and filter out empty lines (for cleaner stats)
+        let lines = inputText.split('\n');
+        
+        // Remove lines that are just whitespace or empty
+        lines = lines.filter(line => line.trim().length > 0);
+        
+        const totalLines = lines.length;
+
+        // 2. Use a JavaScript Set to automatically remove duplicates
+        // Set only stores unique values
+        const uniqueSet = new Set(lines);
+        const uniqueLines = Array.from(uniqueSet);
+        
+        const uniqueCount = uniqueLines.length;
+        const duplicatesRemoved = totalLines - uniqueCount;
+
+        // 3. Join the unique lines back into a single text block
+        const outputText = uniqueLines.join('\n');
+        
+        // 4. Update the output areas
+        outputArea.value = outputText;
+
+        // 5. Update the statistics
+        inputStats.innerHTML = `Total Lines in Input: <strong>${totalLines}</strong>`;
+        outputStats.innerHTML = `Unique Lines: <strong>${uniqueCount}</strong><br>Duplicates Removed: <strong>${duplicatesRemoved}</strong>`;
+    }
+
+    // Initialize the calculation on page load
+    window.onload = function() {
+        removeDuplicates();
+    };
+</script>
+</body>
+</html>
