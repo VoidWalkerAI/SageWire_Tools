@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Focus Writing Pad</title>
+    
+    <style>
+        body { 
+            font-family: serif; 
+            background-color: #0c0e14; 
+            color: #f4f6f7; 
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        .container {
+            width: 90%;
+            max-width: 900px;
+            flex-grow: 1; /* Allows the container to fill vertical space */
+            padding: 20px 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #f39c12; 
+            text-align: center; 
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-size: 1.5em;
+        }
+
+        #editor-area {
+            flex-grow: 1; /* Key to fill the remaining vertical space */
+            width: 100%;
+            padding: 20px;
+            border: none;
+            border-radius: 8px;
+            background-color: #1a1e2b;
+            color: #e6e6e6;
+            resize: none;
+            font-size: 1.1em;
+            line-height: 1.6;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            margin-top: 15px;
+            font-family: 'Times New Roman', serif;
+        }
+
+        #status-bar {
+            width: 90%;
+            max-width: 900px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            font-size: 0.9em;
+            color: #5dade2;
+        }
+
+        .note {
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #f39c12;
+            font-size: 0.9em;
+            width: 90%;
+            max-width: 900px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Focus Draft Pad</h1>
+    <textarea id="editor-area" placeholder="Start writing here. Your work saves automatically."></textarea>
+</div>
+
+<div id="status-bar">
+    <span id="word-count">Words: 0</span>
+    <span id="char-count">Chars: 0</span>
+    <span id="save-status">Status: Loaded</span>
+</div>
+
+<div class="note">
+    Your text is saved to this browser's memory. To back up your work, copy and paste it into a permanent document.
+</div>
+
+<script>
+    const STORAGE_KEY = 'focusWritingPadDraft';
+    const editorArea = document.getElementById('editor-area');
+    const saveStatus = document.getElementById('save-status');
+    const wordCountEl = document.getElementById('word-count');
+    const charCountEl = document.getElementById('char-count');
+    
+    let saveTimer;
+
+    // --- 1. Save and Load Functions ---
+
+    function saveDraft() {
+        try {
+            localStorage.setItem(STORAGE_KEY, editorArea.value);
+            saveStatus.textContent = `Status: Saved @ ${new Date().toLocaleTimeString()}`;
+        } catch (e) {
+            saveStatus.textContent = 'Status: ERROR Saving';
+            console.error('Local Storage Save Error:', e);
+        }
+    }
+
+    function loadDraft() {
+        try {
+            const savedText = localStorage.getItem(STORAGE_KEY);
+            if (savedText) {
+                editorArea.value = savedText;
+                saveStatus.textContent = 'Status: Loaded';
+            }
+        } catch (e) {
+            console.error('Local Storage Load Error:', e);
+            saveStatus.textContent = 'Status: Load Error';
+        }
+    }
+    
+    // --- 2. Live Statistics ---
+
+    function updateStats() {
+        const text = editorArea.value;
+        
+        // Character Count
+        const charCount = text.length;
+        
+        // Word Count (same logic as your previous calculator)
+        const wordCount = text.trim() === '' ? 0 : text.trim().split(/\s+/).length;
+
+        charCountEl.textContent = `Chars: ${charCount}`;
+        wordCountEl.textContent = `Words: ${wordCount}`;
+    }
+
+    // --- 3. Event Handling ---
+
+    function handleInput() {
+        // Clear previous timeout
+        clearTimeout(saveTimer);
+        saveStatus.textContent = 'Status: Typing...';
+        
+        // Set a new timeout to save 5 seconds after the user stops typing
+        saveTimer = setTimeout(() => {
+            saveDraft();
+        }, 5000); // 5000 milliseconds = 5 seconds
+        
+        updateStats();
+    }
+    
+    // --- Initialization ---
+
+    window.onload = function() {
+        loadDraft();
+        updateStats();
+        // Attach the handler to the input event (fires when content changes)
+        editorArea.addEventListener('input', handleInput);
+    };
+    
+    // Save immediately if the user closes the window
+    window.onbeforeunload = saveDraft;
+</script>
+</body>
+</html>
