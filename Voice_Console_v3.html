@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voice Memo & Playback Console V3</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0d1a2b; color: #fff; }
+        .container { max-width: 600px; margin: 0 auto; background: #1c2e4a; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #5dade2; text-align: center; margin-bottom: 5px; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            resize: vertical;
+            font-size: 16px;
+        }
+
+        .controls, .playback-settings {
+            display: flex;
+            justify-content: space-around;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .playback-settings {
+            border: 1px solid #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            flex-wrap: wrap;
+        }
+
+        .controls button {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+            flex-grow: 1;
+        }
+
+        #start-record, #stop-record { background-color: #e74c3c; color: white; }
+        #stop-record { display: none; }
+        #speak-text { background-color: #2ecc71; color: white; }
+        #download-text { background-color: #3498db; color: white; }
+        #speak-text:hover { background-color: #27ae60; }
+        #download-text:hover { background-color: #2980b9; }
+
+        .setting-item {
+            flex-basis: 48%; 
+        }
+        .setting-item label {
+            display: block;
+            color: #f39c12;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+        }
+
+        #status-message {
+            margin-top: 20px;
+            padding: 10px;
+            border-radius: 5px;
+            background-color: #34495e;
+            color: #f39c12;
+            text-align: center;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🎤 Voice Note Console V3</h1>
+    <p>Record, adjust playback speed/pitch, and export your transcribed memo.</p>
+
+    <textarea id="output-area" placeholder="Transcription will appear here..."></textarea>
+    
+    <div class="playback-settings">
+        <div class="setting-item">
+            <label for="rate-input">Speed (Rate) <span id="rate-value">1.1</span>x</label>
+            <input type="range" id="rate-input" min="0.5" max="2" step="0.1" value="1.1">
+        </div>
+        <div class="setting-item">
+            <label for="pitch-input">Pitch <span id="pitch-value">1.0</span></label>
+            <input type="range" id="pitch-input" min="0" max="2" step="0.1" value="1.0">
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="start-record">🔴 Record</button>
+        <button id="stop-record">◼️ Stop</button>
+        <button id="speak-text">🔊 Listen</button>
+        <button id="download-text">⬇️ Export</button>
+    </div>
+
+    <div id="status-message">Ready.</div>
+</div>
+
+<script>
+    // --- Global Variables ---
+    let recognition = null;
+    const outputArea = document.getElementById('output-area');
+    const statusMessage = document.getElementById('status-message');
+    const startBtn = document.getElementById('start-record');
+    const stopBtn = document.getElementById('stop-record');
+    const speakBtn = document.getElementById('speak-text');
+    const downloadBtn = document.getElementById('download-text');
+    
+    const rateInput = document.getElementById('rate-input');
+    const pitchInput = document.getElementById('pitch-input');
+    const rateValueDisplay = document.getElementById('rate-value');
+    const pitchValueDisplay = document.getElementById('pitch-value');
+    
+    // --- Helper Function ---
+    function setStatus(message, isRecording = false) {
+        statusMessage.textContent = message;
+        startBtn.classList.toggle('recording', isRecording);
+    }
+
+    // ==========================================================
+    // 1. SPEECH RECOGNITION (Mic to Text)
+    // ==========================================================
+
+    function initSpeechRecognition() {
+        if (!('webkitSpeechRecognition' in window)) {
+            setStatus("❌ Browser does not support Speech Recognition.");
+            startBtn.disabled = true;
+            return null;
+        }
+
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        recognition = new SpeechRecognition();
+        recognition.lang = 'en-US';
+        recognition.interimResults = false; 
+
+        recognition.onresult = (event) => {
+            const transcript = event.results[0][0].transcript;
+            outputArea.value += transcript + " ";
+            setStatus("✅ Transcription complete. Click Listen.", false);
+        };
+
+        recognition.onstart = () => {
+            setStatus("🔴 Listening... speak now!", true);
+            startBtn.style.display = 'none';
+            stopBtn.style.display = 'block';
+        };
+
+        recognition.onend = () => {
+            setStatus("Ready. Click Record again.", false);
+            startBtn.style.display = 'block';
+            stopBtn.style.display = 'none';
+        };
+
+        recognition.onerror = (event) => {
+            setStatus(`❌ Error: ${event.error}. Click Record to try again.`, false);
+            startBtn.style.display = 'block';
+            stopBtn.style.display = 'none';
+        };
+        
+        return recognition;
+    }
+
+    function startRecording() {
+        if (!recognition) { recognition = initSpeechRecognition(); }
+        if (recognition) {
+            try { recognition.start(); } catch (e) { setStatus("⚠️ Recording already active. Click Stop first."); }
+        }
+    }
+
+    function stopRecording() {
+        if (recognition) { recognition.stop(); }
+    }
+
+    // ==========================================================
+    // 2. SPEECH SYNTHESIS (Text to Audio)
+    // ==========================================================
+
+    function readTextAloud() {
+        if (!('speechSynthesis' in window)) {
+            setStatus("❌ Browser does not support text-to-speech playback.");
+            return;
+        }
+        
+        // Stop any currently speaking text
+        window.speechSynthesis.cancel();
+        
+        const textToSpeak = outputArea.value.trim();
+        
+        if (textToSpeak.length === 0) {
+            setStatus("⚠️ Nothing to read. Type some text first.");
+            return;
+        }
+
+        const utterance = new SpeechSynthesisUtterance(textToSpeak);
+        
+        // Apply custom rate and pitch from sliders
+        utterance.rate = parseFloat(rateInput.value);
+        utterance.pitch = parseFloat(pitchInput.value);
+
+        utterance.onstart = () => {
+            setStatus("🔊 Reading aloud...");
+            speakBtn.disabled = true;
+        };
+
+        utterance.onend = () => {
+            setStatus("✅ Finished reading.", false);
+            speakBtn.disabled = false;
+        };
+
+        window.speechSynthesis.speak(utterance);
+    }
+
+    // ==========================================================
+    // 3. EXPORT FUNCTION
+    // ==========================================================
+    function downloadMemo() {
+        const textToSave = outputArea.value.trim();
+        const filename = 'Voice_Memo_' + new Date().toISOString().slice(0, 10) + '.txt';
+
+        if (textToSave.length === 0) {
+            setStatus("⚠️ Nothing to download. Transcribe or type some text first.");
+            return;
+        }
+
+        const blob = new Blob([textToSave], { type: 'text/plain' });
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = filename;
+        
+        document.body.appendChild(link);
+        link.click();
+        
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(link.href);
+
+        setStatus(`✅ Memo downloaded as ${filename}.`);
+    }
+
+    // ==========================================================
+    // 4. EVENT LISTENERS AND INIT
+    // ==========================================================
+
+    document.addEventListener('DOMContentLoaded', () => {
+        initSpeechRecognition(); 
+    });
+
+    startBtn.addEventListener('click', startRecording);
+    stopBtn.addEventListener('click', stopRecording);
+    speakBtn.addEventListener('click', readTextAloud);
+    downloadBtn.addEventListener('click', downloadMemo);
+    
+    // Update value displays when sliders are moved
+    rateInput.addEventListener('input', () => {
+        rateValueDisplay.textContent = rateInput.value;
+    });
+    pitchInput.addEventListener('input', () => {
+        pitchValueDisplay.textContent = pitchInput.value;
+    });
+</script>
+</body>
+</html>

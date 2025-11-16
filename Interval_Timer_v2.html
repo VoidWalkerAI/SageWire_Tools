@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interval Timer V2</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0c0e14; color: #f4f6f7; }
+        .container { max-width: 500px; margin: 0 auto; background: #1a1e2b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #5dade2; text-align: center; margin-bottom: 5px; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        .time-display {
+            font-size: 3em;
+            color: #2ecc71;
+            text-align: center;
+            padding: 20px;
+            margin-bottom: 25px;
+            border: 3px solid #5dade2;
+            border-radius: 10px;
+            background-color: #2c3e50;
+            transition: all 0.5s;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .input-group input {
+            flex-grow: 1;
+            padding: 10px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+        }
+
+        .controls button {
+            flex-grow: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+        }
+
+        #start-btn { background-color: #2ecc71; color: white; }
+        #start-btn:hover { background-color: #27ae60; }
+        #stop-btn { background-color: #e74c3c; color: white; }
+        #stop-btn:hover { background-color: #c0392b; }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #f39c12;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>⏱️ Interval Cycle Timer</h1>
+    <p>Set a Work duration and a Rest duration to loop through repeating cycles (e.g., Pomodoro or Task Rotation).</p>
+
+    <div class="input-group">
+        <input type="number" id="work-minutes-input" value="5" min="1" placeholder="Work Mins">
+        <input type="number" id="rest-minutes-input" value="1" min="1" placeholder="Rest Mins">
+        <input type="number" id="cycles-input" value="4" min="1" placeholder="Cycles">
+    </div>
+
+    <div class="time-display" id="time-display">05:00</div>
+    <div id="status-display" style="text-align: center; color: #f39c12; font-weight: bold;">Work Cycle 1 / 4</div>
+
+    <div class="controls">
+        <button id="start-btn">▶️ Start Cycle</button>
+        <button id="stop-btn">⏸️ Pause</button>
+        <button id="reset-btn">🔄 Reset</button>
+    </div>
+
+    <div class="note">
+        The timer will count down the Work time, then the Rest time, for the number of cycles specified.
+    </div>
+</div>
+
+<script>
+    const WORK_MINUTES_INPUT = document.getElementById('work-minutes-input');
+    const REST_MINUTES_INPUT = document.getElementById('rest-minutes-input');
+    const CYCLES_INPUT = document.getElementById('cycles-input');
+    const TIME_DISPLAY = document.getElementById('time-display');
+    const STATUS_DISPLAY = document.getElementById('status-display');
+    const START_BTN = document.getElementById('start-btn');
+    const STOP_BTN = document.getElementById('stop-btn');
+    const RESET_BTN = document.getElementById('reset-btn');
+    const DISPLAY_BOX = document.getElementById('time-display');
+
+    let timerInterval = null;
+    let isRunning = false;
+    let totalSeconds = 0;
+    let currentCycle = 1;
+    let isWorkPhase = true;
+
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+
+    // --- Sound Alert Function ---
+    function playAlarm() {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.type = 'square';
+        oscillator.frequency.setValueAtTime(440, audioContext.currentTime); 
+        gainNode.gain.setValueAtTime(1, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 1.5);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + 1.5);
+    }
+    
+    function updateDisplay() {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = totalSeconds % 60;
+        TIME_DISPLAY.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        
+        DISPLAY_BOX.style.backgroundColor = isWorkPhase ? '#004d00' : '#4d0000'; // Dark Green/Red for phase
+
+        if (totalSeconds <= 0) {
+            handlePhaseEnd();
+        }
+    }
+
+    function loadPhaseTime() {
+        const workMins = parseInt(WORK_MINUTES_INPUT.value) || 0;
+        const restMins = parseInt(REST_MINUTES_INPUT.value) || 0;
+        
+        totalSeconds = isWorkPhase ? workMins * 60 : restMins * 60;
+        
+        const phaseName = isWorkPhase ? "Work" : "Rest";
+        STATUS_DISPLAY.textContent = `${phaseName} Cycle ${currentCycle} / ${parseInt(CYCLES_INPUT.value)}`;
+    }
+
+    function handlePhaseEnd() {
+        stopTimer();
+        playAlarm();
+
+        const totalCycles = parseInt(CYCLES_INPUT.value);
+
+        if (isWorkPhase) {
+            // End of Work Phase
+            isWorkPhase = false; // Switch to Rest
+            if (currentCycle <= totalCycles) {
+                loadPhaseTime();
+                startTimer();
+            }
+        } else {
+            // End of Rest Phase
+            currentCycle++;
+            if (currentCycle > totalCycles) {
+                // End of All Cycles
+                STATUS_DISPLAY.textContent = "ALL CYCLES COMPLETE!";
+                TIME_DISPLAY.textContent = "00:00";
+                DISPLAY_BOX.style.backgroundColor = '#1a1e2b';
+            } else {
+                // Start Next Work Phase
+                isWorkPhase = true; // Switch to Work
+                loadPhaseTime();
+                startTimer();
+            }
+        }
+    }
+    
+    function startTimer() {
+        if (isRunning) return;
+        if (currentCycle > parseInt(CYCLES_INPUT.value)) return;
+        
+        if (audioContext.state === 'suspended') { audioContext.resume(); }
+
+        if (totalSeconds <= 0) {
+            // If starting from reset, load initial time
+            loadPhaseTime();
+        }
+
+        isRunning = true;
+        timerInterval = setInterval(() => {
+            totalSeconds--;
+            updateDisplay();
+        }, 1000); 
+    }
+
+    function stopTimer() {
+        clearInterval(timerInterval);
+        isRunning = false;
+    }
+
+    function resetTimer() {
+        stopTimer();
+        currentCycle = 1;
+        isWorkPhase = true;
+        loadPhaseTime();
+        updateDisplay();
+    }
+
+    // --- Event Listeners and Initialization ---
+
+    START_BTN.addEventListener('click', startTimer);
+    STOP_BTN.addEventListener('click', stopTimer);
+    RESET_BTN.addEventListener('click', resetTimer);
+    
+    // Recalculate on input change
+    document.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', resetTimer);
+    });
+
+    window.onload = resetTimer;
+</script>
+</body>
+</html>
