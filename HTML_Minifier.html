@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HTML Minifier</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0c0e14; color: #f4f6f7; }
+        .container { max-width: 900px; margin: 0 auto; background: #1a1e2b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        .editor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-panel h3 {
+            color: #5dade2;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        textarea {
+            width: 100%;
+            height: 350px;
+            padding: 15px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            resize: vertical;
+            font-size: 14px;
+            font-family: 'Courier New', monospace;
+        }
+        
+        #output-area {
+            background-color: #000;
+            color: #90ee90; /* Light green for minified code */
+        }
+
+        .stats-box {
+            margin-top: 15px;
+            background-color: #34495e;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 5px solid #f39c12;
+            font-size: 0.9em;
+        }
+
+        .stats-box strong {
+            color: #f39c12;
+        }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>💻 HTML Minifier</h1>
+    <p>Paste your full HTML code (including CSS/JS) below. The minified, single-line output will appear on the right.</p>
+
+    <div class="editor-grid">
+        <div class="editor-panel">
+            <h3>Original Code (Paste Here)</h3>
+            <textarea id="input-area" oninput="minifyHTML()">
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Test Page</title>
+        <style>
+            body {
+                background-color: #f0f0f0;
+                margin: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="content">
+            <h1>Hello World!</h1>
+            <p>This is a test paragraph with extra spacing.</p>
+        </div>
+    </body>
+</html>
+            </textarea>
+            <div id="input-stats" class="stats-box"></div>
+        </div>
+        
+        <div class="editor-panel">
+            <h3>Minified Output (Copy & Paste)</h3>
+            <textarea id="output-area" readonly></textarea>
+            <div id="output-stats" class="stats-box"></div>
+        </div>
+    </div>
+    
+    <div class="note">
+        Minified code loads faster because the file size is reduced by removing unnecessary whitespace and comments.
+    </div>
+</div>
+
+<script>
+    const INPUT_AREA = document.getElementById('input-area');
+    const OUTPUT_AREA = document.getElementById('output-area');
+    const INPUT_STATS = document.getElementById('input-stats');
+    const OUTPUT_STATS = document.getElementById('output-stats');
+
+    function minifyHTML() {
+        let html = INPUT_AREA.value;
+        const originalLength = html.length;
+        
+        // --- 1. Remove comments ---
+        // This regex removes HTML comments ()
+        html = html.replace(//g, '');
+
+        // --- 2. Remove whitespace around tags ---
+        // This removes whitespace immediately before and after opening and closing tags.
+        html = html.replace(/>\s+</g, '><');
+
+        // --- 3. Replace multiple spaces/newlines/tabs with a single space ---
+        html = html.replace(/\s+/g, ' ');
+
+        // --- 4. Trim leading/trailing spaces ---
+        html = html.trim();
+
+        // Final output updates
+        OUTPUT_AREA.value = html;
+        const minifiedLength = html.length;
+        const savings = originalLength - minifiedLength;
+
+        // --- Update Statistics ---
+        INPUT_STATS.innerHTML = `Original Length: <strong>${originalLength}</strong> characters`;
+        OUTPUT_STATS.innerHTML = `Minified Length: <strong>${minifiedLength}</strong> characters<br>
+                                 Size Reduction: <strong>${savings}</strong> characters`;
+    }
+
+    // Initialize the minifier on page load
+    window.onload = function() {
+        minifyHTML();
+    };
+</script>
+</body>
+</html>

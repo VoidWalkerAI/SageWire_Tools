@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Age & Time Since Event</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0c0e14; color: #f4f6f7; }
+        .container { max-width: 600px; margin: 0 auto; background: #1a1e2b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 8px; color: #5dade2; font-weight: bold; }
+        input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2ecc71;
+            background-color: #34495e;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #f39c12;
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.8em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #f39c12;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🗓️ Age / Time Since Event</h1>
+    <p>Calculate the exact time elapsed between a past date and today (or a future date).</p>
+
+    <label for="start-date">Event Date (e.g., Birth, Purchase, Last Repair)</label>
+    <input type="date" id="start-date" onchange="calculateTimeElapsed()">
+
+    <div class="output-grid">
+        <div class="output-box">
+            <span class="value" id="years-output">0</span>
+            <span class="label">Years</span>
+        </div>
+        <div class="output-box">
+            <span class="value" id="months-output">0</span>
+            <span class="label">Months</span>
+        </div>
+        <div class="output-box">
+            <span class="value" id="days-output">0</span>
+            <span class="label">Days</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        The calculation is precise, factoring in month lengths and leap years.
+    </div>
+</div>
+
+<script>
+    const START_DATE_INPUT = document.getElementById('start-date');
+    const YEARS_OUTPUT = document.getElementById('years-output');
+    const MONTHS_OUTPUT = document.getElementById('months-output');
+    const DAYS_OUTPUT = document.getElementById('days-output');
+
+    // Helper function to format the current date as YYYY-MM-DD
+    function getTodayDateString() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // Core Logic: Calculates years, months, and days elapsed
+    function calculateTimeElapsed() {
+        const startDate = new Date(START_DATE_INPUT.value);
+        const today = new Date(); // Use today's date
+
+        // Check for valid date
+        if (isNaN(startDate) || startDate > today) {
+            YEARS_OUTPUT.textContent = '0';
+            MONTHS_OUTPUT.textContent = '0';
+            DAYS_OUTPUT.textContent = '0';
+            return;
+        }
+
+        let years = today.getFullYear() - startDate.getFullYear();
+        let months = today.getMonth() - startDate.getMonth();
+        let days = today.getDate() - startDate.getDate();
+
+        // Adjust for negative days: borrow a month
+        if (days < 0) {
+            months--;
+            // Get the number of days in the *previous* month of the current date
+            const lastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+            days += lastMonth.getDate();
+        }
+
+        // Adjust for negative months: borrow a year
+        if (months < 0) {
+            years--;
+            months += 12;
+        }
+
+        // --- Output Results ---
+        
+        YEARS_OUTPUT.textContent = years;
+        MONTHS_OUTPUT.textContent = months;
+        DAYS_OUTPUT.textContent = days;
+    }
+
+    // Initialization: Set the default date to one year ago
+    window.onload = function() {
+        const defaultDate = new Date();
+        defaultDate.setFullYear(defaultDate.getFullYear() - 1); // Set to one year ago
+        const defaultDateString = `${defaultDate.getFullYear()}-${String(defaultDate.getMonth() + 1).padStart(2, '0')}-${String(defaultDate.getDate()).padStart(2, '0')}`;
+        
+        START_DATE_INPUT.value = defaultDateString;
+
+        calculateTimeElapsed();
+    };
+</script>
+</body>
+</html>

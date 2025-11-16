@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Business Day Calculator</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0c0e14; color: #f4f6f7; }
+        .container { max-width: 600px; margin: 0 auto; background: #1a1e2b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #5dade2; font-weight: bold; }
+        input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2ecc71;
+            background-color: #34495e;
+        }
+
+        .output-box .value {
+            font-size: 3em;
+            color: #f39c12;
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 1em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #f39c12;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🗓️ Business Day Calculator</h1>
+    <p>Calculate the number of working days between two dates, automatically excluding weekends.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="start-date">Start Date</label>
+            <input type="date" id="start-date" onchange="calculateBusinessDays()">
+        </div>
+        <div>
+            <label for="end-date">End Date</label>
+            <input type="date" id="end-date" onchange="calculateBusinessDays()">
+        </div>
+    </div>
+
+    <div class="output-box">
+        <span class="value" id="business-days-output">0</span>
+        <span class="label">Business Days (M-F)</span>
+    </div>
+    
+    <div class="note">
+        This calculation includes the start date but excludes the end date. Weekends are automatically skipped.
+    </div>
+</div>
+
+<script>
+    const START_DATE_INPUT = document.getElementById('start-date');
+    const END_DATE_INPUT = document.getElementById('end-date');
+    const BUSINESS_DAYS_OUTPUT = document.getElementById('business-days-output');
+
+    // Helper function to format the current date as YYYY-MM-DD
+    function getTodayDateString() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // Core Logic: Calculates business days between two dates
+    function calculateBusinessDays() {
+        const startDate = new Date(START_DATE_INPUT.value);
+        const endDate = new Date(END_DATE_INPUT.value);
+
+        // Check for valid dates
+        if (isNaN(startDate) || isNaN(endDate) || startDate > endDate) {
+            BUSINESS_DAYS_OUTPUT.textContent = '0';
+            return;
+        }
+
+        let businessDays = 0;
+        let currentDate = new Date(startDate);
+        
+        // Loop through each day starting from the start date, stopping *before* the end date
+        // The common interpretation is that the start date is included, but the end date is excluded (e.g., if a task starts Monday and ends Friday, the duration is 4 days).
+        while (currentDate < endDate) {
+            const dayOfWeek = currentDate.getDay();
+            
+            // Check if the day is NOT Saturday (6) and NOT Sunday (0)
+            if (dayOfWeek !== 0 && dayOfWeek !== 6) {
+                businessDays++;
+            }
+            
+            // Move to the next day
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        BUSINESS_DAYS_OUTPUT.textContent = businessDays;
+    }
+
+    // Initialization: Set default dates to today and one week from today
+    window.onload = function() {
+        const todayString = getTodayDateString();
+        const oneWeekLater = new Date();
+        oneWeekLater.setDate(oneWeekLater.getDate() + 7);
+        const oneWeekLaterString = `${oneWeekLater.getFullYear()}-${String(oneWeekLater.getMonth() + 1).padStart(2, '0')}-${String(oneWeekLater.getDate()).padStart(2, '0')}`;
+        
+        START_DATE_INPUT.value = todayString;
+        END_DATE_INPUT.value = oneWeekLaterString;
+
+        calculateBusinessDays();
+    };
+</script>
+</body>
+</html>

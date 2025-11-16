@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Keyword Density Checker</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0c0e14; color: #f4f6f7; }
+        .container { max-width: 800px; margin: 0 auto; background: #1a1e2b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 8px; color: #5dade2; font-weight: bold; }
+        
+        #keyword-input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 20px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        #content-input {
+            width: 100%;
+            height: 200px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            resize: vertical;
+            font-size: 14px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 15px;
+        }
+
+        .output-box {
+            background-color: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2ecc71;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #f39c12;
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔎 Keyword Density Checker</h1>
+    <p>Analyze your content to ensure your primary keyword is used effectively for SEO, avoiding over-optimization.</p>
+
+    <label for="keyword-input">Target Keyword or Phrase (e.g., "ranch management")</label>
+    <input type="text" id="keyword-input" value="content creator" oninput="calculateDensity()">
+
+    <label for="content-input">Article Content (Paste Your Draft Here)</label>
+    <textarea id="content-input" oninput="calculateDensity()">
+The biggest challenge for a modern content creator is consistency. Being a content creator means regularly generating high-quality content. Every content creator needs tools, and if you are a professional content creator, this tool will help you optimize your content.
+    </textarea>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <span class="value" id="word-count">0</span>
+            <span class="label">Total Words</span>
+        </div>
+        <div class="output-box">
+            <span class="value" id="keyword-count">0</span>
+            <span class="label">Keyword Count</span>
+        </div>
+        <div class="output-box">
+            <span class="value" id="density-output">0.0%</span>
+            <span class="label">Density Percentage</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        Density is based on the industry standard of [Keyword Count / Total Words]. Most SEO experts recommend a density of 0.5% to 2.5%.
+    </div>
+</div>
+
+<script>
+    const KEYWORD_INPUT = document.getElementById('keyword-input');
+    const CONTENT_INPUT = document.getElementById('content-input');
+    const WORD_COUNT_EL = document.getElementById('word-count');
+    const KEYWORD_COUNT_EL = document.getElementById('keyword-count');
+    const DENSITY_OUTPUT_EL = document.getElementById('density-output');
+
+    function calculateDensity() {
+        const content = CONTENT_INPUT.value.trim();
+        const keyword = KEYWORD_INPUT.value.trim();
+
+        // Check for empty content
+        if (content.length === 0 || keyword.length === 0) {
+            WORD_COUNT_EL.textContent = '0';
+            KEYWORD_COUNT_EL.textContent = '0';
+            DENSITY_OUTPUT_EL.textContent = '0.0%';
+            return;
+        }
+
+        // --- 1. Calculate Total Word Count ---
+        // Splits by whitespace and filters out empty strings
+        const words = content.split(/\s+/).filter(word => word.length > 0);
+        const totalWords = words.length;
+
+        // --- 2. Calculate Keyword Count ---
+        // Prepare content and keyword for case-insensitive matching
+        const lowerContent = content.toLowerCase();
+        const lowerKeyword = keyword.toLowerCase();
+
+        // Escape special regex characters in the keyword
+        const escapedKeyword = lowerKeyword.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&');
+
+        // Create a regex to find the keyword as a whole word (using word boundaries \b)
+        const regex = new RegExp('\\b' + escapedKeyword + '\\b', 'g');
+        
+        let keywordMatches = lowerContent.match(regex);
+        const keywordCount = keywordMatches ? keywordMatches.length : 0;
+
+        // --- 3. Calculate Density Percentage ---
+        let density = 0;
+        if (totalWords > 0) {
+            density = (keywordCount / totalWords) * 100;
+        }
+
+        // --- Update Output ---
+        WORD_COUNT_EL.textContent = totalWords;
+        KEYWORD_COUNT_EL.textContent = keywordCount;
+        DENSITY_OUTPUT_EL.textContent = density.toFixed(2) + '%';
+    }
+
+    // Initialize the calculation on page load
+    window.onload = function() {
+        calculateDensity();
+    };
+</script>
+</body>
+</html>

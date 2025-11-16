@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Difference Checker (Diff Tool)</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/diff-match-patch/20181111/diff_match_patch.js"></script>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0c0e14; color: #f4f6f7; }
+        .container { max-width: 900px; margin: 0 auto; background: #1a1e2b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        .editor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .editor-panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .editor-panel h3 {
+            color: #5dade2;
+            margin-top: 0;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 15px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            resize: vertical;
+            font-size: 14px;
+            font-family: 'Courier New', monospace; /* Monospace for code/text comparison */
+        }
+        
+        #diff-output-box {
+            margin-top: 20px;
+            padding: 15px;
+            border: 2px solid #2ecc71;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            min-height: 100px;
+            line-height: 1.5;
+            font-family: 'Courier New', monospace;
+            word-wrap: break-word;
+            overflow-y: auto;
+        }
+
+        /* Styles for the Difference Output */
+        del {
+            background-color: #8c0000; /* Dark Red for deleted text */
+            text-decoration: line-through;
+            opacity: 0.8;
+        }
+
+        ins {
+            background-color: #004d00; /* Dark Green for inserted text */
+            text-decoration: none;
+        }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #f39c12;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔍 Document Difference Checker</h1>
+    <p>Paste two versions of text (Original and Revised) to see what was added and removed.</p>
+
+    <div class="editor-grid">
+        <div class="editor-panel">
+            <h3>Original Text (Version A)</h3>
+            <textarea id="text-a" oninput="runDiff()">The project plan included three core phases. First, we will establish the initial requirements. Second, we will complete the design phase. Third, we will finish with testing and deployment.</textarea>
+        </div>
+        
+        <div class="editor-panel">
+            <h3>Revised Text (Version B)</h3>
+            <textarea id="text-b" oninput="runDiff()">The project plan now includes four core phases. First, we must establish the initial requirements. Second, we will conduct a detailed wireframe and complete the design phase. Third, we will finish with testing and final deployment.</textarea>
+        </div>
+    </div>
+    
+    <div class="editor-panel">
+        <h3>Highlighted Output (Additions & Deletions)</h3>
+        <div id="diff-output-box"></div>
+    </div>
+    
+    <div class="note">
+        Additions are highlighted in green. Deletions are highlighted in red with a strikethrough.
+    </div>
+</div>
+
+<script>
+    const textA = document.getElementById('text-a');
+    const textB = document.getElementById('text-b');
+    const diffOutputBox = document.getElementById('diff-output-box');
+    
+    // Initialize the Diff Match Patch library
+    const dmp = new diff_match_patch();
+
+    function runDiff() {
+        const text1 = textA.value;
+        const text2 = textB.value;
+
+        // 1. Calculate the difference between the two texts
+        const d = dmp.diff_main(text1, text2);
+        
+        // 2. Cleanup and optimize the resulting diff for better readability
+        // dmp.diff_cleanupSemantic(d);
+        
+        // 3. Convert the diff output into rich HTML format
+        const html = dmp.diff_prettyHtml(d);
+
+        // 4. Display the result
+        diffOutputBox.innerHTML = html;
+    }
+
+    // Initialize the diff on page load with the default text
+    window.onload = function() {
+        // Wait briefly for the external diff_match_patch.js library to load
+        setTimeout(runDiff, 500); 
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Calving Date Predictor</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #7D716A; /* Aged Bronze Detail */
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        label { display: block; margin-bottom: 8px; color: #7D716A; font-weight: bold; }
+        input[type="date"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; /* Rust Accent */
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #5A946E; /* Forage Green Value */
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+        }
+        /* --- END HERDMATE BRANDING CSS --- */
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>HerdMate | Calving Date Predictor</h1>
+    <p>Predict the expected date your calves will arrive based on breeding or bull turnout date.</p>
+
+    <label for="breeding-date-input">Bull Turnout Date (First Day of Exposure)</label>
+    <input type="date" id="breeding-date-input" onchange="calculateCalvingDate()">
+    
+    <label for="gestation-input">Gestation Length (Days - Avg. 283)</label>
+    <input type="number" id="gestation-input" value="283" min="260" max="300" oninput="calculateCalvingDate()">
+
+    <div class="output-box">
+        <h3>Expected Calving Date</h3>
+        <span class="value" id="calving-date-output">Select Date</span>
+        <span class="label" id="days-remaining-label"></span>
+    </div>
+    
+    <div class="note">
+        Use this tool to plan feed and labor needs 60 days prior to the predicted date.
+    </div>
+</div>
+
+<script>
+    const BREEDING_DATE_INPUT = document.getElementById('breeding-date-input');
+    const GESTATION_INPUT = document.getElementById('gestation-input');
+    const CALVING_DATE_OUTPUT = document.getElementById('calving-date-output');
+    const DAYS_REMAINING_LABEL = document.getElementById('days-remaining-label');
+
+    // Helper to format date as YYYY-MM-DD
+    function formatDate(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    // Core Logic: Add gestation days to the breeding date
+    function calculateCalvingDate() {
+        const breedingDate = new Date(BREEDING_DATE_INPUT.value);
+        const gestationDays = parseInt(GESTATION_INPUT.value);
+        
+        // Validation
+        if (isNaN(breedingDate.getTime()) || isNaN(gestationDays) || gestationDays <= 0) {
+            CALVING_DATE_OUTPUT.textContent = 'Invalid Data';
+            DAYS_REMAINING_LABEL.textContent = '';
+            return;
+        }
+        
+        // 1. Calculate the Calving Date
+        // Create a copy of the breeding date to avoid modifying the original date object
+        const calvingDate = new Date(breedingDate);
+        
+        // Add the gestation period (in milliseconds: days * hours * minutes * seconds * 1000)
+        // We use setDate to add the days directly, which automatically handles month and year rollovers
+        calvingDate.setDate(breedingDate.getDate() + gestationDays);
+
+        // 2. Calculate Days Remaining (from today to calving)
+        const today = new Date();
+        // Remove time component from today's date for accurate day counting
+        today.setHours(0, 0, 0, 0); 
+        
+        const timeDifference = calvingDate.getTime() - today.getTime();
+        const daysRemaining = Math.ceil(timeDifference / (1000 * 60 * 60 * 24));
+        
+        // 3. Output Results
+        
+        CALVING_DATE_OUTPUT.textContent = calvingDate.toLocaleDateString('en-US', { 
+            year: 'numeric', 
+            month: 'long', 
+            day: 'numeric' 
+        });
+
+        if (daysRemaining > 0) {
+            DAYS_REMAINING_LABEL.textContent = `(${daysRemaining} DAYS REMAINING)`;
+        } else if (daysRemaining === 0) {
+            DAYS_REMAINING_LABEL.textContent = `(CALVING TODAY!)`;
+        } else {
+            DAYS_REMAINING_LABEL.textContent = `(CALVED ${Math.abs(daysRemaining)} DAYS AGO)`;
+        }
+    }
+
+    // Initialization: Set default date to today and run calculation
+    window.onload = function() {
+        // Set default breeding date to 283 days ago for a current calving prediction example
+        const defaultDate = new Date();
+        defaultDate.setDate(defaultDate.getDate() - 283); 
+        
+        BREEDING_DATE_INPUT.value = formatDate(defaultDate);
+        
+        // We need a slight delay to ensure the browser has fully rendered the input values 
+        // before the calculation function reads them.
+        setTimeout(calculateCalvingDate, 100);
+    };
+</script>
+</body>
+</html>

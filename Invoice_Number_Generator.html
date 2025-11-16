@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Invoice Number Generator</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0c0e14; color: #f4f6f7; }
+        .container { max-width: 600px; margin: 0 auto; background: #1a1e2b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #f39c12; text-align: center; margin-bottom: 5px; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 8px; color: #5dade2; font-weight: bold; }
+        input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2ecc71;
+            background-color: #34495e;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #f39c12;
+        }
+
+        #invoice-output {
+            font-size: 1.8em;
+            font-family: 'Courier New', monospace;
+            word-wrap: break-word;
+            color: #2ecc71;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+            margin-top: 15px;
+        }
+        button:hover { background-color: #c0392b; }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔢 Invoice Number Generator</h1>
+    <p>Generate the next sequential invoice number and save the progress in this browser.</p>
+
+    <label for="prefix-input">Invoice Prefix (e.g., SW-2025-)</label>
+    <input type="text" id="prefix-input" value="SW-2025-" oninput="savePrefix()">
+    
+    <label for="last-number-input">Last Used Number (Adjust if starting new sequence)</label>
+    <input type="number" id="last-number-input" value="100" min="0" oninput="saveLastNumber()">
+
+    <div class="output-box">
+        <h3>Next Invoice ID</h3>
+        <div id="invoice-output" onclick="copyInvoiceId()">Click to Generate</div>
+    </div>
+    
+    <button onclick="generateNextInvoice()">Generate & Confirm Use</button>
+
+    <div class="note">
+        Clicking 'Generate & Confirm Use' will increment the saved number and display the next ID. Use the output ID for your invoice.
+    </div>
+</div>
+
+<script>
+    const LAST_NUMBER_KEY = 'lastInvoiceNumber';
+    const PREFIX_KEY = 'invoicePrefix';
+    
+    const PREFIX_INPUT = document.getElementById('prefix-input');
+    const LAST_NUMBER_INPUT = document.getElementById('last-number-input');
+    const INVOICE_OUTPUT = document.getElementById('invoice-output');
+
+    // --- Load/Save Persistence ---
+
+    function loadSettings() {
+        // Load prefix (defaults to SW-2025-)
+        const savedPrefix = localStorage.getItem(PREFIX_KEY) || 'SW-2025-';
+        PREFIX_INPUT.value = savedPrefix;
+
+        // Load last number (defaults to 100)
+        const savedLastNumber = parseInt(localStorage.getItem(LAST_NUMBER_KEY)) || 100;
+        LAST_NUMBER_INPUT.value = savedLastNumber;
+    }
+
+    function savePrefix() {
+        localStorage.setItem(PREFIX_KEY, PREFIX_INPUT.value.trim());
+        previewNextInvoice();
+    }
+
+    function saveLastNumber() {
+        const num = parseInt(LAST_NUMBER_INPUT.value);
+        if (!isNaN(num) && num >= 0) {
+            localStorage.setItem(LAST_NUMBER_KEY, num);
+            previewNextInvoice();
+        }
+    }
+
+    // --- Core Logic ---
+
+    function generateNextInvoice() {
+        const currentLastNumber = parseInt(LAST_NUMBER_INPUT.value);
+        
+        if (isNaN(currentLastNumber) || currentLastNumber < 0) {
+            INVOICE_OUTPUT.textContent = "Error: Invalid number.";
+            INVOICE_OUTPUT.style.color = '#e74c3c';
+            return;
+        }
+
+        // Increment the last used number
+        const nextNumber = currentLastNumber + 1;
+        const prefix = PREFIX_INPUT.value.trim();
+        
+        // --- Save the new sequence number ---
+        LAST_NUMBER_INPUT.value = nextNumber;
+        localStorage.setItem(LAST_NUMBER_KEY, nextNumber);
+        
+        // --- Display the full ID ---
+        const invoiceID = prefix + String(nextNumber).padStart(4, '0'); // Pad with zeros up to 4 digits
+        INVOICE_OUTPUT.textContent = invoiceID;
+        INVOICE_OUTPUT.style.color = '#2ecc71';
+
+        // Provide success feedback
+        setTimeout(() => {
+            INVOICE_OUTPUT.textContent = invoiceID; // Display ID again
+        }, 500);
+    }
+    
+    function previewNextInvoice() {
+        const currentLastNumber = parseInt(LAST_NUMBER_INPUT.value);
+        const prefix = PREFIX_INPUT.value.trim();
+        
+        if (isNaN(currentLastNumber) || currentLastNumber < 0) {
+            INVOICE_OUTPUT.textContent = "Error: Invalid number.";
+            INVOICE_OUTPUT.style.color = '#e74c3c';
+            return;
+        }
+
+        const nextNumber = currentLastNumber + 1;
+        const invoiceID = prefix + String(nextNumber).padStart(4, '0');
+        
+        INVOICE_OUTPUT.textContent = invoiceID;
+        INVOICE_OUTPUT.style.color = '#f39c12'; // Use a preview color
+    }
+
+    function copyInvoiceId() {
+        const id = INVOICE_OUTPUT.textContent;
+        if (id && !id.startsWith('Error') && !id.startsWith('Click')) {
+            navigator.clipboard.writeText(id).then(() => {
+                const originalColor = INVOICE_OUTPUT.style.color;
+                INVOICE_OUTPUT.textContent = 'COPIED!';
+                INVOICE_OUTPUT.style.color = '#5dade2';
+                
+                setTimeout(() => {
+                    INVOICE_OUTPUT.textContent = id;
+                    INVOICE_OUTPUT.style.color = originalColor;
+                }, 800);
+            });
+        }
+    }
+
+
+    // --- Initialization ---
+    window.onload = function() {
+        loadSettings();
+        previewNextInvoice();
+        
+        // Attach change listeners to inputs
+        PREFIX_INPUT.addEventListener('input', savePrefix);
+        LAST_NUMBER_INPUT.addEventListener('input', saveLastNumber);
+    };
+</script>
+</body>
+</html>
