@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Multiplication Game</title>
+    
+    <style>
+        body { 
+            font-family: 'Comic Sans MS', sans-serif; /* Fun, child-friendly font */
+            padding: 20px; 
+            background-color: #1a1a2e; /* Deep blue/purple */
+            color: #fff; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container { 
+            max-width: 450px; 
+            margin: 0 auto; 
+            background: #2c3e50; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #f1c40f; /* Yellow */
+            text-align: center; 
+            margin-bottom: 20px; 
+            font-size: 2em;
+        }
+
+        .score-board {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 25px;
+            padding: 10px;
+            background-color: #14141A;
+            border-radius: 8px;
+        }
+        .score-item {
+            text-align: center;
+            font-size: 1.1em;
+            color: #5dade2;
+        }
+        .score-item .value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2ecc71; /* Green */
+        }
+
+        .problem-area {
+            text-align: center;
+            padding: 20px;
+            background-color: #34495e;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        #question-text {
+            font-size: 3em;
+            color: #fff;
+            font-weight: bold;
+        }
+
+        #answer-input {
+            width: 80%;
+            padding: 15px;
+            margin-top: 15px;
+            border: 3px solid #3498db;
+            border-radius: 8px;
+            background-color: #fff;
+            color: #1a1a2e;
+            font-size: 1.5em;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        #feedback-message {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            min-height: 20px;
+            text-align: center;
+        }
+
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #e74c3c; /* Red for Restart */
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 10px;
+            transition: background-color 0.2s;
+        }
+        button:hover { background-color: #c0392b; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🚀 Math Arcade</h1>
+    
+    <div class="score-board">
+        <div class="score-item">Streak:<br><span id="current-score" class="value">0</span></div>
+        <div class="score-item">High Score:<br><span id="high-score" class="value">0</span></div>
+    </div>
+
+    <div class="problem-area">
+        <div id="question-text">? x ?</div>
+        <input type="number" id="answer-input" placeholder="Answer" autofocus>
+    </div>
+
+    <div id="feedback-message">Ready to play!</div>
+    
+    <button onclick="resetGame()">Restart Game</button>
+</div>
+
+<script>
+    const STORAGE_KEY = 'mathArcadeHighScore';
+    const QUESTION_TEXT = document.getElementById('question-text');
+    const ANSWER_INPUT = document.getElementById('answer-input');
+    const FEEDBACK_MESSAGE = document.getElementById('feedback-message');
+    const CURRENT_SCORE_EL = document.getElementById('current-score');
+    const HIGH_SCORE_EL = document.getElementById('high-score');
+    
+    let factor1 = 0;
+    let factor2 = 0;
+    let currentScore = 0;
+    let highScore = 0;
+
+    // --- Audio Context for Game Sounds ---
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    
+    function playTone(frequency, duration, type) {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime); 
+        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + duration);
+    }
+
+    // --- Game Logic ---
+
+    function loadHighScore() {
+        highScore = parseInt(localStorage.getItem(STORAGE_KEY)) || 0;
+        HIGH_SCORE_EL.textContent = highScore;
+    }
+
+    function saveHighScore() {
+        if (currentScore > highScore) {
+            highScore = currentScore;
+            localStorage.setItem(STORAGE_KEY, highScore);
+            HIGH_SCORE_EL.textContent = highScore;
+        }
+    }
+
+    function nextProblem() {
+        // Generate factors between 2 and 12 for standard difficulty
+        factor1 = Math.floor(Math.random() * 11) + 2;
+        factor2 = Math.floor(Math.random() * 11) + 2;
+        
+        QUESTION_TEXT.textContent = `${factor1} x ${factor2}`;
+        ANSWER_INPUT.value = '';
+        ANSWER_INPUT.focus();
+        FEEDBACK_MESSAGE.textContent = '';
+    }
+
+    function checkAnswer(event) {
+        // Only trigger on the Enter key press
+        if (event.key !== 'Enter') return;
+        
+        const userAnswer = parseInt(ANSWER_INPUT.value);
+        const correctAnswer = factor1 * factor2;
+
+        if (isNaN(userAnswer)) {
+            FEEDBACK_MESSAGE.textContent = "Please enter a number.";
+            return;
+        }
+
+        if (userAnswer === correctAnswer) {
+            // Correct Answer!
+            playTone(880, 0.2, 'sine'); // High pitch tone
+            currentScore++;
+            FEEDBACK_MESSAGE.textContent = "CORRECT! Keep it up! 🌟";
+            FEEDBACK_MESSAGE.style.color = '#2ecc71'; // Green
+            saveHighScore();
+            nextProblem();
+        } else {
+            // Incorrect Answer
+            playTone(150, 0.4, 'sawtooth'); // Low pitch tone
+            currentScore = 0; // Reset streak
+            FEEDBACK_MESSAGE.textContent = `WRONG! The answer was ${correctAnswer}. Try again!`;
+            FEEDBACK_MESSAGE.style.color = '#e74c3c'; // Red
+            nextProblem();
+        }
+        CURRENT_SCORE_EL.textContent = currentScore;
+    }
+    
+    function resetGame() {
+        currentScore = 0;
+        CURRENT_SCORE_EL.textContent = 0;
+        FEEDBACK_MESSAGE.textContent = "New Game Started!";
+        FEEDBACK_MESSAGE.style.color = '#f1c40f';
+        nextProblem();
+    }
+
+    // --- Initialization and Event Listeners ---
+    
+    ANSWER_INPUT.addEventListener('keypress', checkAnswer);
+
+    window.onload = function() {
+        loadHighScore();
+        nextProblem();
+    };
+</script>
+</body>
+</html>

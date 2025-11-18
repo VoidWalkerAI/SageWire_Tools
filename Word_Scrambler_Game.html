@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Word Scrambler Game</title>
+    
+    <style>
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #1a1a2e; 
+            color: #fff; 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container { 
+            max-width: 450px; 
+            background: #2c3e50; 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #f1c40f; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            font-size: 2em;
+        }
+
+        .game-area {
+            text-align: center;
+            padding: 20px;
+            background-color: #34495e;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        #scrambled-word {
+            font-size: 3em;
+            color: #2ecc71;
+            font-weight: bold;
+            margin-bottom: 15px;
+            letter-spacing: 10px;
+        }
+
+        #guess-input {
+            width: 80%;
+            padding: 15px;
+            margin-top: 15px;
+            border: 3px solid #3498db;
+            border-radius: 8px;
+            background-color: #fff;
+            color: #1a1a2e;
+            font-size: 1.5em;
+            text-align: center;
+            font-weight: bold;
+            text-transform: lowercase;
+        }
+
+        #feedback-message {
+            margin-top: 20px;
+            font-size: 1.2em;
+            font-weight: bold;
+            min-height: 20px;
+            text-align: center;
+        }
+
+        #skip-btn {
+            width: 100%;
+            padding: 15px;
+            background-color: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔡 Word Scrambler</h1>
+    <p>Unscramble the letters to guess the word!</p>
+    
+    <div class="game-area">
+        <div id="scrambled-word"></div>
+        <input type="text" id="guess-input" placeholder="Your Answer">
+    </div>
+
+    <div id="feedback-message"></div>
+    
+    <button id="skip-btn" onclick="nextWord()">Skip Word</button>
+</div>
+
+<script>
+    const WORDS = ['apple', 'house', 'table', 'chair', 'light', 'water', 'sheep', 'horse', 'fence', 'grass', 'farm', 'truck'];
+    const SCRAMBLED_WORD_EL = document.getElementById('scrambled-word');
+    const GUESS_INPUT = document.getElementById('guess-input');
+    const FEEDBACK_MESSAGE = document.getElementById('feedback-message');
+    
+    let currentWord = '';
+
+    // --- Audio Feedback ---
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    function playTone(frequency, duration, type) {
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, audioContext.currentTime); 
+        gainNode.gain.setValueAtTime(0.5, audioContext.currentTime);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        oscillator.start();
+        oscillator.stop(audioContext.currentTime + duration);
+    }
+    
+    // --- Core Logic ---
+
+    function scrambleWord(word) {
+        // Convert word to an array of characters
+        let array = word.split('');
+        
+        // Fisher-Yates (Knuth) shuffle algorithm
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        
+        // Join the array back into a string
+        return array.join('');
+    }
+
+    function nextWord() {
+        const randomIndex = Math.floor(Math.random() * WORDS.length);
+        currentWord = WORDS[randomIndex];
+        
+        const scrambled = scrambleWord(currentWord);
+        
+        SCRAMBLED_WORD_EL.textContent = scrambled.toUpperCase();
+        GUESS_INPUT.value = '';
+        FEEDBACK_MESSAGE.textContent = '';
+        GUESS_INPUT.focus();
+    }
+
+    function checkGuess(event) {
+        if (event.key !== 'Enter') return;
+        
+        const guess = GUESS_INPUT.value.trim().toLowerCase();
+
+        if (guess === currentWord) {
+            playTone(880, 0.2, 'sine'); // Correct tone
+            FEEDBACK_MESSAGE.textContent = "CORRECT! Great Job! 🌟";
+            FEEDBACK_MESSAGE.style.color = '#2ecc71';
+            
+            // Wait briefly before moving to the next word
+            setTimeout(nextWord, 1000);
+        } else {
+            playTone(150, 0.4, 'sawtooth'); // Incorrect tone
+            FEEDBACK_MESSAGE.textContent = "Oops! Try again.";
+            FEEDBACK_MESSAGE.style.color = '#e74c3c';
+        }
+    }
+
+    // --- Initialization ---
+
+    GUESS_INPUT.addEventListener('keypress', checkGuess);
+
+    window.onload = function() {
+        nextWord();
+    };
+</script>
+</body>
+</html>

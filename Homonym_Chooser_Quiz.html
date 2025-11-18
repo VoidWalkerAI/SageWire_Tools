@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Homonym Context Quiz</title>
+    
+    <style>
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #0c0e14; 
+            color: #f4f6f7; 
+        }
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: #1a1e2b; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        
+        /* --- BRANDED HEADER --- */
+        .header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #5dade2;
+        }
+        .header-brand h1 { 
+            color: #f39c12; 
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .header-brand p {
+            color: #aeb6bf;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+        /* --- END BRANDED HEADER --- */
+        
+        .quiz-area {
+            background-color: #2c3e50;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid #5dade2;
+        }
+
+        #question-text {
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        .choice-button {
+            padding: 10px 15px;
+            margin: 5px;
+            border: 2px solid #5dade2;
+            border-radius: 5px;
+            background-color: transparent;
+            color: #5dade2;
+            cursor: pointer;
+            font-size: 1.1em;
+            transition: background-color 0.2s;
+        }
+
+        .choice-button:hover {
+            background-color: #34495e;
+        }
+
+        #feedback-message {
+            margin-top: 15px;
+            font-size: 1.1em;
+            font-weight: bold;
+        }
+        
+        .score-board {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 20px;
+        }
+        .score-item {
+            font-size: 1.2em;
+            color: #aeb6bf;
+        }
+        .score-item .value {
+            font-weight: bold;
+            color: #2ecc71;
+        }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #f39c12;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-brand">
+        <h1>SageWire Tools</h1>
+        <p>We tend the fire while you're out living life.</p>
+    </div>
+    
+    <h2>🧠 Homonym Context Quiz</h2>
+    <p>Choose the correct word to complete the sentence based on its meaning.</p>
+
+    <div class="quiz-area">
+        <div id="question-text"></div>
+        <div id="choices-container"></div>
+        <div id="feedback-message"></div>
+    </div>
+    
+    <div class="score-board">
+        <div class="score-item">Correct: <span id="correct-score" class="value">0</span></div>
+        <div class="score-item">Total: <span id="total-score" class="value">0</span></div>
+    </div>
+
+    <div class="note">
+        This quiz focuses on words that sound alike but have different meanings (homonyms).
+    </div>
+</div>
+
+<script>
+    const QUIZ_DATA = [
+        {
+            question: "The constant rainfall will severely ________ the grain harvest.",
+            correct: "affect",
+            choices: ["affect", "effect"]
+        },
+        {
+            question: "The most noticeable ________ of the new policy was the reduced paperwork.",
+            correct: "effect",
+            choices: ["affect", "effect"]
+        },
+        {
+            question: "Did you remember to check the weather ________ before leaving the ranch?",
+            correct: "whether",
+            choices: ["whether", "weather"]
+        },
+        {
+            question: "He decided to ________ his principles and accept the compromise.",
+            correct: "alter",
+            choices: ["altar", "alter"]
+        },
+        {
+            question: "If you want to simplify the process, use the shortcut ________.",
+            correct: "key",
+            choices: ["quay", "key"]
+        },
+        {
+            question: "The company spent its entire ________ budget before the quarter ended.",
+            correct: "capital",
+            choices: ["capitol", "capital"]
+        },
+        {
+            question: "I know you were ________ to succeed in this project.",
+            correct: "determined",
+            choices: ["determined", "determinate"]
+        }
+    ];
+
+    const QUESTION_TEXT_EL = document.getElementById('question-text');
+    const CHOICES_CONTAINER = document.getElementById('choices-container');
+    const FEEDBACK_MESSAGE = document.getElementById('feedback-message');
+    const CORRECT_SCORE_EL = document.getElementById('correct-score');
+    const TOTAL_SCORE_EL = document.getElementById('total-score');
+    
+    let currentQuestionIndex = 0;
+    let correctScore = 0;
+    let totalScore = 0;
+
+    // --- Core Logic ---
+
+    function displayQuestion() {
+        if (currentQuestionIndex >= QUIZ_DATA.length) {
+            QUESTION_TEXT_EL.textContent = "Quiz Complete! Your final score: " + correctScore + " out of " + totalScore + ".";
+            CHOICES_CONTAINER.innerHTML = '<button onclick="resetQuiz()">Start Over</button>';
+            return;
+        }
+
+        const q = QUIZ_DATA[currentQuestionIndex];
+        
+        // 1. Display Question Text
+        QUESTION_TEXT_EL.textContent = q.question.replace("________", "______"); // Placeholder fix
+
+        // 2. Display Choices
+        CHOICES_CONTAINER.innerHTML = '';
+        
+        q.choices.forEach(choice => {
+            const button = document.createElement('button');
+            button.className = 'choice-button';
+            button.textContent = choice;
+            button.onclick = () => checkAnswer(choice);
+            CHOICES_CONTAINER.appendChild(button);
+        });
+        
+        FEEDBACK_MESSAGE.textContent = '';
+    }
+
+    function checkAnswer(selectedChoice) {
+        if (currentQuestionIndex >= QUIZ_DATA.length) return;
+
+        const q = QUIZ_DATA[currentQuestionIndex];
+        totalScore++;
+
+        if (selectedChoice === q.correct) {
+            correctScore++;
+            FEEDBACK_MESSAGE.textContent = `✅ Correct! "${selectedChoice}" is the right word.`;
+            FEEDBACK_MESSAGE.style.color = '#2ecc71';
+        } else {
+            FEEDBACK_MESSAGE.textContent = `❌ Incorrect. The correct word was "${q.correct}".`;
+            FEEDBACK_MESSAGE.style.color = '#e74c3c';
+        }
+
+        // Update score display
+        CORRECT_SCORE_EL.textContent = correctScore;
+        TOTAL_SCORE_EL.textContent = totalScore;
+        
+        // Disable buttons after selection and prepare for next question
+        document.querySelectorAll('.choice-button').forEach(btn => btn.disabled = true);
+        
+        currentQuestionIndex++;
+        
+        setTimeout(displayQuestion, 1500); // Wait 1.5 seconds before moving to the next question
+    }
+
+    function resetQuiz() {
+        currentQuestionIndex = 0;
+        correctScore = 0;
+        totalScore = 0;
+        displayQuestion();
+    }
+
+    // Initialization
+    window.onload = function() {
+        displayQuestion();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SageWire Student Tools – GPA Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 1.5rem;
+      line-height: 1.5;
+      background: #f7f7f7;
+    }
+    .sw-header {
+      padding: 0.75rem 1rem;
+      border-radius: 0.75rem;
+      border: 1px solid #ddd;
+      margin-bottom: 1rem;
+      background: #ffffff;
+    }
+    .sw-logo {
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .sw-tagline {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+    .sw-tool-card {
+      border: 1px solid #ddd;
+      border-radius: 0.75rem;
+      padding: 1rem 1.25rem;
+      background: #ffffff;
+    }
+    h1 {
+      font-size: 1.4rem;
+      margin-bottom: 0.25rem;
+    }
+    .sw-desc {
+      font-size: 0.95rem;
+      margin-bottom: 1rem;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.5rem;
+    }
+    th, td {
+      padding: 0.3rem;
+      text-align: left;
+    }
+    th {
+      font-size: 0.9rem;
+    }
+    input {
+      width: 100%;
+      padding: 0.3rem;
+      box-sizing: border-box;
+      font-size: 0.9rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.6rem 1rem;
+      border-radius: 0.6rem;
+      border: none;
+      cursor: pointer;
+      background: #333;
+      color: #fff;
+    }
+    .sw-result {
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    .sw-note {
+      margin-top: 0.5rem;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <header class="sw-header">
+    <div class="sw-logo">SageWire_Tools</div>
+    <div class="sw-tagline">We tend the fire while you’re out living life.</div>
+  </header>
+
+  <section class="sw-tool-card">
+    <h1>GPA Calculator</h1>
+    <p class="sw-desc">
+      Enter your course grades and credit hours to estimate your semester GPA.
+      You can use letter grades (A, B+, C-, etc.) or numeric GPA values (3.7, 2.0).
+    </p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Course</th>
+          <th>Grade (letter or 0–4)</th>
+          <th>Credits</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>1</td>
+          <td><input id="g1" placeholder="e.g. A- or 3.7"></td>
+          <td><input id="c1" type="number" step="0.5" placeholder="e.g. 3"></td>
+        </tr>
+        <tr>
+          <td>2</td>
+          <td><input id="g2" placeholder="e.g. B+ or 3.3"></td>
+          <td><input id="c2" type="number" step="0.5" placeholder="e.g. 3"></td>
+        </tr>
+        <tr>
+          <td>3</td>
+          <td><input id="g3" placeholder="e.g. B or 3.0"></td>
+          <td><input id="c3" type="number" step="0.5" placeholder="e.g. 4"></td>
+        </tr>
+        <tr>
+          <td>4</td>
+          <td><input id="g4" placeholder="e.g. C+ or 2.3"></td>
+          <td><input id="c4" type="number" step="0.5" placeholder="e.g. 3"></td>
+        </tr>
+        <tr>
+          <td>5</td>
+          <td><input id="g5" placeholder="optional"></td>
+          <td><input id="c5" type="number" step="0.5" placeholder="optional"></td>
+        </tr>
+        <tr>
+          <td>6</td>
+          <td><input id="g6" placeholder="optional"></td>
+          <td><input id="c6" type="number" step="0.5" placeholder="optional"></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <button type="button" onclick="calculateGPA()">Calculate GPA</button>
+
+    <div id="result" class="sw-result"></div>
+    <div id="note" class="sw-note"></div>
+  </section>
+
+  <script>
+    const letterScale = {
+      "A+": 4.0, "A": 4.0, "A-": 3.7,
+      "B+": 3.3, "B": 3.0, "B-": 2.7,
+      "C+": 2.3, "C": 2.0, "C-": 1.7,
+      "D+": 1.3, "D": 1.0, "D-": 0.7,
+      "F": 0.0
+    };
+
+    function parseGrade(value) {
+      if (!value) return null;
+      const trimmed = value.trim().toUpperCase();
+
+      if (letterScale.hasOwnProperty(trimmed)) {
+        return letterScale[trimmed];
+      }
+
+      const num = parseFloat(trimmed);
+      if (!isNaN(num) && num >= 0 && num <= 4.0) {
+        return num;
+      }
+
+      return NaN;
+    }
+
+    function calculateGPA() {
+      let totalQuality = 0;
+      let totalCredits = 0;
+      let invalidGrade = false;
+
+      for (let i = 1; i <= 6; i++) {
+        const gVal = document.getElementById('g' + i).value;
+        const cVal = document.getElementById('c' + i).value;
+
+        if (!gVal && !cVal) continue; // skip blank row
+
+        const grade = parseGrade(gVal);
+        const credits = parseFloat(cVal);
+
+        if (isNaN(grade) || isNaN(credits) || credits <= 0) {
+          invalidGrade = true;
+          continue;
+        }
+
+        totalQuality += grade * credits;
+        totalCredits += credits;
+      }
+
+      const resultEl = document.getElementById('result');
+      const noteEl = document.getElementById('note');
+      resultEl.textContent = '';
+      noteEl.textContent = '';
+
+      if (totalCredits === 0) {
+        resultEl.textContent = 'Please enter at least one valid course with grade and credits.';
+        return;
+      }
+
+      const gpa = totalQuality / totalCredits;
+      resultEl.textContent = 'Estimated GPA: ' + gpa.toFixed(3);
+
+      if (invalidGrade) {
+        noteEl.textContent = 'Some rows were skipped because the grade or credits were invalid.';
+      }
+    }
+  </script>
+</body>
+</html>

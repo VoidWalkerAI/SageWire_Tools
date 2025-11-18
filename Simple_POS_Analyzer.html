@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple POS Analyzer</title>
+    
+    <style>
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #0c0e14; 
+            color: #f4f6f7; 
+        }
+        .container { 
+            max-width: 900px; 
+            margin: 0 auto; 
+            background: #1a1e2b; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        
+        /* --- BRANDED HEADER --- */
+        .header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #5dade2;
+        }
+        .header-brand h1 { 
+            color: #f39c12; 
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .header-brand p {
+            color: #aeb6bf;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+        /* --- END BRANDED HEADER --- */
+
+
+        label { display: block; margin-bottom: 8px; color: #5dade2; font-weight: bold; }
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            resize: vertical;
+            font-size: 14px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .output-box {
+            background-color: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2ecc71;
+        }
+
+        .output-box h4 {
+            color: #5dade2;
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-size: 1em;
+            text-transform: uppercase;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #f39c12;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #f39c12;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-brand">
+        <h1>SageWire Tools</h1>
+        <p>We tend the fire while you're out living life.</p>
+    </div>
+    
+    <h2>🧠 Simple Parts of Speech Analyzer</h2>
+    <p>Analyze your prose to see the balance of Nouns, Verbs, Adjectives, and Adverbs.</p>
+
+    <label for="text-input">Paste Your Text Here</label>
+    <textarea id="text-input" oninput="analyzePOS()">
+The quick brown fox jumps over the lazy dog. Writing is a very important and quickly developing skill. Strong prose uses active verbs and clear nouns to convey a compelling message effectively.
+    </textarea>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h4>Nouns</h4>
+            <span id="noun-count" class="value">0</span>
+        </div>
+        <div class="output-box">
+            <h4>Verbs</h4>
+            <span id="verb-count" class="value">0</span>
+        </div>
+        <div class="output-box">
+            <h4>Adjectives</h4>
+            <span id="adjective-count" class="value">0</span>
+        </div>
+        <div class="output-box">
+            <h4>Adverbs</h4>
+            <span id="adverb-count" class="value">0</span>
+        </div>
+        <div class="output-box">
+            <h4>Total Words</h4>
+            <span id="total-words-count" class="value">0</span>
+        </div>
+    </div>
+
+    <div class="note">
+        This analyzer uses basic linguistic heuristics and should be used for stylistic guidance, not definitive grammar checking.
+    </div>
+</div>
+
+<script>
+    const TEXT_INPUT = document.getElementById('text-input');
+    const NOUN_COUNT_EL = document.getElementById('noun-count');
+    const VERB_COUNT_EL = document.getElementById('verb-count');
+    const ADJECTIVE_COUNT_EL = document.getElementById('adjective-count');
+    const ADVERB_COUNT_EL = document.getElementById('adverb-count');
+    const TOTAL_WORDS_COUNT_EL = document.getElementById('total-words-count');
+
+    // --- Heuristic Rule Sets (Simplified) ---
+    // In pure JS without a massive dictionary, POS classification uses simplified rules.
+    
+    // Simple Heuristic: If word ends in -ing, -ed, or -s, it's often a verb form.
+    const VERB_ENDING_REGEX = /(ing|ed|es|s)$/i; 
+    
+    // Simple Heuristic: If word ends in -ly, it's often an adverb.
+    const ADVERB_ENDING_REGEX = /ly$/i; 
+
+    // Simple Heuristic: If word ends in -ous, -able, -ful, -ive, it's often an adjective.
+    const ADJECTIVE_ENDING_REGEX = /(ous|able|ful|ive|ish|y)$/i; 
+
+    // Common filler words and function words to exclude from main categories
+    const EXCLUSION_WORDS = new Set([
+        "the", "a", "an", "is", "was", "be", "are", "by", "for", "in", "of", "to", "and", "or", "but", "so"
+    ]);
+
+    function analyzePOS() {
+        const text = TEXT_INPUT.value;
+        
+        // 1. Clean and tokenize the text into individual words
+        // Remove punctuation and convert to lowercase for easy comparison
+        const cleanedText = text.replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g,"").toLowerCase();
+        const words = cleanedText.split(/\s+/).filter(word => word.length > 0);
+        
+        let nounCount = 0;
+        let verbCount = 0;
+        let adjectiveCount = 0;
+        let adverbCount = 0;
+        const totalWords = words.length;
+
+        // 2. Iterate through words and apply heuristics
+        words.forEach(word => {
+            if (EXCLUSION_WORDS.has(word)) {
+                // Skip common function words
+                return;
+            }
+
+            if (ADVERB_ENDING_REGEX.test(word)) {
+                adverbCount++;
+            } else if (VERB_ENDING_REGEX.test(word)) {
+                verbCount++;
+            } else if (ADJECTIVE_ENDING_REGEX.test(word)) {
+                adjectiveCount++;
+            } else {
+                // Default remaining content words to Nouns (simplification)
+                nounCount++;
+            }
+        });
+        
+        // --- 3. Update the Display ---
+        NOUN_COUNT_EL.textContent = nounCount;
+        VERB_COUNT_EL.textContent = verbCount;
+        ADJECTIVE_COUNT_EL.textContent = adjectiveCount;
+        ADVERB_COUNT_EL.textContent = adverbCount;
+        TOTAL_WORDS_COUNT_EL.textContent = totalWords;
+    }
+
+    // Initialize the analyzer on page load
+    window.onload = function() {
+        analyzePOS();
+    };
+</script>
+</body>
+</html>

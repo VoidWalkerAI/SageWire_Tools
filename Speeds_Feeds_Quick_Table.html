@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SageWire Tools – Speeds & Feeds Quick Table (Drilling)</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    /* ========= COLOR SYSTEM (AUTO LIGHT/DARK) ========= */
+    :root {
+      /* Light mode defaults */
+      --sw-bg: #f3f4f6;
+      --sw-card-bg: #ffffff;
+      --sw-text: #111827;
+      --sw-muted: #6b7280;
+      --sw-border: #e5e7eb;
+      --sw-button-bg: #111827;
+      --sw-button-text: #ffffff;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --sw-bg: #020617;
+        --sw-card-bg: #020617;
+        --sw-text: #e5e7eb;
+        --sw-muted: #9ca3af;
+        --sw-border: #1f2933;
+        --sw-button-bg: #e5e7eb;
+        --sw-button-text: #020617;
+      }
+    }
+
+    /* ========= GLOBAL LAYOUT ========= */
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--sw-bg);
+      color: var(--sw-text);
+      margin: 0;
+      padding: 1.5rem;
+    }
+    .sw-page {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* ========= HEADER ========= */
+    .sw-header {
+      background: var(--sw-card-bg);
+      border-radius: 0.75rem;
+      border: 1px solid var(--sw-border);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .sw-logo {
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .sw-tagline {
+      font-size: 0.85rem;
+      color: var(--sw-muted);
+    }
+
+    /* ========= TOOL CARD ========= */
+    .sw-tool-card {
+      background: var(--sw-card-bg);
+      border-radius: 0.75rem;
+      border: 1px solid var(--sw-border);
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 10px 15px rgba(15, 23, 42, 0.05);
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin: 0 0 0.4rem 0;
+    }
+    .sw-desc {
+      font-size: 0.95rem;
+      color: var(--sw-muted);
+      margin-bottom: 1rem;
+    }
+
+    /* ========= FORM ELEMENTS ========= */
+    label {
+      display: block;
+      margin-top: 0.9rem;
+      font-size: 0.9rem;
+    }
+    select {
+      width: 100%;
+      padding: 0.45rem 0.55rem;
+      margin-top: 0.25rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--sw-border);
+      box-sizing: border-box;
+      font-size: 0.95rem;
+      background: var(--sw-bg);
+      color: var(--sw-text);
+    }
+    select:focus {
+      outline: none;
+      border-color: var(--sw-button-bg);
+      box-shadow: 0 0 0 1px var(--sw-button-bg);
+    }
+
+    button {
+      margin-top: 1.1rem;
+      padding: 0.6rem 1.1rem;
+      border-radius: 0.6rem;
+      border: none;
+      cursor: pointer;
+      background: var(--sw-button-bg);
+      color: var(--sw-button-text);
+      font-size: 0.95rem;
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .sw-result {
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    .sw-note {
+      margin-top: 0.4rem;
+      font-size: 0.9rem;
+      color: var(--sw-muted);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 0.8rem;
+      font-size: 0.9rem;
+    }
+    th, td {
+      border: 1px solid var(--sw-border);
+      padding: 0.4rem 0.5rem;
+      text-align: left;
+    }
+    th {
+      background: rgba(148, 163, 184, 0.12);
+    }
+
+    .sw-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.9rem;
+    }
+    .sw-row > div {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="sw-page">
+    <!-- ===== SAGEWIRE HEADER ===== -->
+    <header class="sw-header">
+      <div class="sw-logo">SageWire Tools</div>
+      <div class="sw-tagline">We tend the fire while you're out living life.</div>
+    </header>
+
+    <!-- ===== TOOL CARD ===== -->
+    <section class="sw-tool-card">
+      <h1>Speeds & Feeds Quick Table (Drilling)</h1>
+      <p class="sw-desc">
+        Quick reference for typical drilling surface speeds (SFM) and feeds (IPR).
+        These are ballpark shop values for HSS tools in common materials.
+        Always check your tool manufacturer’s recommendations for critical or production work.
+      </p>
+
+      <div class="sw-row">
+        <div>
+          <label>
+            Material:
+            <select id="material" onchange="updateTable()">
+              <option value="mild_steel">Mild steel (low carbon)</option>
+              <option value="stainless">Stainless steel</option>
+              <option value="aluminum">Aluminum</option>
+              <option value="cast_iron">Cast iron</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Drill size range:
+            <select id="sizeRange" onchange="updateTable()">
+              <option value="small">Small (≤ 1/4 in)</option>
+              <option value="medium">Medium (1/4 – 1/2 in)</option>
+              <option value="large">Large (≥ 1/2 in)</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <button type="button" onclick="resetTable()">
+        Reset to default view
+      </button>
+
+      <div id="result" class="sw-result"></div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Material</th>
+            <th>Drill size range</th>
+            <th>Typical SFM</th>
+            <th>Typical IPR (in/rev)</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Filled by JavaScript -->
+        </tbody>
+      </table>
+
+      <div id="note" class="sw-note"></div>
+    </section>
+  </div>
+
+  <script>
+    // Simple data table for HSS drilling
+    const data = [
+      // Mild steel
+      {
+        materialKey: 'mild_steel',
+        materialLabel: 'Mild steel (low carbon)',
+        sizeKey: 'small',
+        sizeLabel: 'Small (≤ 1/4 in)',
+        sfm: '80 – 100',
+        ipr: '0.002 – 0.006',
+        note: 'Use cutting fluid. Start at lower end for harder steels or less rigid setups.'
+      },
+      {
+        materialKey: 'mild_steel',
+        materialLabel: 'Mild steel (low carbon)',
+        sizeKey: 'medium',
+        sizeLabel: 'Medium (1/4 – 1/2 in)',
+        sfm: '70 – 90',
+        ipr: '0.004 – 0.010',
+        note: 'Watch chip color. Blue chips can mean too much heat or dull tool.'
+      },
+      {
+        materialKey: 'mild_steel',
+        materialLabel: 'Mild steel (low carbon)',
+        sizeKey: 'large',

@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SageWire Tools – Drill Speed & Feed Calculator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    /* ========= COLOR SYSTEM (AUTO LIGHT/DARK) ========= */
+    :root {
+      /* Light mode defaults */
+      --sw-bg: #f3f4f6;
+      --sw-card-bg: #ffffff;
+      --sw-text: #111827;
+      --sw-muted: #6b7280;
+      --sw-border: #e5e7eb;
+      --sw-button-bg: #111827;
+      --sw-button-text: #ffffff;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --sw-bg: #020617;
+        --sw-card-bg: #020617;
+        --sw-text: #e5e7eb;
+        --sw-muted: #9ca3af;
+        --sw-border: #1f2933;
+        --sw-button-bg: #e5e7eb;
+        --sw-button-text: #020617;
+      }
+    }
+
+    /* ========= GLOBAL LAYOUT ========= */
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--sw-bg);
+      color: var(--sw-text);
+      margin: 0;
+      padding: 1.5rem;
+    }
+    .sw-page {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    /* ========= HEADER ========= */
+    .sw-header {
+      background: var(--sw-card-bg);
+      border-radius: 0.75rem;
+      border: 1px solid var(--sw-border);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .sw-logo {
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .sw-tagline {
+      font-size: 0.85rem;
+      color: var(--sw-muted);
+    }
+
+    /* ========= TOOL CARD ========= */
+    .sw-tool-card {
+      background: var(--sw-card-bg);
+      border-radius: 0.75rem;
+      border: 1px solid var(--sw-border);
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 10px 15px rgba(15, 23, 42, 0.05);
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin: 0 0 0.4rem 0;
+    }
+    .sw-desc {
+      font-size: 0.95rem;
+      color: var(--sw-muted);
+      margin-bottom: 1rem;
+    }
+
+    /* ========= FORM ELEMENTS ========= */
+    label {
+      display: block;
+      margin-top: 0.9rem;
+      font-size: 0.9rem;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.45rem 0.55rem;
+      margin-top: 0.25rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--sw-border);
+      box-sizing: border-box;
+      font-size: 0.95rem;
+      background: var(--sw-bg);
+      color: var(--sw-text);
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--sw-button-bg);
+      box-shadow: 0 0 0 1px var(--sw-button-bg);
+    }
+
+    button {
+      margin-top: 1.1rem;
+      padding: 0.6rem 1.1rem;
+      border-radius: 0.6rem;
+      border: none;
+      cursor: pointer;
+      background: var(--sw-button-bg);
+      color: var(--sw-button-text);
+      font-size: 0.95rem;
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .sw-result {
+      margin-top: 1rem;
+      font-weight: 600;
+    }
+    .sw-note {
+      margin-top: 0.4rem;
+      font-size: 0.9rem;
+      color: var(--sw-muted);
+    }
+
+    .sw-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.9rem;
+    }
+    .sw-row > div {
+      flex: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="sw-page">
+    <!-- ===== SAGEWIRE HEADER ===== -->
+    <header class="sw-header">
+      <div class="sw-logo">SageWire Tools</div>
+      <div class="sw-tagline">We tend the fire while you're out living life.</div>
+    </header>
+
+    <!-- ===== TOOL CARD ===== -->
+    <section class="sw-tool-card">
+      <h1>Drill Speed & Feed Calculator</h1>
+      <p class="sw-desc">
+        Estimate spindle speed (RPM) and feed rate (in/min) for drilling.
+        Uses: RPM = (SFM × 3.82) ÷ diameter(in), Feed = RPM × IPR.
+        Values are approximate and for planning only—always follow tool maker recommendations.
+      </p>
+
+      <label>
+        Material (sets a typical starting SFM – you can override it):
+        <select id="material" onchange="setSfmByMaterial()">
+          <option value="steel">Mild steel (≈ 90 SFM)</option>
+          <option value="stainless">Stainless steel (≈ 60 SFM)</option>
+          <option value="aluminum">Aluminum (≈ 250 SFM)</option>
+          <option value="cast">Cast iron (≈ 70 SFM)</option>
+          <option value="custom">Custom SFM (enter your own)</option>
+        </select>
+      </label>
+
+      <div class="sw-row">
+        <div>
+          <label>
+            Surface speed, SFM:
+            <input type="number" id="sfm" placeholder="e.g. 90" step="1">
+          </label>
+        </div>
+        <div>
+          <label>
+            Drill diameter (in):
+            <input type="number" id="diameter" placeholder="e.g. 0.5" step="0.001" min="0">
+          </label>
+        </div>
+      </div>
+
+      <div class="sw-row">
+        <div>
+          <label>
+            Feed per revolution (IPR – in/rev, optional):
+            <input type="number" id="ipr" placeholder="e.g. 0.005" step="0.001" min="0">
+          </label>
+        </div>
+        <div>
+          <label>
+            Number of holes (optional):
+            <input type="number" id="holes" placeholder="e.g. 10" step="1" min="1">
+          </label>
+        </div>
+      </div>
+
+      <button type="button" onclick="calculateDrillSpeedFeed()">
+        Calculate Speed & Feed
+      </button>
+
+      <div id="result" class="sw-result"></div>
+      <div id="note" class="sw-note"></div>
+    </section>
+  </div>
+
+  <script>
+    function setSfmByMaterial() {
+      const mat = document.getElementById('material').value;
+      const sfmInput = document.getElementById('sfm');
+
+      if (mat === 'steel') {
+        sfmInput.value = 90;
+      } else if (mat === 'stainless') {
+        sfmInput.value = 60;
+      } else if (mat === 'aluminum') {
+        sfmInput.value = 250;
+      } else if (mat === 'cast') {
+        sfmInput.value = 70;
+      } else {
+        // custom – leave as-is
+      }
+    }
+
+    function calculateDrillSpeedFeed() {
+      const sfm = parseFloat(document.getElementById('sfm').value);
+      const dia = parseFloat(document.getElementById('diameter').value);
+      const ipr = parseFloat(document.getElementById('ipr').value);
+      const holes = parseFloat(document.getElementById('holes').value);
+
+      const resultEl = document.getElementById('result');
+      const noteEl = document.getElementById('note');
+      resultEl.innerHTML = '';
+      noteEl.textContent = '';
+
+      if (isNaN(sfm) || sfm <= 0 || isNaN(dia) || dia <= 0) {
+        resultEl.textContent = 'Please enter a valid SFM and drill diameter.';
+        return;
+      }
+
+      // RPM = (SFM × 3.82) / Diameter(in)
+      const rpm = (sfm * 3.82) / dia;
+      if (!isFinite(rpm) || rpm <= 0) {
+        resultEl.textContent = 'Something went wrong with the RPM calculation. Check your inputs.';
+        return;
+      }
+
+      const rpmRounded = rpm.toFixed(0);
+      let html = 'Recommended spindle speed: ' + rpmRounded + ' RPM';
+
+      // If IPR given, compute feed rate
+      if (!isNaN(ipr) && ipr > 0) {
+        const ipm = rpm * ipr; // inches per minute
+        const ipmRounded = ipm.toFixed(2);
+        html += '<br>Estimated feed rate: ' + ipmRounded + ' in/min';
+
+        // If number of holes given, give total drilling time (rough)
+        if (!isNaN(holes) && holes > 0) {
+          // This is a rough helper: assume 1 drill diameter depth per hole as a simple placeholder.
+          // Time per hole ≈ depth / (feed rate) = (dia in) / (ipm in/min)
+          const depthPerHole = dia; // simple assumption: 1× diameter
+          if (ipm > 0) {
+            const timePerHoleMin = depthPerHole / ipm;
+            const totalTimeMin = timePerHoleMin * holes;
+            const totalTimeSec = totalTimeMin * 60;
+
+            html += '<br><br>Very rough time estimate (assuming depth ≈ 1× diameter per hole):<br>' +
+                    'Time per hole ≈ ' + timePerHoleMin.toFixed(2) + ' min<br>' +
+                    'Total time for ' + holes.toFixed(0) + ' holes ≈ ' +
+                    totalTimeMin.toFixed(2) + ' min (' + totalTimeSec.toFixed(0) + ' sec)';
+          }
+        }
+      } else {
+        noteEl.textContent =
+          'IPR (feed per rev) not provided – showing RPM only. Enter IPR to estimate feed rate.';
+      }
+
+      resultEl.innerHTML = html;
+    }
+
+    // Initialize default SFM for mild steel
+    setSfmByMaterial();
+  </script>
+</body>
+</html>

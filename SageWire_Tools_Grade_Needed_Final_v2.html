@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SageWire Student Tools – Grade Needed on Final</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    /* ===== Global Page Style (LOCKED) ===== */
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f3f4f6;
+      margin: 0;
+      padding: 1.5rem;
+    }
+    .sw-page {
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    /* ===== SageWire Branding (LOCKED) ===== */
+    .sw-header {
+      background: #ffffff;
+      border-radius: 0.75rem;
+      border: 1px solid #e5e7eb;
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .sw-logo {
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      color: #111827;
+    }
+    .sw-tagline {
+      font-size: 0.85rem;
+      color: #6b7280;
+    }
+
+    /* ===== Tool Card Layout (LOCKED) ===== */
+    .sw-tool-card {
+      background: #ffffff;
+      border-radius: 0.75rem;
+      border: 1px solid #e5e7eb;
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 10px 15px rgba(15, 23, 42, 0.05);
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin: 0 0 0.4rem 0;
+      color: #111827;
+    }
+    .sw-desc {
+      font-size: 0.95rem;
+      color: #4b5563;
+      margin-bottom: 1rem;
+    }
+
+    label {
+      display: block;
+      margin-top: 0.9rem;
+      font-size: 0.9rem;
+      color: #111827;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 0.45rem 0.55rem;
+      margin-top: 0.25rem;
+      border-radius: 0.5rem;
+      border: 1px solid #d1d5db;
+      box-sizing: border-box;
+      font-size: 0.95rem;
+    }
+    input[type="number"]:focus {
+      outline: none;
+      border-color: #111827;
+      box-shadow: 0 0 0 1px #11182722;
+    }
+
+    button {
+      margin-top: 1.1rem;
+      padding: 0.6rem 1.1rem;
+      border-radius: 0.6rem;
+      border: none;
+      cursor: pointer;
+      background: #111827;
+      color: #ffffff;
+      font-size: 0.95rem;
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .sw-result {
+      margin-top: 1rem;
+      font-weight: 600;
+      color: #111827;
+    }
+    .sw-note {
+      margin-top: 0.4rem;
+      font-size: 0.9rem;
+      color: #6b7280;
+    }
+  </style>
+</head>
+<body>
+  <div class="sw-page">
+    <!-- SageWire branding (auto on every tool) -->
+    <header class="sw-header">
+      <div class="sw-logo">SageWire_Tools</div>
+      <div class="sw-tagline">We tend the fire while you’re out living life.</div>
+    </header>
+
+    <!-- Tool card -->
+    <section class="sw-tool-card">
+      <h1>Grade Needed on Final</h1>
+      <p class="sw-desc">
+        Enter your current grade, how much the final is worth, and the overall grade you want.
+        We’ll calculate what you need to score on the final exam.
+      </p>
+
+      <label>
+        Current grade in the class (%):
+        <input type="number" id="currentGrade" placeholder="e.g. 82" step="0.1">
+      </label>
+
+      <label>
+        Final exam weight (% of total grade):
+        <input type="number" id="finalWeight" placeholder="e.g. 30" step="0.1">
+      </label>
+
+      <label>
+        Desired overall grade in the class (%):
+        <input type="number" id="desiredGrade" placeholder="e.g. 90" step="0.1">
+      </label>
+
+      <button type="button" onclick="calculateNeededGrade()">
+        Calculate Needed Final Grade
+      </button>
+
+      <div id="result" class="sw-result"></div>
+      <div id="note" class="sw-note"></div>
+    </section>
+  </div>
+
+  <script>
+    function calculateNeededGrade() {
+      const current = parseFloat(document.getElementById('currentGrade').value);
+      const weight = parseFloat(document.getElementById('finalWeight').value);
+      const desired = parseFloat(document.getElementById('desiredGrade').value);
+
+      const resultEl = document.getElementById('result');
+      const noteEl = document.getElementById('note');
+      resultEl.textContent = '';
+      noteEl.textContent = '';
+
+      if (isNaN(current) || isNaN(weight) || isNaN(desired) ||
+          weight <= 0 || weight >= 100) {
+        resultEl.textContent = 'Please enter valid numbers (final weight between 0 and 100).';
+        return;
+      }
+
+      const wFinal = weight / 100;
+      const wCurrent = 1 - wFinal;
+
+      const finalNeeded = (desired - current * wCurrent) / wFinal;
+
+      if (!isFinite(finalNeeded)) {
+        resultEl.textContent = 'Something went wrong with the inputs. Please check your values.';
+        return;
+      }
+
+      const rounded = finalNeeded.toFixed(2);
+
+      if (finalNeeded > 100) {
+        resultEl.textContent =
+          'You would need approximately ' + rounded + '% on the final.';
+        noteEl.textContent =
+          'That is more than 100%, which usually isn’t possible. It may not be realistic to reach your desired overall grade.';
+      } else if (finalNeeded < 0) {
+        resultEl.textContent =
+          'You would need approximately ' + rounded + '% on the final.';
+        noteEl.textContent =
+          'That is less than 0%, which means you already have at least your desired overall grade locked in.';
+      } else {
+        resultEl.textContent =
+          'You need approximately ' + rounded + '% on the final to reach your goal.';
+        noteEl.textContent = '';
+      }
+    }
+  </script>
+</body>
+</html>

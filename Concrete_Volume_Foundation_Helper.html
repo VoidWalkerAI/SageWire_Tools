@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SageWire Tools – Concrete Volume & Foundation Helper</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <style>
+    /* ========= COLOR SYSTEM (AUTO LIGHT/DARK) ========= */
+    :root {
+      /* Light mode defaults */
+      --sw-bg: #f3f4f6;
+      --sw-card-bg: #ffffff;
+      --sw-text: #111827;
+      --sw-muted: #6b7280;
+      --sw-border: #e5e7eb;
+      --sw-button-bg: #111827;
+      --sw-button-text: #ffffff;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --sw-bg: #020617;
+        --sw-card-bg: #020617;
+        --sw-text: #e5e7eb;
+        --sw-muted: #9ca3af;
+        --sw-border: #1f2933;
+        --sw-button-bg: #e5e7eb;
+        --sw-button-text: #020617;
+      }
+    }
+
+    /* ========= GLOBAL LAYOUT ========= */
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--sw-bg);
+      color: var(--sw-text);
+      margin: 0;
+      padding: 1.5rem;
+    }
+    .sw-page {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    /* ========= HEADER ========= */
+    .sw-header {
+      background: var(--sw-card-bg);
+      border-radius: 0.75rem;
+      border: 1px solid var(--sw-border);
+      padding: 0.75rem 1rem;
+      margin-bottom: 1rem;
+    }
+    .sw-logo {
+      font-weight: 700;
+      letter-spacing: 0.03em;
+    }
+    .sw-tagline {
+      font-size: 0.85rem;
+      color: var(--sw-muted);
+    }
+
+    /* ========= TOOL CARD ========= */
+    .sw-tool-card {
+      background: var(--sw-card-bg);
+      border-radius: 0.75rem;
+      border: 1px solid var(--sw-border);
+      padding: 1.25rem 1.5rem;
+      box-shadow: 0 10px 15px rgba(15, 23, 42, 0.05);
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin: 0 0 0.4rem 0;
+    }
+    h2 {
+      font-size: 1.1rem;
+      margin: 0 0 0.4rem 0;
+    }
+    .sw-desc {
+      font-size: 0.95rem;
+      color: var(--sw-muted);
+      margin-bottom: 0.8rem;
+    }
+    .sw-section-title {
+      margin-top: 1.2rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      border-top: 1px solid var(--sw-border);
+      padding-top: 0.8rem;
+    }
+
+    /* ========= FORM ELEMENTS ========= */
+    label {
+      display: block;
+      margin-top: 0.9rem;
+      font-size: 0.9rem;
+    }
+    input, select {
+      width: 100%;
+      padding: 0.45rem 0.55rem;
+      margin-top: 0.25rem;
+      border-radius: 0.5rem;
+      border: 1px solid var(--sw-border);
+      box-sizing: border-box;
+      font-size: 0.95rem;
+      background: var(--sw-bg);
+      color: var(--sw-text);
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--sw-button-bg);
+      box-shadow: 0 0 0 1px var(--sw-button-bg);
+    }
+
+    .sw-row {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: 0.9rem;
+    }
+    .sw-row > div {
+      flex: 1;
+    }
+
+    button {
+      margin-top: 1.1rem;
+      padding: 0.6rem 1.1rem;
+      border-radius: 0.6rem;
+      border: none;
+      cursor: pointer;
+      background: var(--sw-button-bg);
+      color: var(--sw-button-text);
+      font-size: 0.95rem;
+    }
+    button:active {
+      transform: translateY(1px);
+    }
+
+    .sw-result {
+      margin-top: 0.7rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+    .sw-note {
+      margin-top: 0.6rem;
+      font-size: 0.9rem;
+      color: var(--sw-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="sw-page">
+    <!-- ===== SAGEWIRE HEADER ===== -->
+    <header class="sw-header">
+      <div class="sw-logo">SageWire Tools</div>
+      <div class="sw-tagline">We tend the fire while you're out living life.</div>
+    </header>
+
+    <!-- ===== SLAB TOOL ===== -->
+    <section class="sw-tool-card">
+      <h1>Concrete Volume – Slab Helper</h1>
+      <p class="sw-desc">
+        Estimate concrete volume for flat slabs (floors, pads, driveways).
+        Enter dimensions and get cubic yards plus bag counts.
+      </p>
+
+      <div class="sw-row">
+        <div>
+          <label>
+            Length:
+            <input type="number" id="slabLength" placeholder="e.g. 20" step="0.1" min="0">
+          </label>
+        </div>
+        <div>
+          <label>
+            Width:
+            <input type="number" id="slabWidth" placeholder="e.g. 30" step="0.1" min="0">
+          </label>
+        </div>
+      </div>
+
+      <div class="sw-row">
+        <div>
+          <label>
+            Length unit:
+            <select id="slabLenUnit">
+              <option value="ft">feet</option>
+              <option value="in">inches</option>
+            </select>
+          </label>
+        </div>
+        <div>
+          <label>
+            Width unit:
+            <select id="slabWidUnit">
+              <option value="ft">feet</option>
+              <option value="in">inches</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="sw-row">
+        <div>
+          <label>
+            Thickness:
+            <input type="number" id="slabThick" placeholder="e.g. 4" step="0.1" min="0">
+          </label>
+        </div>
+        <div>
+          <label>
+            Thickness unit:
+            <select id="slabThickUnit">
+              <option value="in">inches</option>
+              <option value="ft">feet</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <button type="button" onclick="calculateSlab()">
+        Calculate Slab Volume
+      </button>
+
+      <div id="slabResult" class="sw-result"></div>
+    </section>
+
+    <!-- ===== FOOTING / FOUNDATION TOOL ===== -->
+    <section class="sw-tool-card">
+      <h2>Concrete Volume – Footing / Foundation Strip</h2>
+      <p class="sw-desc">
+        Estimate concrete for continuous footings or strip foundations.
+        Treat it like a long rectangular trench.
+      </p>
+
+      <div class="sw-row">
+        <div>
+          <label>
+            Length (run of the footing):
+            <input type="number" id="footLength" placeholder="e.g. 80" step="0.1" min="0">
+          </label>
+        </div>
+        <div>
+          <label>
+            Length unit:
+            <select id="footLenUnit">
+              <option value="ft">feet</option>
+              <option value="in">inches</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="sw-row">
+        <div>
+          <label>
+            Width:
+            <input type="number" id="footWidth" placeholder="e.g. 16" step="0.1" min="0">
+          </label>
+        </div>
+        <div>
+          <label>
+            Width unit:
+            <select id="footWidUnit">
+              <option value="in">inches</option>
+              <option value="ft">feet</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <div class="sw-row">
+        <div>
+          <label>
+            Depth:
+            <input type="number" id="footDepth" placeholder="e.g. 8" step="0.1" min="0">
+          </label>
+        </div>
+        <div>
+          <label>
+            Depth unit:
+            <select id="footDepthUnit">
+              <option value="in">inches</option>
+              <option value="ft">feet</option>
+            </select>
+          </label>
+        </div>
+      </div>
+
+      <button type="button" onclick="calculateFooting()">
+        Calculate Footing Volume
+      </button>
+
+      <div id="footResult" class="sw-result"></div>
+
+      <div class="sw-note">
+        Bag counts use approximate yields:<br>
+        • 80 lb bag ≈ 0.60 ft³ &nbsp;• 60 lb bag ≈ 0.45 ft³.<br>
+        Always add a waste factor in real projects (spillage, uneven forms, etc.).
+        Structural design (rebar, frost depth, code rules) is beyond this helper.
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const CUBIC_FEET_PER_YARD = 27.0;
+    const YIELD_80LB_FT3 = 0.60; // approximate
+    const YIELD_60LB_FT3 = 0.45; // approximate
+
+    function toFeet(value, unit) {
+      if (!isFinite(value) || value <= 0) return 0;
+      return unit === 'in' ? value / 12.0 : value;
+    }
+
+    function formatVolumeResult(cuFt) {
+      if (!isFinite(cuFt) || cuFt <= 0) {
+        return 'Check your dimensions. Volume must be greater than zero.';
+      }
+      const cuYd = cuFt / CUBIC_FEET_PER_YARD;
+      const yards = cuYd.toFixed(2);
+      const feet = cuFt.toFixed(1);
+
+      const bags80 = cuFt / YIELD_80LB_FT3;
+      const bags60 = cuFt / YIELD_60LB_FT3;
+
+      const bags80R = bags80.toFixed(1);
+      const bags60R = bags60.toFixed(1);
+
+      return (
+        'Volume: ' + yards + ' yd³ (' + feet + ' ft³)<br>' +
+        'Approx. 80 lb bags: ' + bags80R + ' bag(s)<br>' +
+        'Approx. 60 lb bags: ' + bags60R + ' bag(s)'
+      );
+    }
+
+    function calculateSlab() {
+      const lenVal = parseFloat(document.getElementById('slabLength').value);
+      const widVal = parseFloat(document.getElementById('slabWidth').value);
+      const thickVal = parseFloat(document.getElementById('slabThick').value);
+      const lenUnit = document.getElementById('slabLenUnit').value;
+      const widUnit = document.getElementById('slabWidUnit').value;
+      const thickUnit = document.getElementById('slabThickUnit').value;
+      const resultEl = document.getElementById('slabResult');
+
+      resultEl.innerHTML = '';
+
+      if (isNaN(lenVal) || lenVal <= 0 ||
+          isNaN(widVal) || widVal <= 0 ||
+          isNaN(thickVal) || thickVal <= 0) {
+        resultEl.textContent = 'Please enter valid length, width, and thickness.';
+        return;
+      }
+
+      const lengthFt = toFeet(lenVal, lenUnit);
+      const widthFt  = toFeet(widVal, widUnit);
+      const thickFt  = toFeet(thickVal, thickUnit);
+
+      const volumeFt3 = lengthFt * widthFt * thickFt;
+
+      resultEl.innerHTML = formatVolumeResult(volumeFt3);
+    }
+
+    function calculateFooting() {
+      const lenVal   = parseFloat(document.getElementById('footLength').value);
+      const widVal   = parseFloat(document.getElementById('footWidth').value);
+      const depthVal = parseFloat(document.getElementById('footDepth').value);
+      const lenUnit   = document.getElementById('footLenUnit').value;
+      const widUnit   = document.getElementById('footWidUnit').value;
+      const depthUnit = document.getElementById('footDepthUnit').value;
+      const resultEl = document.getElementById('footResult');
+
+      resultEl.innerHTML = '';
+
+      if (isNaN(lenVal) || lenVal <= 0 ||
+          isNaN(widVal) || widVal <= 0 ||
+          isNaN(depthVal) || depthVal <= 0) {
+        resultEl.textContent = 'Please enter valid length, width, and depth.';
+        return;
+      }
+
+      const lengthFt = toFeet(lenVal, lenUnit);
+      const widthFt  = toFeet(widVal, widUnit);
+      const depthFt  = toFeet(depthVal, depthUnit);
+
+      const volumeFt3 = lengthFt * widthFt * depthFt;
+
+      resultEl.innerHTML = formatVolumeResult(volumeFt3);
+    }
+  </script>
+</body>
+</html>

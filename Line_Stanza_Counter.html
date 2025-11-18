@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Line & Stanza Counter</title>
+    
+    <style>
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #0c0e14; 
+            color: #f4f6f7; 
+        }
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: #1a1e2b; 
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        
+        /* --- BRANDED HEADER --- */
+        .header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #5dade2;
+        }
+        .header-brand h1 { 
+            color: #f39c12; 
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .header-brand p {
+            color: #aeb6bf;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+        /* --- END BRANDED HEADER --- */
+        
+        h2 { margin-top: 0; color: #5dade2; text-align: center; }
+
+        label { display: block; margin-bottom: 8px; color: #5dade2; font-weight: bold; }
+        textarea {
+            width: 100%;
+            height: 250px;
+            padding: 15px;
+            margin-bottom: 20px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            resize: vertical;
+            font-size: 14px;
+            font-family: 'Courier New', monospace; /* Monospace for structured text */
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .output-box {
+            background-color: #34495e;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2ecc71;
+        }
+
+        .output-box h4 {
+            color: #f39c12;
+            margin-top: 0;
+            margin-bottom: 5px;
+            font-size: 1em;
+            text-transform: uppercase;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #2ecc71;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #f39c12;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-brand">
+        <h1>SageWire Tools</h1>
+        <p>We tend the fire while you're out living life.</p>
+    </div>
+    
+    <h2>📜 Line and Stanza Counter</h2>
+    <p>Analyze poetry, scripts, or structured prose by counting lines, words, and structural breaks (stanzas).</p>
+
+    <label for="text-input">Paste Your Structured Text Here</label>
+    <textarea id="text-input" oninput="analyzeStructure()">
+When winter comes,
+and all the leaves are gone,
+the sky is clear.
+
+The night is long,
+but we still sing our song,
+and know no fear.
+    </textarea>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h4>Total Lines</h4>
+            <span id="total-lines-count" class="value">0</span>
+        </div>
+        <div class="output-box">
+            <h4>Non-Empty Lines</h4>
+            <span id="non-empty-lines-count" class="value">0</span>
+        </div>
+        <div class="output-box">
+            <h4>Stanza Count</h4>
+            <span id="stanza-count" class="value">0</span>
+        </div>
+        <div class="output-box">
+            <h4>Word Count</h4>
+            <span id="word-count" class="value">0</span>
+        </div>
+    </div>
+
+    <div class="note">
+        A "Stanza" is defined here as a block of text separated by one or more completely empty lines.
+    </div>
+</div>
+
+<script>
+    const TEXT_INPUT = document.getElementById('text-input');
+    const TOTAL_LINES_COUNT_EL = document.getElementById('total-lines-count');
+    const NON_EMPTY_LINES_COUNT_EL = document.getElementById('non-empty-lines-count');
+    const STANZA_COUNT_EL = document.getElementById('stanza-count');
+    const WORD_COUNT_EL = document.getElementById('word-count');
+
+    function analyzeStructure() {
+        const text = TEXT_INPUT.value;
+        
+        // 1. Total Lines
+        const lines = text.split('\n');
+        const totalLines = lines.length;
+
+        // 2. Non-Empty Lines and Total Word Count
+        let nonEmptyLinesCount = 0;
+        let totalWordCount = 0;
+        
+        lines.forEach(line => {
+            const trimmedLine = line.trim();
+            if (trimmedLine.length > 0) {
+                nonEmptyLinesCount++;
+                // Count words in the line
+                const words = trimmedLine.split(/\s+/).filter(word => word.length > 0);
+                totalWordCount += words.length;
+            }
+        });
+        
+        // 3. Stanza Count (Blocks separated by one or more blank lines)
+        // This regex splits the text by two or more consecutive newline characters,
+        // effectively grouping lines into stanzas (or paragraphs).
+        const stanzas = text.split(/\n\s*\n/g).filter(stanza => stanza.trim().length > 0);
+        const stanzaCount = stanzas.length;
+
+        // --- Update the Display ---
+        TOTAL_LINES_COUNT_EL.textContent = totalLines;
+        NON_EMPTY_LINES_COUNT_EL.textContent = nonEmptyLinesCount;
+        STANZA_COUNT_EL.textContent = stanzaCount;
+        WORD_COUNT_EL.textContent = totalWordCount;
+    }
+
+    // Initialize the analyzer on page load
+    window.onload = function() {
+        analyzeStructure();
+    };
+</script>
+</body>
+</html>
