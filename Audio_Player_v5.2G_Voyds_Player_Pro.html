@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Voyd's Player V2: Mobile Optimized</title>
+    
+    <style>
+        /* --- Default DARK (Space) Theme --- */
+        :root {
+            --bg-color: #0c0e14;
+            --container-bg: #3c3c45; 
+            --text-color: #f4f6f7;
+            --accent-glow: #e74c3c; 
+            --highlight-color: #5dade2; 
+            --neutral-color: #34495e;
+            --sphere-color: #ff6666; 
+        }
+
+        /* --- LIGHT Theme (Activated by the body class) --- */
+        body.light-mode {
+            --bg-color: #f7f7f7;
+            --container-bg: #ffffff;
+            --text-color: #333333;
+            --accent-glow: #2ecc71; 
+            --highlight-color: #007bff;
+            --neutral-color: #e0e0e0;
+            --sphere-color: #5A946E; 
+        }
+
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: var(--bg-color); 
+            color: var(--text-color); 
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            transition: background-color 0.5s;
+        }
+        .container { 
+            max-width: 500px; 
+            margin: 0 auto; 
+            background: var(--container-bg); 
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5); 
+        }
+        
+        /* --- BRANDING & HEADER --- */
+        .full-header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed var(--highlight-color);
+        }
+        .full-header-brand h1 { 
+            color: var(--accent-glow);
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .full-header-brand p {
+            color: var(--highlight-color);
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        .header-brand {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 25px;
+        }
+        .header-brand h1 { 
+            color: var(--text-color);
+            margin: 0 0 0 10px;
+            font-size: 2em;
+        }
+        
+        #void-sphere {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background-color: var(--sphere-color);
+            box-shadow: 0 0 10px rgba(255, 102, 102, 0.7);
+            transition: background-color 0.5s;
+        }
+        .pulsing { animation: pulse 1.5s infinite; }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0.7); }
+            70% { box-shadow: 0 0 0 15px rgba(231, 76, 60, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(231, 76, 60, 0); }
+        }
+
+        /* --- Playlist Styling --- */
+        #playlist-area {
+            max-height: 200px; /* Increased height */
+            overflow-y: auto;
+            border: 1px solid var(--neutral-color);
+            border-radius: 5px;
+            list-style: none;
+            padding: 0;
+            margin-bottom: 20px;
+            background-color: #292930;
+        }
+        .playlist-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 12px;
+            border-bottom: 1px solid #34495e;
+            user-select: none;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+        .playlist-item.playing {
+            background-color: var(--highlight-color);
+            color: var(--container-bg); 
+            border-left: 5px solid var(--accent-glow);
+        }
+        .track-info {
+            cursor: pointer; /* Click to play */
+            flex-grow: 1;
+        }
+        
+        /* --- Mobile Reordering Buttons --- */
+        .reorder-btns button {
+            background: none;
+            border: none;
+            color: var(--highlight-color);
+            cursor: pointer;
+            font-size: 1.1em;
+            margin-left: 5px;
+            padding: 0 5px;
+            transition: color 0.1s;
+        }
+        .reorder-btns button:hover {
+            color: var(--accent-glow);
+        }
+        
+        /* --- General Player Styles --- */
+        #audio-file-input { margin-bottom: 15px; }
+        #current-track-info { color: var(--accent-glow); font-weight: bold; margin-bottom: 10px; text-align: center; }
+        #progress-container { background: var(--neutral-color); margin-bottom: 5px; }
+        #progress-bar { background-color: var(--highlight-color); }
+        #player-controls { margin-bottom: 20px; }
+        #player-controls button { background: var(--highlight-color); }
+        #play-pause-btn { background-color: var(--accent-glow); }
+        #theme-toggle-btn { background-color: var(--neutral-color); border-color: var(--highlight-color); color: var(--text-color); }
+    </style>
+</head>
+<body>
+<button id="theme-toggle-btn" onclick="toggleTheme()">🌑 Dark Mode</button>
+
+<div class="container">
+    <div class="full-header-brand">
+        <h1>SageWire Tools</h1>
+        <p>We tend the fire while you're out living life.</p>
+    </div>
+
+    <div class="header-brand">
+        <div id="void-sphere"></div>
+        <h1>VOYD'S PLAYER</h1> </div>
+
+    <p>Use the buttons on the right to manually set the playlist order.</p>
+
+    <input type="file" id="audio-file-input" accept="audio/*" multiple onchange="loadPlaylist(event)">
+
+    <div id="current-track-info" style="text-align: center;">Playlist Empty.</div>
+
+    <div id="time-display">
+        <span id="current-time">0:00</span>
+        <span id="duration-time">0:00</span>
+    </div>
+
+    <div id="progress-container" onclick="seek(event)">
+        <div id="progress-bar"></div>
+    </div>
+
+    <div id="player-controls">
+        <button onclick="toggleShuffle()">🔀</button>
+        <button onclick="previousTrack()">⏮️</button>
+        <button id="play-pause-btn" onclick="togglePlayPause()">▶️</button>
+        <button onclick="nextTrack()">⏭️</button>
+        <button onclick="stopPlayback()">⏹️</button>
+    </div>
+
+    <ul id="playlist-area">
+        </ul>
+    
+    <audio id="audio-player"></audio>
+</div>
+
+<script>
+    const STORAGE_KEY_THEME = 'voidPlayerTheme';
+    const STORAGE_KEY_PLAYLIST = 'voidPlayerPlaylist'; // New key for playlist memory
+    const STORAGE_KEY_ORIGINAL = 'voidPlayerOriginal'; // New key for original list
+    
+    const AUDIO_INPUT = document.getElementById('audio-file-input');
+    const AUDIO_PLAYER = document.getElementById('audio-player');
+    const TRACK_INFO = document.getElementById('current-track-info');
+    const PLAYLIST_AREA = document.getElementById('playlist-area');
+    const PROGRESS_BAR = document.getElementById('progress-bar');
+    const CURRENT_TIME_EL = document.getElementById('current-time');
+    const DURATION_TIME_EL = document.getElementById('duration-time');
+    const PLAY_PAUSE_BTN = document.getElementById('play-pause-btn');
+    const THEME_TOGGLE_BTN = document.getElementById('theme-toggle-btn');
+    const VOID_SPHERE = document.getElementById('void-sphere');
+    
+    // --- Global State ---
+    let playlist = [];
+    let currentTrackIndex = 0;
+    let isShuffling = false;
+    let isPlaying = false;
+    let originalPlaylist = [];
+    
+    // ==========================================================
+    // 1. UTILITIES & THEMES (WITH MEMORY)
+    // ==========================================================
+
+    function formatTime(seconds) {
+        const min = Math.floor(seconds / 60);
+        const sec = Math.floor(seconds % 60);
+        return `${min}:${String(sec).padStart(2, '0')}`;
+    }
+
+    function toggleTheme() {
+        const isLight = document.body.classList.toggle('light-mode');
+        
+        if (isLight) {
+            THEME_TOGGLE_BTN.textContent = '🌑 Dark Mode';
+            localStorage.setItem(STORAGE_KEY_THEME, 'light');
+        } else {
+            THEME_TOGGLE_BTN.textContent = '✨ Light Mode';
+            localStorage.setItem(STORAGE_KEY_THEME, 'dark');
+        }
+    }
+    
+    function loadSavedTheme() {
+        const savedTheme = localStorage.getItem(STORAGE_KEY_THEME) || 'dark';
+        if (savedTheme === 'light') {
+            document.body.classList.add('light-mode');
+            THEME_TOGGLE_BTN.textContent = '🌑 Dark Mode';
+        } else {
+            document.body.classList.remove('light-mode');
+            THEME_TOGGLE_BTN.textContent = '✨ Light Mode';
+        }
+    }
+
+    function toggleSpherePulse(isPulsing) {
+        VOID_SPHERE.classList.toggle('pulsing', isPulsing);
+    }
+
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+
+    // ==========================================================
+    // 2. PLAYLIST PERSISTENCE & CONTROL
+    // ==========================================================
+    
+    function savePlaylistToLocalStorage() {
+        // Save the current state of the playlist array (track name and URL data)
+        localStorage.setItem(STORAGE_KEY_PLAYLIST, JSON.stringify(playlist));
+        localStorage.setItem(STORAGE_KEY_ORIGINAL, JSON.stringify(originalPlaylist));
+    }
+
+    // --- Core Playlist Loading Logic ---
+
+    function loadPlaylist(event) {
+        const files = Array.from(event.target.files).filter(file => file.type.startsWith('audio/'));
+        
+        if (files.length === 0) return;
+
+        playlist.forEach(file => URL.revokeObjectURL(file.url)); // Clean memory
+        
+        // Map file objects to playlist structure
+        playlist = files.map((file, index) => ({
+            id: 'track-' + index + Math.random().toString(36).substr(2, 5), // Unique ID for keying
+            name: file.name,
+            url: URL.createObjectURL(file) // IMPORTANT: Local URLs must be regenerated
+        }));
+        originalPlaylist = [...playlist]; 
+        
+        currentTrackIndex = 0;
+        renderPlaylist();
+        savePlaylistToLocalStorage(); // Save new playlist
+        
+        if (playlist.length > 0) {
+            TRACK_INFO.textContent = `Loaded ${playlist.length} tracks.`;
+            loadTrack(currentTrackIndex);
+        }
+    }
+    
+    function renderPlaylist() {
+        PLAYLIST_AREA.innerHTML = '';
+        playlist.forEach((track, index) => {
+            const li = document.createElement('li');
+            li.className = 'playlist-item';
+            li.setAttribute('data-index', index); // Used for reordering and playback index
+
+            const trackInfo = document.createElement('span');
+            trackInfo.className = 'track-info';
+            trackInfo.textContent = `${index + 1}. ${track.name}`;
+            trackInfo.addEventListener('click', () => loadTrack(index, true)); // Click to play
+
+            const reorderBtns = document.createElement('span');
+            reorderBtns.className = 'reorder-btns';
+            
+            // Move Up Button
+            const upBtn = document.createElement('button');
+            upBtn.innerHTML = '▲';
+            upBtn.onclick = () => moveTrack(index, index - 1);
+
+            // Move Down Button
+            const downBtn = document.createElement('button');
+            downBtn.innerHTML = '▼';
+            downBtn.onclick = () => moveTrack(index, index + 1);
+
+            reorderBtns.appendChild(upBtn);
+            reorderBtns.appendChild(downBtn);
+            
+            li.appendChild(trackInfo);
+            li.appendChild(reorderBtns);
+
+            if (index === currentTrackIndex) {
+                li.classList.add('playing');
+            }
+            
+            PLAYLIST_AREA.appendChild(li);
+        });
+    }
+
+    function loadTrack(index, playImmediately = false) {
+        if (playlist.length === 0) return;
+
+        currentTrackIndex = (index + playlist.length) % playlist.length;
+        const track = playlist[currentTrackIndex];
+        
+        AUDIO_PLAYER.src = track.url; // Use the stored URL
+        TRACK_INFO.textContent = `Now Playing (${currentTrackIndex + 1}/${playlist.length}): ${track.name}`;
+
+        renderPlaylist(); // Update the 'playing' highlight
+
+        if (playImmediately || isPlaying) {
+            AUDIO_PLAYER.play().then(() => {
+                isPlaying = true;
+                PLAY_PAUSE_BTN.textContent = '⏸️';
+                toggleSpherePulse(true);
+            }).catch(error => {
+                isPlaying = false;
+                PLAY_PAUSE_BTN.textContent = '▶️';
+                toggleSpherePulse(false);
+            });
+        } else {
+             PLAY_PAUSE_BTN.textContent = '▶️';
+        }
+    }
+    
+    // --- Manual Reordering Logic ---
+    function moveTrack(oldIndex, newIndex) {
+        if (newIndex < 0 || newIndex >= playlist.length) {
+            return; // Out of bounds
+        }
+
+        // Swap tracks in the array
+        const trackToMove = playlist.splice(oldIndex, 1)[0];
+        playlist.splice(newIndex, 0, trackToMove);
+
+        // Update current track index if necessary
+        if (currentTrackIndex === oldIndex) {
+            currentTrackIndex = newIndex;
+        } else if (currentTrackIndex === newIndex) {
+            currentTrackIndex = oldIndex;
+        }
+
+        renderPlaylist();
+        savePlaylistToLocalStorage(); // Save the new order
+    }
+
+    // ==========================================================
+    // 3. CONTROLS & TIME
+    // ==========================================================
+
+    function togglePlayPause() {
+        if (playlist.length === 0) return;
+        if (AUDIO_PLAYER.paused) {
+            AUDIO_PLAYER.play();
+            isPlaying = true;
+            PLAY_PAUSE_BTN.textContent = '⏸️';
+            toggleSpherePulse(true);
+        } else {
+            AUDIO_PLAYER.pause();
+            isPlaying = false;
+            PLAY_PAUSE_BTN.textContent = '▶️';
+            toggleSpherePulse(false);
+        }
+    }
+
+    function stopPlayback() {
+        AUDIO_PLAYER.pause();
+        AUDIO_PLAYER.currentTime = 0;
+        isPlaying = false;
+        PLAY_PAUSE_BTN.textContent = '▶️';
+        TRACK_INFO.textContent = 'Playback Stopped.';
+        PROGRESS_BAR.style.width = '0%';
+        CURRENT_TIME_EL.textContent = '0:00';
+        toggleSpherePulse(false);
+    }
+
+    function nextTrack() { loadTrack(currentTrackIndex + 1); }
+    function previousTrack() { loadTrack(currentTrackIndex - 1); }
+
+    function toggleShuffle() {
+        isShuffling = !isShuffling;
+        const shuffleBtn = document.querySelector('button[onclick="toggleShuffle()"]');
+        
+        if (isShuffling) {
+            const currentSong = playlist[currentTrackIndex];
+            playlist = shuffleArray([...originalPlaylist]);
+            currentTrackIndex = playlist.findIndex(track => track.url === currentSong.url); 
+            
+            shuffleBtn.style.backgroundColor = '#2ecc71'; 
+            TRACK_INFO.textContent += ' (SHUFFLE)';
+        } else {
+            const currentSong = playlist[currentTrackIndex];
+            playlist = [...originalPlaylist];
+            currentTrackIndex = originalPlaylist.findIndex(track => track.url === currentSong.url); 
+            
+            shuffleBtn.style.backgroundColor = '#5dade2'; 
+        }
+        renderPlaylist();
+    }
+    
+    // --- Audio Event Handlers ---
+    AUDIO_PLAYER.ontimeupdate = () => {
+        const duration = AUDIO_PLAYER.duration;
+        if (isFinite(duration) && duration > 0) {
+            PROGRESS_BAR.style.width = `${(AUDIO_PLAYER.currentTime / duration) * 100}%`;
+            CURRENT_TIME_EL.textContent = formatTime(AUDIO_PLAYER.currentTime);
+        }
+    };
+    AUDIO_PLAYER.onloadedmetadata = () => { DURATION_TIME_EL.textContent = formatTime(AUDIO_PLAYER.duration); };
+    AUDIO_PLAYER.onended = () => { nextTrack(); };
+    function seek(event) {
+        const progressContainer = document.getElementById('progress-container');
+        const totalWidth = progressContainer.offsetWidth;
+        const seekTime = (event.offsetX / totalWidth) * AUDIO_PLAYER.duration;
+        AUDIO_PLAYER.currentTime = seekTime;
+    }
+
+    // --- Initialization ---
+    window.onload = function() {
+        loadSavedTheme();
+        
+        // --- NOTE: Local URLs are transient. They are deleted when the document is closed. ---
+        // --- Therefore, persisting the playlist (names/metadata) is possible, but playing the files again requires the user to re-select them. ---
+        
+        // Setting up the initial state for VOYD'S PLAYER
+        // The memory persistence for the *playlist content* is not possible because the URLs are revoked.
+        
+        // We will initialize a functional, empty state.
+        TRACK_INFO.textContent = 'Select files to begin.';
+        
+        // NOTE: Drag and drop listeners are removed as we replaced them with buttons.
+    };
+</script>
+</body>
+</html>

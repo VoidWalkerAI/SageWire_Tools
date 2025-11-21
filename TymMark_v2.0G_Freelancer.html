@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TymMark | Freelancer's Cockpit</title>
+    
+    <style>
+        /* --- SAGEWIRE / TYMMARK BRANDING --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .container { 
+            width: 100%;
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 15px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        
+        /* Header Styling */
+        .header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #5dade2;
+        }
+        .header-brand h1 { 
+            color: #f39c12; 
+            margin: 0;
+            font-size: 2.2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .header-brand p {
+            color: #aeb6bf;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        /* --- DASHBOARD (The Cockpit) --- */
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 25px;
+        }
+        .dash-card {
+            background-color: #34343d;
+            border-radius: 8px;
+            padding: 10px;
+            text-align: center;
+            border-top: 3px solid #aeb6bf;
+        }
+        .dash-label { font-size: 0.75em; color: #aeb6bf; text-transform: uppercase; }
+        .dash-value { font-size: 1.2em; font-weight: bold; color: #fff; margin-top: 5px; display: block;}
+        
+        /* Specific dashboard colors */
+        #dash-today { border-color: #5dade2; }
+        #dash-week-hours { border-color: #f39c12; }
+        #dash-week-earn { border-color: #2ecc71; }
+        .money-text { color: #2ecc71; }
+
+        /* Timer & Money Display */
+        .display-container {
+            background-color: #0c0e14;
+            border: 2px solid #34495e;
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .timer-display {
+            font-size: 3.5em;
+            font-weight: bold;
+            color: #f4f6f7;
+            font-family: 'Courier New', monospace;
+            text-shadow: 0 0 10px rgba(0,0,0,0.5);
+            line-height: 1;
+            margin-bottom: 10px;
+        }
+        
+        .money-display {
+            font-size: 2em;
+            color: #2ecc71; /* Money Green */
+            font-weight: bold;
+            font-family: sans-serif;
+            margin-top: 5px;
+        }
+        
+        .status-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 0.7em;
+            padding: 3px 8px;
+            border-radius: 4px;
+            background: #34343d;
+            color: #aaa;
+            text-transform: uppercase;
+            font-weight: bold;
+            display: none; /* Hidden by default */
+        }
+        
+        /* Active/Paused States */
+        .display-container.running { border-color: #2ecc71; }
+        .display-container.running .status-badge { display: block; background: #2ecc71; color: #000; content: "Running"; }
+        
+        .display-container.paused { border-color: #f39c12; }
+        .display-container.paused .timer-display { color: #f39c12; opacity: 0.8; }
+        .display-container.paused .status-badge { display: block; background: #f39c12; color: #000; }
+
+        .rate-input-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+            margin-top: 15px;
+            color: #aeb6bf;
+        }
+        #hourly-rate {
+            width: 80px;
+            padding: 5px;
+            background-color: #34343d;
+            border: 1px solid #5dade2;
+            color: white;
+            text-align: center;
+            border-radius: 5px;
+        }
+
+        /* Main Controls */
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr; /* 3 buttons now */
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+        
+        .btn-main {
+            padding: 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            font-weight: bold;
+            cursor: pointer;
+            text-transform: uppercase;
+            transition: all 0.2s;
+        }
+        .btn-main:active { transform: scale(0.98); }
+        .btn-main:disabled { opacity: 0.3; cursor: not-allowed; transform: none; }
+
+        #mark-in-btn { background-color: #27ae60; color: white; } /* Green */
+        #pause-btn { background-color: #f39c12; color: #1a1e2b; } /* Orange */
+        #mark-out-btn { background-color: #c0392b; color: white; } /* Red */
+        
+        /* Notes Section */
+        .notes-section {
+            background-color: #1a1e2b;
+            padding: 20px;
+            border-radius: 10px;
+            border: 2px solid #34495e;
+            margin-bottom: 30px;
+        }
+        .notes-section h3 { margin-top: 0; color: #5dade2; font-size: 1.1em; border-bottom: 1px solid #34495e; padding-bottom: 10px; }
+        
+        .note-input-group { display: flex; gap: 10px; }
+        #task-input {
+            flex-grow: 1; padding: 10px; border-radius: 5px;
+            border: 1px solid #5dade2; background-color: #0c0e14; color: white;
+        }
+        #add-note-btn {
+            background-color: #5dade2; color: white; border: none;
+            border-radius: 5px; padding: 0 15px; cursor: pointer; font-weight: bold;
+        }
+
+        #current-session-notes {
+            list-style: none; padding: 0; margin-top: 15px;
+            max-height: 150px; overflow-y: auto;
+        }
+        #current-session-notes li {
+            background: #2c3e50; margin-bottom: 5px; padding: 8px;
+            border-radius: 4px; font-size: 0.9em; border-left: 3px solid #f39c12;
+        }
+        .timestamp-tag { color: #aeb6bf; font-size: 0.8em; margin-right: 5px; }
+
+        /* History Log */
+        .history-section { margin-top: 30px; }
+        .log-card {
+            background-color: #34343d; border-radius: 8px;
+            padding: 15px; margin-bottom: 15px; border-left: 4px solid #aeb6bf;
+        }
+        .log-card.today { border-left-color: #2ecc71; }
+        .log-top { display: flex; justify-content: space-between; margin-bottom: 5px; }
+        .log-date { font-weight: bold; color: #f4f6f7; }
+        .log-earnings { color: #2ecc71; font-weight: bold; } 
+        .log-time-range { font-size: 0.85em; color: #aeb6bf; margin-bottom: 10px; }
+        .log-tasks { background-color: #1a1e2b; padding: 10px; border-radius: 4px; font-size: 0.85em; color: #ccc; }
+        .log-tasks ul { margin: 0; padding-left: 20px; }
+        .export-btn {
+            display: block; width: 100%; padding: 12px;
+            background-color: #34495e; color: #fff; border: 1px solid #aeb6bf;
+            border-radius: 8px; cursor: pointer; margin-top: 20px; font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header-brand">
+        <h1>TymMark</h1>
+        <p>Mark In. Mark It Down. Mark Out.</p>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="dash-card" id="dash-today">
+            <span class="dash-label">Hours Today</span>
+            <span class="dash-value" id="val-hours-today">0.0</span>
+        </div>
+        <div class="dash-card" id="dash-week-hours">
+            <span class="dash-label">Hours Week</span>
+            <span class="dash-value" id="val-hours-week">0.0</span>
+        </div>
+        <div class="dash-card" id="dash-week-earn">
+            <span class="dash-label">Earned Week</span>
+            <span class="dash-value money-text" id="val-earn-week">$0</span>
+        </div>
+    </div>
+
+    <div class="display-container" id="timer-container">
+        <div class="status-badge" id="status-badge">Ready</div>
+        <div class="timer-display" id="main-timer">00:00:00</div>
+        <div class="money-display" id="money-display">$0.00</div>
+        
+        <div class="rate-input-group">
+            <label for="hourly-rate">Hourly Rate: $</label>
+            <input type="number" id="hourly-rate" value="0" min="0" step="0.50" oninput="saveRate()">
+        </div>
+    </div>
+
+    <div class="controls">
+        <button id="mark-in-btn" class="btn-main" onclick="markIn()">Mark In</button>
+        <button id="pause-btn" class="btn-main" onclick="togglePause()" disabled>⏸️ Pause</button>
+        <button id="mark-out-btn" class="btn-main" onclick="markOut()" disabled>Mark Out</button>
+    </div>
+
+    <div class="notes-section">
+        <h3>📝 Mark It Down (Task Breakdown)</h3>
+        <div class="note-input-group">
+            <input type="text" id="task-input" placeholder="What are you working on?">
+            <button id="add-note-btn" onclick="addNote()">Add</button>
+        </div>
+        <ul id="current-session-notes"></ul>
+    </div>
+
+    <div class="history-section">
+        <div style="color:#aeb6bf; font-weight:bold; margin-bottom:15px;">SESSION LOG</div>
+        <div id="history-log"></div>
+        <button class="export-btn" onclick="exportToCSV()">⬇️ Export History to CSV</button>
+        <button class="export-btn" style="margin-top:10px; background:#5d1a1a; border-color:#e74c3c;" onclick="clearHistory()">🗑️ Clear History</button>
+    </div>
+</div>
+
+<script>
+    // Elements
+    const TIMER_DISPLAY = document.getElementById('main-timer');
+    const MONEY_DISPLAY = document.getElementById('money-display');
+    const TIMER_CONTAINER = document.getElementById('timer-container');
+    const STATUS_BADGE = document.getElementById('status-badge');
+    const RATE_INPUT = document.getElementById('hourly-rate');
+    const TASK_INPUT = document.getElementById('task-input');
+    const SESSION_NOTES_LIST = document.getElementById('current-session-notes');
+    const HISTORY_LOG = document.getElementById('history-log');
+    
+    // Buttons
+    const BTN_IN = document.getElementById('mark-in-btn');
+    const BTN_PAUSE = document.getElementById('pause-btn');
+    const BTN_OUT = document.getElementById('mark-out-btn');
+
+    // Dashboard Elements
+    const VAL_HOURS_TODAY = document.getElementById('val-hours-today');
+    const VAL_HOURS_WEEK = document.getElementById('val-hours-week');
+    const VAL_EARN_WEEK = document.getElementById('val-earn-week');
+
+    // State
+    let timerInterval;
+    let startTime = null;    // When current segment started
+    let accumulatedMs = 0;   // Time from previous segments (before pause)
+    let isPaused = false;
+    let isActive = false;
+    
+    let currentNotes = [];
+    let historyData = [];
+
+    // --- Core Timer Loop ---
+
+    function updateTimer() {
+        if (isPaused || !isActive) return;
+
+        const now = new Date();
+        const sessionMs = (now - startTime) + accumulatedMs;
+        
+        // 1. Calculate Time
+        const hrs = Math.floor(sessionMs / 3600000);
+        const mins = Math.floor((sessionMs % 3600000) / 60000);
+        const secs = Math.floor((sessionMs % 60000) / 1000);
+
+        TIMER_DISPLAY.textContent = 
+            `${String(hrs).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+            
+        // 2. Calculate Money Live
+        const rate = parseFloat(RATE_INPUT.value) || 0;
+        if (rate > 0) {
+            const hoursDecimal = sessionMs / 3600000;
+            const earnings = hoursDecimal * rate;
+            MONEY_DISPLAY.textContent = '$' + earnings.toFixed(2);
+        }
+    }
+
+    // --- Control Functions ---
+
+    function markIn() {
+        if (isActive) return; // Already running
+        
+        startTime = new Date();
+        accumulatedMs = 0;
+        isPaused = false;
+        isActive = true;
+        
+        currentNotes = []; 
+        SESSION_NOTES_LIST.innerHTML = ''; 
+        MONEY_DISPLAY.textContent = '$0.00';
+        
+        updateUIState();
+        saveState();
+        
+        timerInterval = setInterval(updateTimer, 1000);
+        addNote("Marked In", true);
+    }
+
+    function togglePause() {
+        if (!isActive) return;
+
+        if (isPaused) {
+            // RESUME
+            isPaused = false;
+            startTime = new Date(); // Reset start time for new segment
+            addNote("Resumed Work", true);
+        } else {
+            // PAUSE
+            isPaused = true;
+            const now = new Date();
+            accumulatedMs += (now - startTime); // Bank the time worked so far
+            addNote("Paused Work", true);
+        }
+        updateUIState();
+        saveState();
+        updateTimer(); // Force one update to reflect state
+    }
+
+    function markOut() {
+        if (!isActive) return;
+        
+        clearInterval(timerInterval);
+        
+        // Calculate Final Total Time
+        let finalMs = accumulatedMs;
+        if (!isPaused) {
+            finalMs += (new Date() - startTime);
+        }
+        
+        addNote("Marked Out", true);
+
+        // Financials
+        const rate = parseFloat(RATE_INPUT.value) || 0;
+        const earnings = (finalMs / 3600000) * rate;
+
+        // Create Record
+        const sessionRecord = {
+            id: Date.now(),
+            date: new Date().toISOString(),
+            durationMs: finalMs,
+            rate: rate,
+            earnings: earnings,
+            notes: currentNotes
+        };
+
+        historyData.unshift(sessionRecord); // Add to history
+        
+        // Reset Everything
+        isActive = false;
+        isPaused = false;
+        startTime = null;
+        accumulatedMs = 0;
+        
+        clearState(); // Clear LocalStorage active state
+        saveHistory(); // Save new history
+        
+        // UI Reset
+        updateUIState();
+        TIMER_DISPLAY.textContent = "00:00:00";
+        TASK_INPUT.value = "";
+        SESSION_NOTES_LIST.innerHTML = '<li style="color:#aeb6bf; text-align:center;">Session Ended.</li>';
+        
+        updateDashboard();
+        renderHistory();
+    }
+
+    function addNote(text = null, isSystem = false) {
+        const noteText = text || TASK_INPUT.value.trim();
+        if (!noteText) return;
+
+        const timestamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        const noteObj = { time: timestamp, text: noteText };
+        
+        currentNotes.push(noteObj);
+        if (isActive) saveState(); // Update saved notes
+
+        const li = document.createElement('li');
+        li.innerHTML = `<span class="timestamp-tag">[${timestamp}]</span> ${noteText}`;
+        if (isSystem) li.style.fontStyle = 'italic';
+        
+        SESSION_NOTES_LIST.insertBefore(li, SESSION_NOTES_LIST.firstChild);
+        TASK_INPUT.value = '';
+        if (!text) TASK_INPUT.focus(); // Only focus if user added it manually
+    }
+
+    // --- UI & State Management ---
+
+    function updateUIState() {
+        if (isActive) {
+            BTN_IN.disabled = true;
+            BTN_OUT.disabled = false;
+            BTN_PAUSE.disabled = false;
+            RATE_INPUT.disabled = true;
+            
+            TIMER_CONTAINER.classList.add('running');
+            if (isPaused) {
+                TIMER_CONTAINER.classList.add('paused');
+                STATUS_BADGE.textContent = "PAUSED";
+                BTN_PAUSE.textContent = "▶️ Resume";
+            } else {
+                TIMER_CONTAINER.classList.remove('paused');
+                STATUS_BADGE.textContent = "RUNNING";
+                BTN_PAUSE.textContent = "⏸️ Pause";
+            }
+        } else {
+            BTN_IN.disabled = false;
+            BTN_OUT.disabled = true;
+            BTN_PAUSE.disabled = true;
+            BTN_PAUSE.textContent = "⏸️ Pause";
+            RATE_INPUT.disabled = false;
+            TIMER_CONTAINER.classList.remove('running', 'paused');
+            STATUS_BADGE.textContent = "READY";
+        }
+    }
+
+    // --- Data Persistence ---
+
+    function saveRate() { localStorage.setItem('tymMarkRate', RATE_INPUT.value); }
+    function saveHistory() { localStorage.setItem('tymMarkHistory', JSON.stringify(historyData)); }
+
+    function saveState() {
+        const state = {
+            isActive, isPaused, startTime, accumulatedMs, currentNotes
+        };
+        localStorage.setItem('tymMarkState', JSON.stringify(state));
+    }
+
+    function clearState() { localStorage.removeItem('tymMarkState'); }
+
+    function loadData() {
+        // 1. Settings
+        const savedRate = localStorage.getItem('tymMarkRate');
+        if (savedRate) RATE_INPUT.value = savedRate;
+
+        // 2. History
+        const savedHistory = localStorage.getItem('tymMarkHistory');
+        if (savedHistory) historyData = JSON.parse(savedHistory);
+
+        // 3. Active Session Recovery
+        const savedState = localStorage.getItem('tymMarkState');
+        if (savedState) {
+            const state = JSON.parse(savedState);
+            if (state.isActive) {
+                isActive = true;
+                isPaused = state.isPaused;
+                accumulatedMs = state.accumulatedMs;
+                currentNotes = state.currentNotes || [];
+                
+                if (state.startTime) startTime = new Date(state.startTime);
+
+                // Restore Notes UI
+                currentNotes.forEach(note => {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<span class="timestamp-tag">[${note.time}]</span> ${note.text}`;
+                    SESSION_NOTES_LIST.insertBefore(li, SESSION_NOTES_LIST.firstChild);
+                });
+
+                timerInterval = setInterval(updateTimer, 1000);
+                updateUIState();
+                updateTimer(); // Instant update
+            }
+        }
+        
+        updateDashboard();
+        renderHistory();
+        updateUIState(); // Ensure buttons match state
+    }
+
+    // --- Dashboard Logic ---
+
+    function updateDashboard() {
+        const today = new Date();
+        today.setHours(0,0,0,0);
+        
+        // Determine Start of Week (Monday)
+        const day = today.getDay();
+        const diff = today.getDate() - day + (day == 0 ? -6 : 1); // Adjust for Sunday
+        const startOfWeek = new Date(today.setDate(diff));
+        startOfWeek.setHours(0,0,0,0);
+
+        let msToday = 0;
+        let msWeek = 0;
+        let earnWeek = 0;
+
+        historyData.forEach(session => {
+            const sDate = new Date(session.date);
+            
+            // Check Today
+            if (sDate.toDateString() === new Date().toDateString()) {
+                msToday += session.durationMs;
+            }
+            
+            // Check Week
+            if (sDate >= startOfWeek) {
+                msWeek += session.durationMs;
+                earnWeek += (session.earnings || 0);
+            }
+        });
+
+        VAL_HOURS_TODAY.textContent = (msToday / 3600000).toFixed(1);
+        VAL_HOURS_WEEK.textContent = (msWeek / 3600000).toFixed(1);
+        VAL_EARN_WEEK.textContent = '$' + Math.floor(earnWeek);
+    }
+
+    // --- Rendering & Export ---
+
+    function renderHistory() {
+        HISTORY_LOG.innerHTML = '';
+        historyData.forEach(session => {
+            const date = new Date(session.date);
+            const durationMin = Math.floor(session.durationMs / 60000);
+            const earnedStr = session.earnings ? `$${session.earnings.toFixed(2)}` : '$0.00';
+
+            let notesHtml = '';
+            if (session.notes && session.notes.length > 0) {
+                notesHtml = '<div class="log-tasks"><ul>' + 
+                    session.notes.map(n => `<li>[${n.time}] ${n.text}</li>`).join('') + 
+                    '</ul></div>';
+            }
+
+            const card = document.createElement('div');
+            card.className = 'log-card';
+            if (date.toDateString() === new Date().toDateString()) card.classList.add('today');
+
+            card.innerHTML = `
+                <div class="log-top">
+                    <span class="log-date">${date.toLocaleDateString()}</span>
+                    <span class="log-earnings">${earnedStr}</span>
+                </div>
+                <div class="log-time-range">${durationMin} Minutes</div>
+                ${notesHtml}
+            `;
+            HISTORY_LOG.appendChild(card);
+        });
+    }
+    
+    function exportToCSV() {
+        if (historyData.length === 0) { alert("No history to export."); return; }
+        let csv = "Date,Duration(Mins),Rate,Earned,Notes\n";
+        historyData.forEach(r => {
+            const d = new Date(r.date).toLocaleDateString();
+            const m = Math.round(r.durationMs / 60000);
+            const notes = r.notes.map(n => `[${n.time}] ${n.text}`).join('; ').replace(/,/g, "");
+            csv += `${d},${m},${r.rate},${r.earnings.toFixed(2)},"${notes}"\n`;
+        });
+        const link = document.createElement("a");
+        link.href = encodeURI("data:text/csv;charset=utf-8," + csv);
+        link.download = "TymMark_History.csv";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    function clearHistory() {
+        if(confirm("Delete all history?")) {
+            historyData = [];
+            localStorage.removeItem('tymMarkHistory');
+            loadData();
+        }
+    }
+
+    TASK_INPUT.addEventListener('keypress', (e) => { if (e.key === 'Enter') addNote(); });
+    window.onload = loadData;
+
+</script>
+</body>
+</html>
