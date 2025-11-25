@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cut List Optimizer</title>
+    <style>
+        body { font-family: 'Roboto', sans-serif; margin: 20px; background-color: #f7f7f7; }
+        .calculator { max-width: 700px; margin: 0 auto; padding: 30px; background-color: #fff; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); }
+        h2 { text-align: center; color: #333; border-bottom: 2px solid #5cb85c; padding-bottom: 10px; margin-bottom: 25px; }
+        .input-section, .parts-section { padding: 15px; border: 1px solid #ddd; border-radius: 8px; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="number"] { width: 90%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .part-input { display: flex; gap: 10px; margin-bottom: 10px; align-items: center; }
+        .part-input input { flex: 1; }
+        .part-input button { width: 40px; padding: 8px; background-color: #d9534f; color: white; border: none; border-radius: 5px; cursor: pointer; }
+        #addPart { background-color: #5cb85c; margin-top: 10px; }
+        button.optimize { width: 100%; padding: 15px; margin-top: 25px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; transition: background-color 0.3s; }
+        .results-section { margin-top: 30px; padding: 20px; border: 2px solid #007bff; border-radius: 8px; background-color: #e6f7ff; }
+        .results-section h3 { color: #007bff; }
+        #outputList { list-style: none; padding: 0; }
+        #outputList li { margin-bottom: 10px; padding: 8px; border-bottom: 1px dashed #aaa; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>📐 Cut List Optimizer (1D)</h2>
+        <p>Minimize waste when cutting required pieces from stock material (units consistent: inches, mm, etc.).</p>
+
+        <div class="input-section">
+            <h3>Stock Parameters</h3>
+            <label for="stockLength">Available Stock Length ($L_{\text{stock}}$):</label>
+            <input type="number" id="stockLength" value="144" placeholder="e.g., 144 (12 feet)">
+
+            <label for="kerfWidth">Saw Kerf Width ($K$, material lost per cut):</label>
+            <input type="number" id="kerfWidth" value="0.125" placeholder="e.g., 0.125 (1/8 inch)">
+        </div>
+
+        <div class="parts-section">
+            <h3>Required Parts List (Length & Quantity)</h3>
+            <div id="partsContainer">
+                <div class="part-input">
+                    <input type="number" class="part-length" value="48" placeholder="Length">
+                    <input type="number" class="part-quantity" value="3" placeholder="Qty">
+                    <button onclick="removePart(this)">X</button>
+                </div>
+                <div class="part-input">
+                    <input type="number" class="part-length" value="30" placeholder="Length">
+                    <input type="number" class="part-quantity" value="5" placeholder="Qty">
+                    <button onclick="removePart(this)">X</button>
+                </div>
+            </div>
+            <button id="addPart" onclick="addPartInput()">+ Add Another Part</button>
+        </div>
+
+        <button class="optimize" onclick="runOptimization()">Optimize Cut List</button>
+
+        <div class="results-section">
+            <h3>Optimization Results</h3>
+            <div id="summary">Total Stock Used: <strong>--</strong> | Total Waste: <strong>--</strong></div>
+            <hr>
+            <h4>Recommended Cut Sequence:</h4>
+            <ul id="outputList">
+                <li>Click 'Optimize Cut List' to see results.</li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function addPartInput() {
+            const container = document.getElementById('partsContainer');
+            const newPart = document.createElement('div');
+            newPart.className = 'part-input';
+            newPart.innerHTML = `
+                <input type="number" class="part-length" placeholder="Length">
+                <input type="number" class="part-quantity" placeholder="Qty">
+                <button onclick="removePart(this)">X</button>
+            `;
+            container.appendChild(newPart);
+        }
+
+        function removePart(button) {
+            button.parentNode.remove();
+        }
+
+        function runOptimization() {
+            const stockLength = parseFloat(document.getElementById('stockLength').value);
+            const kerfWidth = parseFloat(document.getElementById('kerfWidth').value);
+            const partsContainer = document.getElementById('partsContainer');
+            const outputList = document.getElementById('outputList');
+            const summaryDiv = document.getElementById('summary');
+            
+            outputList.innerHTML = '';
+            summaryDiv.innerHTML = 'Total Stock Used: <strong>--</strong> | Total Waste: <strong>--</strong>';
+
+            if (isNaN(stockLength) || stockLength <= 0 || isNaN(kerfWidth)) {
+                outputList.innerHTML = '<li>Error: Please enter a valid Stock Length.</li>';
+                return;
+            }
+
+            let requiredPieces = [];
+            partsContainer.querySelectorAll('.part-input').forEach(div => {
+                const length = parseFloat(div.querySelector('.part-length').value);
+                const quantity = parseInt(div.querySelector('.part-quantity').value);
+
+                if (length > 0 && quantity > 0) {
+                    for (let i = 0; i < quantity; i++) {
+                        requiredPieces.push(length);
+                    }
+                }
+            });
+
+            if (requiredPieces.length === 0) {
+                outputList.innerHTML = '<li>Please enter parts to cut.</li>';
+                return;
+            }
+
+            // --- Simplified Best-Fit Decreasing (BFD) Heuristic ---
+            requiredPieces.sort((a, b) => b - a); // Sort Descending
+
+            let stockSheets = [];
+            let stockCount = 0;
+            let totalWaste = 0;
+
+            requiredPieces.forEach(pieceLength => {
+                let pieceFits = false;
+                
+                // Try to fit the piece into an existing stock sheet
+                for (let i = 0; i < stockSheets.length; i++) {
+                    const currentUsedLength = stockSheets[i].used;
+                    
+                    // Kerf must be accounted for *if* this is not the first piece on the stock
+                    const pieceCost = pieceLength + (currentUsedLength > 0 ? kerfWidth : 0);
+
+                    if (currentUsedLength + pieceCost <= stockLength) {
+                        stockSheets[i].cuts.push(pieceLength);
+                        stockSheets[i].used += pieceCost;
+                        pieceFits = true;
+                        break;
+                    }
+                }
+
+                // If piece does not fit anywhere, start a new stock sheet
+                if (!pieceFits) {
+                    stockCount++;
+                    // The first piece on a new stock sheet uses the piece length but no pre-cut kerf
+                    const initialCost = pieceLength; 
+                    stockSheets.push({ 
+                        id: stockCount, 
+                        cuts: [pieceLength], 
+                        used: initialCost 
+                    });
+                }
+            });
+
+            // --- Output Results ---
+            stockSheets.forEach(sheet => {
+                // Calculate actual waste including the final unused length and any trailing kerf
+                const finalKerfCount = sheet.cuts.length > 1 ? sheet.cuts.length - 1 : 0;
+                const totalLengthCut = sheet.cuts.reduce((sum, len) => sum + len, 0);
+                const totalKerfLoss = finalKerfCount * kerfWidth;
+                
+                // Final used space = total material + kerf
+                const totalUsedSpace = totalLengthCut + totalKerfLoss;
+                const waste = stockLength - totalUsedSpace;
+                totalWaste += waste;
+
+                const cutsString = sheet.cuts.map(c => c.toFixed(2)).join(', ');
+                const listItem = document.createElement('li');
+                listItem.innerHTML = `
+                    <strong>Stock ${sheet.id}:</strong> Cuts (${sheet.cuts.length}): ${cutsString}. 
+                    <br> Used: ${totalUsedSpace.toFixed(2)} | Waste: ${waste.toFixed(2)}
+                `;
+                outputList.appendChild(listItem);
+            });
+
+            summaryDiv.innerHTML = `
+                Total Stock Used: <strong>${stockCount}</strong> | 
+                Total Waste: <strong>${totalWaste.toFixed(2)}</strong> (Units)
+            `;
+        }
+    </script>
+</body>
+</html>

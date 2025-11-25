@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hydraulic Cylinder Force Calculator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
+        .calculator { max-width: 500px; margin: 0 auto; padding: 25px; background-color: #fff; border-radius: 10px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.15); }
+        h2 { text-align: center; color: #007bff; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 25px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="number"] { width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 12px; margin-top: 20px; background-color: #28a745; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; }
+        button:hover { background-color: #1e7e34; }
+        .result-section { margin-top: 30px; padding: 15px; border: 1px solid #007bff; border-radius: 6px; background-color: #eaf6ff; }
+        .result-section h3 { margin-top: 0; color: #007bff; }
+        .force-output { font-size: 1.2em; margin: 10px 0; }
+        .force-output strong { color: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>🛠️ Hydraulic Cylinder Force Calculator</h2>
+        <p>Calculates force in pounds ($\text{lb}_{\text{f}}$) using pressure in psi and dimensions in inches.</p>
+
+        <div class="input-group">
+            <label for="pressure">System Pressure (psi):</label>
+            <input type="number" id="pressure" value="3000" placeholder="e.g., 3000">
+        </div>
+
+        <div class="input-group">
+            <label for="pistonDiameter">Piston Bore Diameter (inches):</label>
+            <input type="number" id="pistonDiameter" value="4" placeholder="e.g., 4.0">
+        </div>
+
+        <div class="input-group">
+            <label for="rodDiameter">Rod Diameter (inches):</label>
+            <input type="number" id="rodDiameter" value="2" placeholder="e.g., 2.0">
+        </div>
+
+        <button onclick="calculateForce()">Calculate Cylinder Forces</button>
+
+        <div class="result-section">
+            <h3>Calculated Results</h3>
+            <div class="force-output">
+                Extension Force (Push): <strong id="extensionForce">-- $\text{lb}_{\text{f}}$</strong>
+            </div>
+            <div class="force-output">
+                Retraction Force (Pull): <strong id="retractionForce">-- $\text{lb}_{\text{f}}$</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const PI = Math.PI;
+
+        function calculateForce() {
+            const P = parseFloat(document.getElementById('pressure').value);
+            const D = parseFloat(document.getElementById('pistonDiameter').value);
+            const d = parseFloat(document.getElementById('rodDiameter').value);
+            
+            // Basic input validation
+            if (isNaN(P) || isNaN(D) || isNaN(d) || P <= 0 || D <= 0 || d < 0 || d >= D) {
+                document.getElementById('extensionForce').innerHTML = 'Invalid Input';
+                document.getElementById('retractionForce').innerHTML = 'Invalid Input';
+                return;
+            }
+
+            // 1. Extension Force (Push)
+            // Area 1 (Piston Area): A1 = (PI * D^2) / 4
+            const A1 = (PI * D * D) / 4;
+            // Force Ext: F_ext = P * A1
+            const F_ext = P * A1;
+
+            // 2. Retraction Force (Pull)
+            // Area 2 (Annulus Area): A2 = (PI * (D^2 - d^2)) / 4
+            const A2 = (PI * (D * D - d * d)) / 4;
+            // Force Ret: F_ret = P * A2
+            const F_ret = P * A2;
+
+            document.getElementById('extensionForce').innerHTML = `${F_ext.toFixed(0)} $\\text{lb}_{\\text{f}}$ (Max Force)`;
+            document.getElementById('retractionForce').innerHTML = `${F_ret.toFixed(0)} $\\text{lb}_{\\text{f}}$`;
+        }
+    </script>
+</body>
+</html>

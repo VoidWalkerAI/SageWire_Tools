@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Days to Market</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .target-date-box {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E;
+            text-align: center;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🥩 HerdMate | Days to Market</h1>
+    <p>Predict when your cattle will be finished and ready for the butcher or sale barn.</p>
+
+    <h3 class="section-title">Current Status</h3>
+    <div class="input-grid">
+        <div>
+            <label for="current-weight">Current Weight (Lbs)</label>
+            <input type="number" id="current-weight" value="900" min="100" oninput="calculateFinish()">
+        </div>
+        <div>
+            <label for="adg-input">Avg. Daily Gain (Lbs/Day)</label>
+            <input type="number" id="adg-input" value="3.5" min="0.1" step="0.1" oninput="calculateFinish()">
+        </div>
+    </div>
+
+    <h3 class="section-title">Finish Goals</h3>
+    <div class="input-grid">
+        <div>
+            <label for="target-weight">Target Market Weight</label>
+            <input type="number" id="target-weight" value="1350" min="500" oninput="calculateFinish()">
+        </div>
+        <div>
+            <label for="intake-input">Daily Feed Intake (Lbs)</label>
+            <input type="number" id="intake-input" value="28" min="0" placeholder="Optional" oninput="calculateFinish()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Days Remaining</h3>
+            <span class="value" id="days-left-output">0 Days</span>
+            <span class="label">Until Target Weight</span>
+        </div>
+        <div class="output-box">
+            <h3>Feed Required</h3>
+            <span class="value" id="feed-needed-output">0 Lbs</span>
+            <span class="label">Total to Finish</span>
+        </div>
+    </div>
+    
+    <div class="target-date-box">
+        <span style="color:#aeb6bf; font-weight:bold; display:block; margin-bottom:5px;">ESTIMATED FINISH DATE</span>
+        <span id="target-date-output" style="font-size: 2.2em; color: #5A946E; font-weight: bold;">--/--/----</span>
+    </div>
+    
+    <div class="note">
+        <strong>Tip:</strong> High-energy rations typically yield an ADG of 3.0 - 4.0 lbs. Pasture finishing is typically 1.5 - 2.0 lbs. Adjust your input accordingly.
+    </div>
+</div>
+
+<script>
+    const CURRENT_W_INPUT = document.getElementById('current-weight');
+    const ADG_INPUT = document.getElementById('adg-input');
+    const TARGET_W_INPUT = document.getElementById('target-weight');
+    const INTAKE_INPUT = document.getElementById('intake-input');
+    
+    const DAYS_LEFT_OUTPUT = document.getElementById('days-left-output');
+    const FEED_NEEDED_OUTPUT = document.getElementById('feed-needed-output');
+    const TARGET_DATE_OUTPUT = document.getElementById('target-date-output');
+
+    function calculateFinish() {
+        const currentWt = parseFloat(CURRENT_W_INPUT.value);
+        const adg = parseFloat(ADG_INPUT.value);
+        const targetWt = parseFloat(TARGET_W_INPUT.value);
+        const dailyIntake = parseFloat(INTAKE_INPUT.value);
+
+        // Validation
+        if (isNaN(currentWt) || isNaN(adg) || isNaN(targetWt) || currentWt < 0 || adg <= 0 || targetWt <= currentWt) {
+            DAYS_LEFT_OUTPUT.textContent = '0 Days';
+            FEED_NEEDED_OUTPUT.textContent = '0 Lbs';
+            TARGET_DATE_OUTPUT.textContent = '--/--/----';
+            return;
+        }
+
+        // 1. Calculate Weight to Gain
+        const weightToGain = targetWt - currentWt;
+
+        // 2. Calculate Days Remaining
+        // Formula: Weight Needed / Daily Gain
+        const daysRemaining = Math.ceil(weightToGain / adg);
+
+        // 3. Calculate Target Date
+        const today = new Date();
+        const targetDate = new Date(today);
+        targetDate.setDate(today.getDate() + daysRemaining);
+
+        // 4. Calculate Feed Required (Optional)
+        let totalFeed = 0;
+        if (!isNaN(dailyIntake) && dailyIntake > 0) {
+            totalFeed = daysRemaining * dailyIntake;
+        }
+
+        // --- Output Results ---
+        
+        DAYS_LEFT_OUTPUT.textContent = daysRemaining + " Days";
+        
+        // Format Date
+        const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+        TARGET_DATE_OUTPUT.textContent = targetDate.toLocaleDateString('en-US', options);
+        
+        // Format Feed
+        if (totalFeed > 0) {
+            FEED_NEEDED_OUTPUT.textContent = Math.round(totalFeed).toLocaleString() + " Lbs";
+        } else {
+            FEED_NEEDED_OUTPUT.textContent = "---";
+        }
+        
+        // Color warning if days are excessive (>1 year)
+        if (daysRemaining > 365) {
+            TARGET_DATE_OUTPUT.style.color = '#E74C3C'; // Red
+        } else {
+            TARGET_DATE_OUTPUT.style.color = '#5A946E'; // Green
+        }
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateFinish();
+    };
+</script>
+</body>
+</html>

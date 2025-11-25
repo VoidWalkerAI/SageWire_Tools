@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daylight Remaining Calculator</title>
+    <style>
+        body { font-family: 'Verdana', sans-serif; margin: 20px; background-color: #f0f8ff; }
+        .calculator { max-width: 550px; margin: 0 auto; padding: 30px; background-color: #ffffff; border-radius: 15px; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); }
+        h2 { text-align: center; color: #ff9800; border-bottom: 3px solid #ff9800; padding-bottom: 10px; margin-bottom: 30px; }
+        .input-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        input[type="number"], input[type="time"] { width: 95%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1.05em; }
+        button { width: 100%; padding: 15px; margin-top: 25px; background-color: #28a745; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s; }
+        button:hover { background-color: #1e7e34; }
+        .result-section { margin-top: 35px; padding: 20px; border: 2px dashed #ff9800; border-radius: 10px; background-color: #fffaf0; text-align: center; }
+        .result-section h3 { margin-top: 0; color: #ff9800; }
+        .output-value { font-size: 1.6em; margin: 10px 0; font-weight: 600; color: #00796b; }
+        .note { font-size: 0.9em; color: #777; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>☀️ Daylight Remaining Calculator</h2>
+        <p style="text-align: center;">Estimates sunset time to calculate remaining daylight for your location.</p>
+
+        <h3>Location and Time Inputs</h3>
+        <div class="input-group">
+            <label for="latitude">Latitude (Degrees, North is Positive):</label>
+            <input type="number" id="latitude" value="40.7" placeholder="e.g., 40.7 (New York)">
+        </div>
+        <div class="input-group">
+            <label for="longitude">Longitude (Degrees, East is Positive, West is Negative):</label>
+            <input type="number" id="longitude" value="-74.0" placeholder="e.g., -74.0">
+        </div>
+        <div class="input-group">
+            <label for="currentTime">Current Local Time (HH:MM):</label>
+            <input type="time" id="currentTime" value="13:10">
+        </div>
+        
+        <button onclick="calculateDaylight()">Calculate Daylight Remaining</button>
+
+        <div class="result-section">
+            <h3>Estimated Sunset Time</h3>
+            <div class="output-value" id="sunsetTime">--:--</div>
+            
+            <h3>Daylight Remaining</h3>
+            <div class="output-value" id="remainingTime">-- Hours -- Minutes</div>
+        </div>
+        
+        <p class="note">Note: A functional calculator requires real-time astronomical data (Solar Declination/EoT) for accuracy.</p>
+    </div>
+
+    <script>
+        // NOTE: This JavaScript provides the framework but uses dummy values for the complex astronomical factors.
+        // A true calculator would require a library or API to get accurate daily solar data.
+
+        function calculateDaylight() {
+            const phi = parseFloat(document.getElementById('latitude').value); // Latitude
+            const lambda = parseFloat(document.getElementById('longitude').value); // Longitude
+            const currentTimeStr = document.getElementById('currentTime').value;
+            
+            if (isNaN(phi) || isNaN(lambda) || !currentTimeStr) {
+                alert('Please enter valid latitude, longitude, and current time.');
+                return;
+            }
+
+            // --- 1. ESTIMATE ASTRONOMICAL DATA (Dummy Data for Demonstration) ---
+            // In a real app, these values are calculated based on the current date:
+            // Delta (Solar Declination) is about 0 on the Equinoxes.
+            // EoT (Equation of Time) is 0 on 4 days a year.
+            const solarDeclination_delta = 0.0; // degrees
+            const EoT = 0; // minutes
+
+            // --- 2. Calculate Time of Local Apparent Noon (T_noon) ---
+            // T_noon (min) = 720 - 4 * (lambda_local - lambda_standard) - EoT
+            // Assuming Local Standard Time is used, we use: 720 - 4 * lambda - EoT
+            const noonMinutes = 720 - (4 * lambda) - EoT; 
+
+            // --- 3. Calculate Hour Angle at Sunset (omega_0) ---
+            // omega_0 = arccos( (-sin(-0.833) - sin(phi) * sin(delta)) / (cos(phi) * cos(delta)) )
+            // Convert degrees to radians for JS Math functions
+            const phi_rad = phi * (Math.PI / 180);
+            const delta_rad = solarDeclination_delta * (Math.PI / 180);
+            const elevation_rad = -0.833 * (Math.PI / 180);
+
+            const numerator = -Math.sin(elevation_rad) - Math.sin(phi_rad) * Math.sin(delta_rad);
+            const denominator = Math.cos(phi_rad) * Math.cos(delta_rad);
+            
+            // Check for polar night/day
+            if (denominator === 0 || Math.abs(numerator / denominator) > 1) {
+                document.getElementById('sunsetTime').textContent = "Polar Zone Error";
+                document.getElementById('remainingTime').textContent = "Twilight All Day";
+                return;
+            }
+
+            const omega_0_rad = Math.acos(numerator / denominator);
+            const omega_0_deg = omega_0_rad * (180 / Math.PI);
+
+            // --- 4. Calculate Sunset Time (T_sunset) ---
+            // Time from Noon to Sunset (min) = omega_0_deg / 15 * 60 (simplified to 4 * omega_0_deg)
+            const minutesFromNoon = 4 * omega_0_deg;
+            const sunsetMinutes = noonMinutes + minutesFromNoon;
+
+            // Convert sunset minutes (since midnight) to HH:MM format
+            const sunsetHours = Math.floor(sunsetMinutes / 60) % 24;
+            const sunsetMins = Math.round(sunsetMinutes % 60);
+            
+            const T_sunset_str = `${String(sunsetHours).padStart(2, '0')}:${String(sunsetMins).padStart(2, '0')}`;
+            document.getElementById('sunsetTime').textContent = T_sunset_str;
+
+            // --- 5. Calculate Daylight Remaining ---
+            const [currentH, currentM] = currentTimeStr.split(':').map(Number);
+            const totalCurrentMinutes = currentH * 60 + currentM;
+            
+            // Convert sunset time to total minutes
+            const totalSunsetMinutes = sunsetHours * 60 + sunsetMins;
+
+            let minutesRemaining = totalSunsetMinutes - totalCurrentMinutes;
+
+            if (minutesRemaining < 0) {
+                // If sunset already passed
+                minutesRemaining += 24 * 60; // Calculate daylight until tomorrow's sunset
+            }
+            
+            const finalHours = Math.floor(minutesRemaining / 60);
+            const finalMinutes = minutesRemaining % 60;
+
+            document.getElementById('remainingTime').textContent = `${finalHours} Hours ${finalMinutes} Minutes`;
+        }
+        
+        // Auto-fill time on load (best practice for this type of tool)
+        document.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            const timeString = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+            document.getElementById('currentTime').value = timeString;
+        });
+    </script>
+</body>
+</html>

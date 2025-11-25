@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Potting Mix Ratio Blender</title>
+    <style>
+        body { font-family: 'Georgia', serif; margin: 20px; background-color: #f7fcf5; }
+        .calculator { max-width: 600px; margin: 0 auto; padding: 30px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
+        h2 { text-align: center; color: #38761d; border-bottom: 3px solid #38761d; padding-bottom: 10px; margin-bottom: 25px; }
+        h3 { color: #8f7200; margin-top: 25px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="number"], input[type="text"] { width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        .ingredient-input { display: flex; gap: 10px; margin-bottom: 10px; }
+        .ingredient-input input { flex: 1; }
+        button { width: 100%; padding: 14px; margin-top: 30px; background-color: #8f7200; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; transition: background-color 0.3s; }
+        button:hover { background-color: #6d5700; }
+        .result-section { margin-top: 35px; padding: 20px; border: 2px solid #38761d; border-radius: 8px; background-color: #eaf1e5; }
+        .result-output { font-size: 1.1em; margin: 8px 0; }
+        .result-output strong { color: #8f7200; }
+        #percentCheck { font-weight: bold; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>🪴 Potting Mix Ratio Blender</h2>
+        <p style="text-align: center;">Calculates ingredient volumes needed for a total batch size based on percentage ratios.</p>
+
+        <h3>1. Target Volume</h3>
+        <div class="input-group">
+            <label for="totalVolume">Total Volume Needed (Liters/Gallons/Cubic Feet):</label>
+            <input type="number" id="totalVolume" value="50" placeholder="e.g., 50">
+        </div>
+        <div class="input-group">
+            <label for="volumeUnit">Volume Unit (e.g., L, Gal, ft³):</label>
+            <input type="text" id="volumeUnit" value="Liters" placeholder="Liters">
+        </div>
+
+        <h3>2. Mix Ratios (Must Total 100%)</h3>
+        <div id="ingredientList">
+            <div class="ingredient-input">
+                <input type="text" class="name" value="Peat/Coir" placeholder="Ingredient Name">
+                <input type="number" class="percent" value="30" placeholder="Percentage (%)" oninput="checkTotalPercent()">
+            </div>
+            <div class="ingredient-input">
+                <input type="text" class="name" value="Perlite/Pumice" placeholder="Ingredient Name">
+                <input type="number" class="percent" value="20" placeholder="Percentage (%)" oninput="checkTotalPercent()">
+            </div>
+            <div class="ingredient-input">
+                <input type="text" class="name" value="Orchid Bark" placeholder="Ingredient Name">
+                <input type="number" class="percent" value="40" placeholder="Percentage (%)" oninput="checkTotalPercent()">
+            </div>
+            <div class="ingredient-input">
+                <input type="text" class="name" value="Worm Castings" placeholder="Ingredient Name">
+                <input type="number" class="percent" value="10" placeholder="Percentage (%)" oninput="checkTotalPercent()">
+            </div>
+        </div>
+        <div id="percentCheck">Total Percentage: 100%</div>
+
+        <button onclick="blendMix()">Blend Mix Volumes</button>
+
+        <div class="result-section">
+            <h3>Required Volumes for Blend</h3>
+            <div id="resultOutput">
+                <p>Enter inputs and click 'Blend Mix Volumes'.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function checkTotalPercent() {
+            const percents = document.querySelectorAll('.percent');
+            let total = 0;
+            percents.forEach(input => {
+                total += parseFloat(input.value) || 0;
+            });
+
+            const checkDiv = document.getElementById('percentCheck');
+            checkDiv.textContent = `Total Percentage: ${total.toFixed(0)}%`;
+            if (total !== 100) {
+                checkDiv.style.color = '#dc3545';
+            } else {
+                checkDiv.style.color = '#38761d';
+            }
+        }
+
+        function blendMix() {
+            const V_total = parseFloat(document.getElementById('totalVolume').value);
+            const unit = document.getElementById('volumeUnit').value;
+            const resultDiv = document.getElementById('resultOutput');
+            const percents = document.querySelectorAll('.percent');
+            const names = document.querySelectorAll('.name');
+            let totalPercent = 0;
+            
+            percents.forEach(input => {
+                totalPercent += parseFloat(input.value) || 0;
+            });
+
+            if (isNaN(V_total) || V_total <= 0) {
+                resultDiv.innerHTML = '<p style="color:red;">Error: Please enter a valid Total Volume.</p>';
+                return;
+            }
+            if (Math.abs(totalPercent - 100) > 0.01) {
+                resultDiv.innerHTML = '<p style="color:red;">Error: Total Ratios must equal 100%.</p>';
+                return;
+            }
+
+            resultDiv.innerHTML = '';
+            
+            names.forEach((nameInput, index) => {
+                const percentValue = parseFloat(percents[index].value);
+                if (percentValue > 0) {
+                    // Formula: V_ingredient = V_total * (% / 100)
+                    const V_ingredient = V_total * (percentValue / 100);
+
+                    const outputP = document.createElement('p');
+                    outputP.className = 'result-output';
+                    outputP.innerHTML = `
+                        ${nameInput.value} (${percentValue}%): 
+                        <strong>${V_ingredient.toFixed(2)} ${unit}</strong>
+                    `;
+                    resultDiv.appendChild(outputP);
+                }
+            });
+        }
+
+        // Initialize check on load
+        checkTotalPercent();
+    </script>
+</body>
+</html>

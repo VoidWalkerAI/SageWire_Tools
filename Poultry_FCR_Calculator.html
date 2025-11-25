@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Poultry FCR Calculator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🐔 HerdMate | Poultry FCR</h1>
+    <p>Calculate Feed Conversion Ratio to measure the efficiency of your meat bird flock.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="feed-input">Total Feed Consumed (Lbs)</label>
+            <input type="number" id="feed-input" value="500" min="1" oninput="calculateFCR()">
+        </div>
+        <div>
+            <label for="weight-input">Total Live Weight (Lbs)</label>
+            <input type="number" id="weight-input" value="250" min="1" oninput="calculateFCR()">
+        </div>
+    </div>
+    
+    <label for="cost-input">Total Cost of Feed ($)</label>
+    <input type="number" id="cost-input" value="150.00" min="0" step="0.01" oninput="calculateFCR()">
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Feed Conversion Ratio</h3>
+            <span class="value" id="fcr-output">0.0</span>
+            <span class="label">Lbs Feed per Lb Meat</span>
+        </div>
+        <div class="output-box">
+            <h3>Feed Cost of Gain</h3>
+            <span class="value" id="cost-output">$0.00</span>
+            <span class="label">Cost Per Lb of Meat</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Targets:</strong> A good FCR for commercial broilers is around <strong>1.6 - 1.8</strong>. Heritage breeds or free-range birds may range from <strong>2.5 - 4.0</strong>. Lower is better.
+    </div>
+</div>
+
+<script>
+    const FEED_INPUT = document.getElementById('feed-input');
+    const WEIGHT_INPUT = document.getElementById('weight-input');
+    const COST_INPUT = document.getElementById('cost-input');
+    
+    const FCR_OUTPUT = document.getElementById('fcr-output');
+    const COST_OUTPUT = document.getElementById('cost-output');
+
+    function calculateFCR() {
+        const feed = parseFloat(FEED_INPUT.value);
+        const weight = parseFloat(WEIGHT_INPUT.value);
+        const cost = parseFloat(COST_INPUT.value);
+
+        // Validation
+        if (isNaN(feed) || isNaN(weight) || feed <= 0 || weight <= 0) {
+            FCR_OUTPUT.textContent = '0.0';
+            COST_OUTPUT.textContent = '$0.00';
+            return;
+        }
+
+        // 1. Calculate FCR
+        // Formula: Total Feed / Total Weight
+        const fcr = feed / weight;
+
+        // 2. Calculate Cost Per Pound of Gain
+        // Formula: Total Cost / Total Weight
+        let costPerLb = 0;
+        if (!isNaN(cost) && cost > 0) {
+            costPerLb = cost / weight;
+        }
+
+        // --- Output Results ---
+        
+        FCR_OUTPUT.textContent = fcr.toFixed(2);
+        COST_OUTPUT.textContent = '$' + costPerLb.toFixed(2);
+        
+        // Visual Logic: Color code the FCR
+        // 1.8 is standard efficient broiler, 2.5 is decent for range
+        if (fcr < 2.0) {
+             FCR_OUTPUT.style.color = '#5A946E'; // Excellent (Green)
+        } else if (fcr < 3.0) {
+             FCR_OUTPUT.style.color = '#f39c12'; // Average/Heritage (Yellow)
+        } else {
+             FCR_OUTPUT.style.color = '#E74C3C'; // High/Inefficient (Red)
+        }
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateFCR();
+    };
+</script>
+</body>
+</html>

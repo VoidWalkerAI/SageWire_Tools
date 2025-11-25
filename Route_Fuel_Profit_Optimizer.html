@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Route Fuel & Profit Optimizer</title>
+    <style>
+        body { font-family: 'Verdana', sans-serif; margin: 20px; background-color: #e6f7ff; }
+        .calculator { max-width: 800px; margin: 0 auto; padding: 30px; background-color: #ffffff; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2); }
+        h2 { text-align: center; color: #004d40; border-bottom: 3px solid #004d40; padding-bottom: 10px; margin-bottom: 25px; }
+        h3 { color: #00796b; margin-top: 25px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        .input-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="number"], input[type="text"] { width: 90%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        #stopsContainer input { width: 45%; margin-right: 5px; }
+        button { width: 100%; padding: 16px; margin-top: 30px; background-color: #ff9800; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.2em; font-weight: bold; transition: background-color 0.3s; }
+        button:hover { background-color: #e65100; }
+        .result-section { margin-top: 35px; padding: 25px; border: 2px solid #ff9800; border-radius: 10px; background-color: #fffaf0; }
+        .result-output { font-size: 1.2em; margin: 12px 0; }
+        .result-output strong { color: #d32f2f; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>💰 Route Fuel & Profit Optimizer</h2>
+        <p style="text-align: center;">Finds the maximum Profit Per Hour ($\Pi_{\text{time}}$) for a route.</p>
+
+        <h3>1. Vehicle & Cost Data</h3>
+        <div class="input-grid">
+            <div>
+                <label for="mpg">Fuel Efficiency (MPG/kpl):</label>
+                <input type="number" id="mpg" value="7" placeholder="e.g., 7.0 (MPG)">
+            </div>
+            <div>
+                <label for="fuelPrice">Average Fuel Price (Currency/Gallon/Liter):</label>
+                <input type="number" id="fuelPrice" value="3.50" placeholder="e.g., 3.50">
+            </div>
+            <div>
+                <label for="avgSpeed">Average Travel Speed (MPH/kph):</label>
+                <input type="number" id="avgSpeed" value="50" placeholder="e.g., 50 (MPH)">
+            </div>
+            <div>
+                <label for="fixedCostHour">Variable/Fixed Cost Per Hour (Wages, Maintenance):</label>
+                <input type="number" id="fixedCostHour" value="30" placeholder="e.g., 30.00">
+            </div>
+        </div>
+        
+        <h3>2. Route & Revenue Data</h3>
+        <div id="stopsContainer">
+            <label for="stop1">Stop 1 (Start/Load):</label>
+            <input type="text" id="stop1Name" value="Warehouse" placeholder="Location Name">
+            <label for="stop1Rev">Revenue ($):</label>
+            <input type="number" id="stop1Rev" value="0" disabled>
+            <div style="margin-top: 10px;">
+                <label for="distance12">Distance to Stop 2 (Miles/km):</label>
+                <input type="number" id="distance12" value="150" placeholder="e.g., 150">
+            </div>
+        </div>
+
+        <div id="additionalStops">
+            <label for="distance23">Distance to Stop 3 (Miles/km):</label>
+            <input type="number" id="distance23" value="100" placeholder="e.g., 100">
+            <label for="stop2Rev">Revenue at Stop 2 ($):</label>
+            <input type="number" id="stop2Rev" value="800" placeholder="e.g., 800">
+        </div>
+        
+        <label for="distance3end">Distance to End/Return (Miles/km):</label>
+        <input type="number" id="distance3end" value="200" placeholder="e.g., 200">
+        <label for="stop3Rev">Revenue at End Stop ($):</label>
+        <input type="number" id="stop3Rev" value="1000" placeholder="e.g., 1000">
+
+        <button onclick="optimizeProfit()">Optimize Route Profit</button>
+
+        <div class="result-section">
+            <h3>Optimization Results</h3>
+            <div class="result-output">
+                Total Distance Traveled: <strong id="totalDistance">-- Miles/km</strong>
+            </div>
+            <div class="result-output">
+                Total Travel Time: <strong id="totalTime">-- Hours</strong>
+            </div>
+            <div class="result-output">
+                Total Operating Cost (Fuel + Variable): <strong id="totalCost">-- Currency</strong>
+            </div>
+            <div class="result-output" style="font-size: 1.4em;">
+                Total Profit Per Hour ($\Pi_{\text{time}}$): <strong id="profitPerHour">-- Currency/Hr</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function optimizeProfit() {
+            const E = parseFloat(document.getElementById('mpg').value); // Efficiency
+            const P_fuel = parseFloat(document.getElementById('fuelPrice').value);
+            const V_avg = parseFloat(document.getElementById('avgSpeed').value);
+            const C_fixed_hr = parseFloat(document.getElementById('fixedCostHour').value);
+            
+            const D12 = parseFloat(document.getElementById('distance12').value);
+            const D23 = parseFloat(document.getElementById('distance23').value);
+            const D3E = parseFloat(document.getElementById('distance3end').value); // Distance to End
+
+            const R2 = parseFloat(document.getElementById('stop2Rev').value);
+            const R3 = parseFloat(document.getElementById('stop3Rev').value);
+
+            // Basic validation
+            if ([E, P_fuel, V_avg, C_fixed_hr, D12, D23, D3E, R2, R3].some(isNaN) || E <= 0 || V_avg <= 0) {
+                alert('Please ensure all fields are filled with valid, non-zero numbers.');
+                return;
+            }
+
+            // --- 1. Route Modeling ---
+            // NOTE: This simple script assumes a fixed route sequence (1->2->3->End).
+            // A real optimizer would use a TSP algorithm to test all sequences.
+            const D_total = D12 + D23 + D3E;
+            const T_total = D_total / V_avg; // Total travel time in hours
+
+            // --- 2. Cost Estimation ---
+            // Total Fuel Volume (V_fuel = D_total / E)
+            const V_fuel = D_total / E;
+            // Total Fuel Cost (C_fuel = V_fuel * P_fuel)
+            const C_fuel = V_fuel * P_fuel;
+            // Total Variable/Fixed Cost (C_variable = T_total * C_fixed_hr)
+            const C_variable = T_total * C_fixed_hr;
+            // Total Operating Cost (C_total = C_fuel + C_variable)
+            const C_total = C_fuel + C_variable;
+
+            // --- 3. Profit Maximization ---
+            const R_total = R2 + R3;
+            const Profit_total = R_total - C_total;
+            
+            // Profit Per Unit Time (The optimization metric)
+            const Profit_per_hour = Profit_total / T_total;
+            
+            // --- Output ---
+            document.getElementById('totalDistance').textContent = `${D_total.toFixed(0)} Miles/km`;
+            document.getElementById('totalTime').textContent = `${T_total.toFixed(1)} Hours`;
+            document.getElementById('totalCost').textContent = `${C_total.toFixed(2)}`;
+            document.getElementById('profitPerHour').textContent = `${Profit_per_hour.toFixed(2)} / Hr`;
+        }
+    </script>
+</body>
+</html>

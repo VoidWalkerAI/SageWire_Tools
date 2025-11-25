@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vehicle Towing Safety Check</title>
+    <style>
+        body { font-family: 'Tahoma', sans-serif; margin: 20px; background-color: #f7f7f7; }
+        .calculator { max-width: 650px; margin: 0 auto; padding: 30px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
+        h2 { text-align: center; color: #dc3545; border-bottom: 3px solid #dc3545; padding-bottom: 10px; margin-bottom: 25px; }
+        h3 { color: #007bff; margin-top: 20px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        .input-group { display: flex; gap: 20px; margin-bottom: 15px; }
+        .input-item { flex: 1; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="number"] { width: 90%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; margin-top: 30px; background-color: #28a745; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; transition: background-color 0.3s; }
+        button:hover { background-color: #1e7e34; }
+        .result-section { margin-top: 30px; padding: 20px; border: 2px solid #ffc107; border-radius: 8px; background-color: #fffbe6; }
+        .result-output { font-size: 1.1em; margin: 10px 0; }
+        .result-output strong { color: #dc3545; }
+        .safety-status { font-weight: bold; margin-top: 15px; padding: 10px; background-color: #e2f0d9; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>🛑 Vehicle Towing Safety Check</h2>
+        <p style="text-align: center;">All weights should be in the same unit (e.g., pounds or kilograms).</p>
+
+        <h3>1. Vehicle & Trailer Limits (From Door Sticker/Manual)</h3>
+        <div class="input-group">
+            <div class="input-item">
+                <label for="maxTowCapacity">Max Tow Capacity (Vehicle/Hitch Limit):</label>
+                <input type="number" id="maxTowCapacity" value="7000" placeholder="e.g., 7000">
+            </div>
+            <div class="input-item">
+                <label for="gcwr">Gross Combined Weight Rating (GCWR):</label>
+                <input type="number" id="gcwr" value="12000" placeholder="e.g., 12000">
+            </div>
+        </div>
+
+        <h3>2. Actual Weights (Measured or Estimated)</h3>
+        <div class="input-group">
+            <div class="input-item">
+                <label for="ttw">Total Trailer Weight (TTW, Loaded):</label>
+                <input type="number" id="ttw" value="5500" placeholder="e.g., 5500">
+            </div>
+            <div class="input-item">
+                <label for="loadedVehicleWeight">Loaded Tow Vehicle Weight (GVW):</label>
+                <input type="number" id="loadedVehicleWeight" value="4500" placeholder="e.g., 4500">
+            </div>
+        </div>
+        
+        <button onclick="performSafetyCheck()">Run Safety Check & Calculate Limits</button>
+
+        <div class="result-section">
+            <h3>Towing Safety Results</h3>
+
+            <div class="result-output">
+                **Total Combined Weight:** <strong id="combinedWeight">--</strong>
+                <div class="safety-status" id="gcwrStatus">GCWR Check: --</div>
+            </div>
+            
+            <div class="result-output">
+                **Trailer Capacity Check:** <strong id="towCapacityStatus">--</strong>
+            </div>
+
+            <div class="result-output">
+                **Ideal Tongue Weight Range (10% - 15% of TTW):** <strong id="twRange">--</strong>
+            </div>
+            <p style="font-size: 0.9em; margin-top: 10px;">
+                *You must adjust your trailer load to achieve a measured TW within this range for stable towing.*
+            </p>
+        </div>
+    </div>
+
+    <script>
+        function performSafetyCheck() {
+            const maxTowCapacity = parseFloat(document.getElementById('maxTowCapacity').value);
+            const gcwr = parseFloat(document.getElementById('gcwr').value);
+            const ttw = parseFloat(document.getElementById('ttw').value);
+            const loadedVehicleWeight = parseFloat(document.getElementById('loadedVehicleWeight').value);
+
+            if (isNaN(maxTowCapacity) || isNaN(gcwr) || isNaN(ttw) || isNaN(loadedVehicleWeight) || ttw <= 0) {
+                alert('Please enter valid, non-zero weights for all fields.');
+                return;
+            }
+
+            // --- 1. GCWR Check ---
+            const combinedWeight = loadedVehicleWeight + ttw;
+            const gcwrStatusDiv = document.getElementById('gcwrStatus');
+            const gcwrCheck = combinedWeight <= gcwr;
+
+            document.getElementById('combinedWeight').textContent = `${combinedWeight.toFixed(0)} Units`;
+            
+            if (gcwrCheck) {
+                gcwrStatusDiv.textContent = `PASS: Combined Weight is below the GCWR limit (${gcwr.toFixed(0)}).`;
+                gcwrStatusDiv.style.backgroundColor = '#d4edda'; // Green light
+            } else {
+                gcwrStatusDiv.textContent = `FAIL: Combined Weight is ${combinedWeight - gcwr} Units OVER the GCWR limit (${gcwr.toFixed(0)}).`;
+                gcwrStatusDiv.style.backgroundColor = '#f8d7da'; // Red light
+            }
+
+            // --- 2. Towing Capacity Check ---
+            const towCapacityStatusDiv = document.getElementById('towCapacityStatus');
+            const towCapacityCheck = ttw <= maxTowCapacity;
+
+            if (towCapacityCheck) {
+                towCapacityStatusDiv.innerHTML = `PASS: Trailer Weight is safe (Max Capacity: ${maxTowCapacity.toFixed(0)} Units).`;
+                towCapacityStatusDiv.style.color = '#28a745';
+            } else {
+                towCapacityStatusDiv.innerHTML = `FAIL: Trailer Weight is ${ttw - maxTowCapacity} Units OVER max tow capacity.`;
+                towCapacityStatusDiv.style.color = '#dc3545';
+            }
+
+            // --- 3. Tongue Weight (TW) Calculation ---
+            // Ideal TW is 10% to 15% of the Total Trailer Weight (TTW)
+            const minTW = ttw * 0.10;
+            const maxTW = ttw * 0.15;
+            
+            document.getElementById('twRange').textContent = `${minTW.toFixed(0)} to ${maxTW.toFixed(0)} Units`;
+            document.getElementById('twRange').style.color = '#dc3545';
+        }
+    </script>
+</body>
+</html>

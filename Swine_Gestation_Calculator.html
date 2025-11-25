@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Swine Gestation Calc</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+            font-family: inherit;
+            margin-bottom: 20px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5dade2; 
+            background-color: #34343d;
+        }
+
+        .output-box.primary {
+            border-color: #5A946E; /* Forage Green */
+            background-color: #1e2b24;
+        }
+        
+        .output-box.warning {
+            border-color: #f39c12; /* Orange for Move Date */
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #f4f6f7;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .output-box.primary .value { color: #5A946E; }
+        .output-box.warning .value { color: #f39c12; }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🐖 HerdMate | Swine Farrowing</h1>
+    <p>Calculate due dates and management schedules based on the 114-day gestation cycle.</p>
+
+    <label for="breeding-date">Breeding / AI Date</label>
+    <input type="date" id="breeding-date" onchange="calculateSwineDates()">
+
+    <div class="output-grid">
+        <div class="output-box primary">
+            <h3>Expected Farrowing Date</h3>
+            <span class="value" id="farrow-date-output">--/--/----</span>
+            <span class="label">Day 114 (Due Date)</span>
+        </div>
+
+        <div class="output-box warning">
+            <h3>Move to Crate/Pen</h3>
+            <span class="value" id="move-date-output">--/--/----</span>
+            <span class="label">Day 110 (4 Days Prior)</span>
+        </div>
+
+        <div class="output-box" style="border-color: #7D716A;">
+            <h3>Return to Estrous Check</h3>
+            <span class="value" id="check-date-output">--/--/----</span>
+            <span class="label">Day 21 (If Not Pregnant)</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Rule of Thumb:</strong> Swine gestation is often remembered as "3 months, 3 weeks, and 3 days" (114 days). Move sows to farrowing quarters by Day 110 to acclimate.
+    </div>
+</div>
+
+<script>
+    const BREEDING_INPUT = document.getElementById('breeding-date');
+    const FARROW_OUTPUT = document.getElementById('farrow-date-output');
+    const MOVE_OUTPUT = document.getElementById('move-date-output');
+    const CHECK_OUTPUT = document.getElementById('check-date-output');
+
+    const GESTATION_DAYS = 114;
+    const MOVE_DAYS = 110; // 4 days before due date
+    const CHECK_DAYS = 21; // Standard heat cycle
+
+    function calculateSwineDates() {
+        const inputDate = BREEDING_INPUT.value;
+        
+        if (!inputDate) return;
+
+        // Create Date object (T12:00:00 prevents timezone offset errors)
+        const breedingDate = new Date(inputDate + 'T12:00:00');
+
+        // 1. Calculate Farrowing Date (Day 114)
+        const farrowDate = new Date(breedingDate);
+        farrowDate.setDate(breedingDate.getDate() + GESTATION_DAYS);
+
+        // 2. Calculate Move-In Date (Day 110)
+        const moveDate = new Date(breedingDate);
+        moveDate.setDate(breedingDate.getDate() + MOVE_DAYS);
+        
+        // 3. Calculate Heat Check Date (Day 21)
+        const checkDate = new Date(breedingDate);
+        checkDate.setDate(breedingDate.getDate() + CHECK_DAYS);
+
+        // --- Output Formatted Dates ---
+        
+        const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+
+        FARROW_OUTPUT.textContent = farrowDate.toLocaleDateString('en-US', options);
+        MOVE_OUTPUT.textContent = moveDate.toLocaleDateString('en-US', options);
+        CHECK_OUTPUT.textContent = checkDate.toLocaleDateString('en-US', options);
+    }
+
+    // Initialize
+    window.onload = function() {
+        // Set default date to today
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        BREEDING_INPUT.value = `${year}-${month}-${day}`;
+        
+        calculateSwineDates();
+    };
+</script>
+</body>
+</html>

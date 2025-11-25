@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Water Demand Estimator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>💧 HerdMate | Water Demand</h1>
+    <p>Estimate total daily water requirements based on herd size and air temperature.</p>
+
+    <label for="animal-type">Livestock Class</label>
+    <select id="animal-type" onchange="calculateWater()">
+        <option value="15">Beef Cow/Calf Pair (15 gal base)</option>
+        <option value="12">Dry Cow / Bred Heifer (12 gal base)</option>
+        <option value="10">Yearling / Stocker (10 gal base)</option>
+        <option value="18">Bull (18 gal base)</option>
+        <option value="30">Lactating Dairy Cow (30 gal base)</option>
+        <option value="12">Horse (12 gal base)</option>
+        <option value="2">Sheep / Goat (2 gal base)</option>
+    </select>
+
+    <div class="input-grid" style="margin-top: 15px;">
+        <div>
+            <label for="herd-size">Herd Size (Head)</label>
+            <input type="number" id="herd-size" value="50" min="1" oninput="calculateWater()">
+        </div>
+        <div>
+            <label for="temp-input">High Temp (°F)</label>
+            <input type="number" id="temp-input" value="85" min="0" max="120" oninput="calculateWater()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Total Daily Demand</h3>
+            <span class="value" id="total-gallons-output">0 Gal</span>
+            <span class="label">Gallons Per Day</span>
+        </div>
+        <div class="output-box">
+            <h3>Per Animal</h3>
+            <span class="value" id="per-head-output">0 Gal</span>
+            <span class="label">Average Intake</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Heat Stress Factor:</strong> Water intake increases significantly above 70°F. At 90°F+, intake can nearly double compared to 50°F. Ensure peak flow rate can keep troughs full.
+    </div>
+</div>
+
+<script>
+    const ANIMAL_SELECT = document.getElementById('animal-type');
+    const HERD_INPUT = document.getElementById('herd-size');
+    const TEMP_INPUT = document.getElementById('temp-input');
+    
+    const TOTAL_OUT = document.getElementById('total-gallons-output');
+    const PER_HEAD_OUT = document.getElementById('per-head-output');
+
+    function calculateWater() {
+        const baseIntake = parseFloat(ANIMAL_SELECT.value);
+        const herdSize = parseInt(HERD_INPUT.value);
+        const temp = parseFloat(TEMP_INPUT.value);
+
+        // Validation
+        if (isNaN(baseIntake) || isNaN(herdSize) || isNaN(temp) || herdSize <= 0) {
+            TOTAL_OUT.textContent = '0 Gal';
+            PER_HEAD_OUT.textContent = '0 Gal';
+            return;
+        }
+
+        // --- Calculate Temperature Multiplier ---
+        // Base intake assumes moderate temps (approx 50-60F).
+        // Intake rises as temp rises.
+        let tempMultiplier = 1.0;
+        
+        if (temp >= 90) {
+            tempMultiplier = 1.9; // Near double intake
+        } else if (temp >= 80) {
+            tempMultiplier = 1.5; // +50%
+        } else if (temp >= 70) {
+            tempMultiplier = 1.2; // +20%
+        } else {
+            tempMultiplier = 1.0; // Baseline
+        }
+
+        // --- Calculate Requirements ---
+        const intakePerHead = baseIntake * tempMultiplier;
+        const totalDemand = intakePerHead * herdSize;
+
+        // --- Output Results ---
+        
+        TOTAL_OUT.textContent = Math.round(totalDemand).toLocaleString() + " Gal";
+        PER_HEAD_OUT.textContent = intakePerHead.toFixed(1) + " Gal";
+        
+        // Visual Feedback for High Demand
+        if (temp >= 90) {
+            TOTAL_OUT.style.color = '#E74C3C'; // Red (Critical Load)
+        } else {
+            TOTAL_OUT.style.color = '#5A946E'; // Green
+        }
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateWater();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Field Work Rate</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🚜 HerdMate | Field Work Rate</h1>
+    <p>Calculate equipment capacity (Acres/Hour) and estimated time to finish a field.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="width-input">Implement Width (Feet)</label>
+            <input type="number" id="width-input" value="15" min="1" oninput="calculateRate()">
+        </div>
+        <div>
+            <label for="speed-input">Average Speed (MPH)</label>
+            <input type="number" id="speed-input" value="5.0" min="0.1" step="0.1" oninput="calculateRate()">
+        </div>
+    </div>
+    
+    <div class="input-grid">
+        <div>
+            <label for="efficiency-input">Field Efficiency (%)</label>
+            <input type="number" id="efficiency-input" value="80" min="1" max="100" oninput="calculateRate()">
+        </div>
+        <div>
+            <label for="field-size-input">Field Size (Acres) - *Optional*</label>
+            <input type="number" id="field-size-input" value="40" min="0" oninput="calculateRate()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Work Rate</h3>
+            <span class="value" id="rate-output">0.0 Ac/Hr</span>
+            <span class="label">Acres Per Hour</span>
+        </div>
+        <div class="output-box">
+            <h3>Time to Finish</h3>
+            <span class="value" id="time-output">0.0 Hours</span>
+            <span class="label">Total Tractor Time</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Efficiency Tip:</strong> 80-85% is typical for tillage. Planting/Harvesting may be 65-75% due to refill stops and turning.
+    </div>
+</div>
+
+<script>
+    const WIDTH_INPUT = document.getElementById('width-input');
+    const SPEED_INPUT = document.getElementById('speed-input');
+    const EFFICIENCY_INPUT = document.getElementById('efficiency-input');
+    const FIELD_SIZE_INPUT = document.getElementById('field-size-input');
+    
+    const RATE_OUTPUT = document.getElementById('rate-output');
+    const TIME_OUTPUT = document.getElementById('time-output');
+
+    function calculateRate() {
+        const width = parseFloat(WIDTH_INPUT.value);
+        const speed = parseFloat(SPEED_INPUT.value);
+        const efficiency = parseFloat(EFFICIENCY_INPUT.value);
+        const fieldSize = parseFloat(FIELD_SIZE_INPUT.value);
+
+        // Validation
+        if (isNaN(width) || isNaN(speed) || isNaN(efficiency) || width <= 0 || speed <= 0 || efficiency <= 0) {
+            RATE_OUTPUT.textContent = '0.0 Ac/Hr';
+            TIME_OUTPUT.textContent = '0.0 Hours';
+            return;
+        }
+
+        // --- 1. Calculate Acres Per Hour ---
+        // Formula: (Width * Speed * Efficiency%) / 8.25
+        // Note: 8.25 is the constant derived from (43,560 sq ft/acre) / (5,280 ft/mile)
+        const efficiencyDecimal = efficiency / 100;
+        const acresPerHour = (width * speed * efficiencyDecimal) / 8.25;
+
+        // --- 2. Calculate Time to Finish ---
+        let timeString = "Enter Acres";
+        if (!isNaN(fieldSize) && fieldSize > 0) {
+            const totalHours = fieldSize / acresPerHour;
+            timeString = totalHours.toFixed(1) + " Hours";
+        }
+
+        // --- Output Results ---
+        RATE_OUTPUT.textContent = acresPerHour.toFixed(1) + " Ac/Hr";
+        TIME_OUTPUT.textContent = timeString;
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateRate();
+    };
+</script>
+</body>
+</html>

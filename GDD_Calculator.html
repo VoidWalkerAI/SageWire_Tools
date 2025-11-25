@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | GDD Calculator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 3em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+        
+        /* Toggle Switch Style */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+            color: #aeb6bf;
+            font-size: 0.9em;
+        }
+        .toggle-container input {
+            width: auto;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌡️ HerdMate | GDD Calculator</h1>
+    <p>Calculate Daily Growing Degree Units to track crop maturity stages.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="high-temp">Daily High Temp (°F)</label>
+            <input type="number" id="high-temp" value="85" oninput="calculateGDD()">
+        </div>
+        <div>
+            <label for="low-temp">Daily Low Temp (°F)</label>
+            <input type="number" id="low-temp" value="62" oninput="calculateGDD()">
+        </div>
+    </div>
+    
+    <div class="input-grid">
+        <div>
+            <label for="crop-base">Crop Base Temp (°F)</label>
+            <select id="crop-base" onchange="calculateGDD()">
+                <option value="50" selected>Corn / Soybeans (50°F)</option>
+                <option value="40">Wheat / Small Grains (40°F)</option>
+                <option value="60">Cotton / Sorghum (60°F)</option>
+                <option value="32">Alfalfa / Grass (32°F)</option>
+            </select>
+        </div>
+        <div>
+            </div>
+    </div>
+
+    <div class="toggle-container">
+        <input type="checkbox" id="corn-cutoff" checked onchange="calculateGDD()">
+        <label for="corn-cutoff">Use Standard Corn Cutoffs (86/50 Rule)</label>
+    </div>
+
+    <div class="output-box">
+        <h3>Daily GDD Units</h3>
+        <span class="value" id="gdd-output">0</span>
+        <span class="label">Heat Units Accumulated Today</span>
+    </div>
+    
+    <div class="note">
+        <strong>Corn Rule (86/50):</strong> If the high is >86°F, it counts as 86. If the low is <50°F, it counts as 50. This prevents overestimating growth on extreme days.
+    </div>
+</div>
+
+<script>
+    const HIGH_INPUT = document.getElementById('high-temp');
+    const LOW_INPUT = document.getElementById('low-temp');
+    const BASE_SELECT = document.getElementById('crop-base');
+    const CUTOFF_CHECK = document.getElementById('corn-cutoff');
+    const GDD_OUTPUT = document.getElementById('gdd-output');
+
+    function calculateGDD() {
+        let high = parseFloat(HIGH_INPUT.value);
+        let low = parseFloat(LOW_INPUT.value);
+        const base = parseFloat(BASE_SELECT.value);
+        const useCutoff = CUTOFF_CHECK.checked;
+
+        // Validation
+        if (isNaN(high) || isNaN(low)) {
+            GDD_OUTPUT.textContent = '0';
+            return;
+        }
+
+        // --- Apply Standard Corn Cutoffs (If Selected) ---
+        // Used primarily for Corn (Base 50) to standardise heat unit accumulation
+        if (useCutoff && base === 50) {
+            if (high > 86) high = 86;
+            if (low < 50) low = 50;
+        }
+
+        // --- Calculate Average Daily Temp ---
+        const averageTemp = (high + low) / 2;
+
+        // --- Calculate GDD ---
+        // Formula: Average - Base
+        let gdd = averageTemp - base;
+
+        // GDD cannot be negative for a single day (if it's too cold, growth just stops, it doesn't reverse)
+        if (gdd < 0) gdd = 0;
+
+        // --- Output Results ---
+        GDD_OUTPUT.textContent = gdd.toFixed(1);
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateGDD();
+    };
+</script>
+</body>
+</html>

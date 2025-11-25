@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Grain Drying Calculator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+        
+        /* Specific color for cost/loss */
+        #total-cost-output, #shrink-bushels-output { color: #E74C3C; border-color: #E74C3C; }
+        #shrink-box { border-color: #E74C3C; }
+        #cost-box { border-color: #E74C3C; }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌽 HerdMate | Grain Drying Cost</h1>
+    <p>Calculate total fuel costs and shrink loss to determine the net value of your harvested grain.</p>
+
+    <label for="bushels-input">Total Wet Bushels Harvested</label>
+    <input type="number" id="bushels-input" value="10000" min="100" step="100" oninput="calculateDrying()">
+
+    <h3 class="section-title">Moisture Levels (%)</h3>
+    <div class="input-grid">
+        <div>
+            <label for="start-moisture">Start Moisture</label>
+            <input type="number" id="start-moisture" value="22.0" min="10" max="40" step="0.1" oninput="calculateDrying()">
+        </div>
+        <div>
+            <label for="target-moisture">Target Moisture</label>
+            <input type="number" id="target-moisture" value="15.0" min="10" max="20" step="0.1" oninput="calculateDrying()">
+        </div>
+    </div>
+
+    <h3 class="section-title">Drying Costs</h3>
+    <div class="input-grid">
+        <div>
+            <label for="fuel-price">Fuel Price ($/Gal LP)</label>
+            <input type="number" id="fuel-price" value="1.80" min="0" step="0.01" oninput="calculateDrying()">
+        </div>
+        <div>
+            <label for="efficiency-input">Efficiency (Gal/Point/Bu)</label>
+            <input type="number" id="efficiency-input" value="0.02" step="0.001" oninput="calculateDrying()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box" id="cost-box">
+            <h3>Total Fuel Cost</h3>
+            <span class="value" id="total-cost-output">$0.00</span>
+            <span class="label" id="cost-per-bu-output">0.00 / bu</span>
+        </div>
+        <div class="output-box" id="shrink-box">
+            <h3>Shrink Loss</h3>
+            <span class="value" id="shrink-bushels-output">0 bu</span>
+            <span class="label">Bushels Evaporated</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Shrink Factor:</strong> Calculated using the standard 1.4% loss per point of moisture removed (1.18% water + 0.22% handling loss).
+    </div>
+</div>
+
+<script>
+    const BUSHELS_INPUT = document.getElementById('bushels-input');
+    const START_MOISTURE = document.getElementById('start-moisture');
+    const TARGET_MOISTURE = document.getElementById('target-moisture');
+    const FUEL_PRICE = document.getElementById('fuel-price');
+    const EFFICIENCY_INPUT = document.getElementById('efficiency-input');
+    
+    const TOTAL_COST_OUTPUT = document.getElementById('total-cost-output');
+    const COST_PER_BU_OUTPUT = document.getElementById('cost-per-bu-output');
+    const SHRINK_OUTPUT = document.getElementById('shrink-bushels-output');
+
+    // Standard commercial shrink factor (water weight + invisible loss)
+    const SHRINK_FACTOR = 0.014; // 1.4% per point
+
+    const formatCurrency = (value) => '$' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    function calculateDrying() {
+        const wetBushels = parseFloat(BUSHELS_INPUT.value);
+        const startM = parseFloat(START_MOISTURE.value);
+        const targetM = parseFloat(TARGET_MOISTURE.value);
+        const pricePerGal = parseFloat(FUEL_PRICE.value);
+        const efficiency = parseFloat(EFFICIENCY_INPUT.value); // Gallons per point per bushel
+
+        // Validation
+        if (isNaN(wetBushels) || isNaN(startM) || isNaN(targetM) || isNaN(pricePerGal) || wetBushels <= 0) {
+            TOTAL_COST_OUTPUT.textContent = '$0.00';
+            COST_PER_BU_OUTPUT.textContent = '$0.00 / bu';
+            SHRINK_OUTPUT.textContent = '0 bu';
+            return;
+        }
+
+        // 1. Calculate Moisture Points Removed
+        let pointsRemoved = startM - targetM;
+        if (pointsRemoved < 0) pointsRemoved = 0;
+
+        // 2. Calculate Fuel Cost
+        // Gallons Used = Bushels * Points * Efficiency Factor
+        const gallonsUsed = wetBushels * pointsRemoved * efficiency;
+        const totalFuelCost = gallonsUsed * pricePerGal;
+        const costPerBu = totalFuelCost / wetBushels;
+
+        // 3. Calculate Shrink Loss (Bushels)
+        // Shrink % = Points Removed * 1.4%
+        // Shrink Bushels = Wet Bushels * Shrink %
+        const shrinkPercent = pointsRemoved * SHRINK_FACTOR;
+        const shrinkBushels = wetBushels * shrinkPercent;
+
+        // --- Output Results ---
+        
+        TOTAL_COST_OUTPUT.textContent = formatCurrency(totalFuelCost);
+        COST_PER_BU_OUTPUT.textContent = formatCurrency(costPerBu) + " / bu";
+        SHRINK_OUTPUT.textContent = Math.round(shrinkBushels).toLocaleString() + " bu";
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateDrying();
+    };
+</script>
+</body>
+</html>

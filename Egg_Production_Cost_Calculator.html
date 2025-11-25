@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Egg Cost Calculator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box.cost {
+            grid-column: 1 / span 2;
+            background-color: #1e2b24;
+            border-color: #B85C38;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+        
+        .output-box.cost .value {
+            color: #B85C38; /* Rust for Cost */
+            font-size: 2.5em;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🍳 HerdMate | Egg Cost Calc</h1>
+    <p>Calculate your true break-even cost per dozen based on feed prices and laying rate.</p>
+
+    <h3 class="section-title">1. Feed Expenses</h3>
+    <div class="input-grid">
+        <div>
+            <label for="feed-price">Cost Per Bag ($)</label>
+            <input type="number" id="feed-price" value="18.50" min="0" step="0.10" oninput="calculateEggCost()">
+        </div>
+        <div>
+            <label for="bag-weight">Bag Weight (Lbs)</label>
+            <input type="number" id="bag-weight" value="50" min="1" oninput="calculateEggCost()">
+        </div>
+    </div>
+
+    <h3 class="section-title">2. Flock Performance</h3>
+    <div class="input-grid">
+        <div>
+            <label for="flock-size">Flock Size (Hens)</label>
+            <input type="number" id="flock-size" value="25" min="1" oninput="calculateEggCost()">
+        </div>
+        <div>
+            <label for="daily-intake">Daily Intake (Lbs/Bird)</label>
+            <input type="number" id="daily-intake" value="0.25" min="0.01" step="0.01" oninput="calculateEggCost()">
+        </div>
+    </div>
+    
+    <label for="lay-rate">Laying Rate (%) - *Avg. 70-90%*</label>
+    <input type="number" id="lay-rate" value="80" min="0" max="100" oninput="calculateEggCost()">
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Daily Production</h3>
+            <span class="value" id="daily-eggs-output">0 Doz</span>
+            <span class="label">Dozens Per Day</span>
+        </div>
+        <div class="output-box">
+            <h3>Daily Feed Cost</h3>
+            <span class="value" id="daily-cost-output">$0.00</span>
+            <span class="label">Total Flock Cost</span>
+        </div>
+        
+        <div class="output-box cost">
+            <h3>Break-Even Cost</h3>
+            <span class="value" id="cost-per-dozen-output">$0.00</span>
+            <span class="label">Cost Per Dozen Eggs</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Standard:</strong> A standard layer eats about 0.25 - 0.30 lbs of feed per day. High production hybrids lay at 90%+, while heritage breeds may be 60-70%.
+    </div>
+</div>
+
+<script>
+    const FEED_PRICE = document.getElementById('feed-price');
+    const BAG_WEIGHT = document.getElementById('bag-weight');
+    const FLOCK_SIZE = document.getElementById('flock-size');
+    const DAILY_INTAKE = document.getElementById('daily-intake');
+    const LAY_RATE = document.getElementById('lay-rate');
+    
+    const EGGS_OUTPUT = document.getElementById('daily-eggs-output');
+    const DAILY_COST_OUTPUT = document.getElementById('daily-cost-output');
+    const DOZEN_COST_OUTPUT = document.getElementById('cost-per-dozen-output');
+
+    const formatCurrency = (value) => '$' + value.toFixed(2);
+
+    function calculateEggCost() {
+        const pricePerBag = parseFloat(FEED_PRICE.value);
+        const bagLbs = parseFloat(BAG_WEIGHT.value);
+        const flock = parseInt(FLOCK_SIZE.value);
+        const intake = parseFloat(DAILY_INTAKE.value);
+        const rate = parseFloat(LAY_RATE.value);
+
+        // Validation
+        if (isNaN(pricePerBag) || isNaN(bagLbs) || isNaN(flock) || isNaN(intake) || isNaN(rate) ||
+            bagLbs <= 0 || flock <= 0) {
+            EGGS_OUTPUT.textContent = '0 Doz';
+            DAILY_COST_OUTPUT.textContent = '$0.00';
+            DOZEN_COST_OUTPUT.textContent = '$0.00';
+            return;
+        }
+
+        // 1. Calculate Cost Per Pound of Feed
+        const costPerLb = pricePerBag / bagLbs;
+
+        // 2. Calculate Total Daily Feed Cost
+        const totalDailyFeed = flock * intake;
+        const dailyFeedCost = totalDailyFeed * costPerLb;
+
+        // 3. Calculate Daily Egg Production (in Dozens)
+        const dailyEggs = flock * (rate / 100);
+        const dailyDozens = dailyEggs / 12;
+
+        // 4. Calculate Cost Per Dozen
+        let costPerDozen = 0;
+        if (dailyDozens > 0) {
+            costPerDozen = dailyFeedCost / dailyDozens;
+        }
+
+        // --- Output Results ---
+        
+        EGGS_OUTPUT.textContent = dailyDozens.toFixed(1) + " Doz";
+        DAILY_COST_OUTPUT.textContent = formatCurrency(dailyFeedCost);
+        DOZEN_COST_OUTPUT.textContent = formatCurrency(costPerDozen);
+        
+        // Visual Feedback
+        if (costPerDozen > 5.00) {
+             DOZEN_COST_OUTPUT.style.color = '#E74C3C'; // High cost!
+        } else if (costPerDozen < 2.50) {
+             DOZEN_COST_OUTPUT.style.color = '#5A946E'; // Excellent margin
+        } else {
+             DOZEN_COST_OUTPUT.style.color = '#B85C38'; // Average
+        }
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculateEggCost();
+    };
+</script>
+</body>
+</html>

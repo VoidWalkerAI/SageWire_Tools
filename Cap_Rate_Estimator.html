@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SageWire Tools | Board Feet Calculator</title>
+    <title>SageWire Tools | Cap Rate Calculator</title>
     
     <style>
         /* --- SAGEWIRE BRANDING CSS --- */
@@ -52,6 +52,7 @@
         }
 
         label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
         input[type="number"] {
             width: 100%;
             padding: 12px;
@@ -60,7 +61,6 @@
             background-color: #34343d; 
             color: #fff;
             font-size: 16px;
-            text-align: center;
         }
 
         .output-box {
@@ -110,94 +110,85 @@
         <p>We tend the fire while you're out living life.</p>
     </div>
     
-    <h2>🪵 Board Feet & Cost Calculator</h2>
-    <p style="text-align:center; color:#ccc;">Calculate total board footage and estimated material cost for lumber orders.</p>
+    <h2>🏘️ Rental Property Cap Rate</h2>
+    <p style="text-align:center; color:#ccc;">Determine the annual return on investment (ROI) for a rental property.</p>
 
-    <div class="input-grid">
+    <label for="price-input">Property Purchase Price ($)</label>
+    <input type="number" id="price-input" value="250000" min="0" step="1000" oninput="calculateCapRate()">
+
+    <div class="input-grid" style="margin-top: 15px;">
         <div>
-            <label>Thickness (Inches)</label>
-            <input type="number" id="thickness-input" value="1" min="0.25" step="0.25" oninput="calculateBoardFeet()">
+            <label for="rent-input">Monthly Rent Income ($)</label>
+            <input type="number" id="rent-input" value="2200" min="0" oninput="calculateCapRate()">
         </div>
         <div>
-            <label>Width (Inches)</label>
-            <input type="number" id="width-input" value="6" min="1" oninput="calculateBoardFeet()">
+            <label for="expense-input">Annual Operating Expense ($)</label>
+            <input type="number" id="expense-input" value="8000" min="0" placeholder="Tax, Ins, Maint" oninput="calculateCapRate()">
         </div>
     </div>
-    
-    <div class="input-grid">
-        <div>
-            <label>Length (Feet)</label>
-            <input type="number" id="length-input" value="8" min="1" oninput="calculateBoardFeet()">
-        </div>
-        <div>
-            <label>Quantity (Boards)</label>
-            <input type="number" id="quantity-input" value="10" min="1" oninput="calculateBoardFeet()">
-        </div>
-    </div>
-
-    <label>Price Per Board Foot ($)</label>
-    <input type="number" id="price-input" value="3.50" min="0" step="0.10" placeholder="e.g. 3.50" oninput="calculateBoardFeet()">
 
     <div class="output-box">
-        <h3>Total Estimate</h3>
-        <span class="value" id="total-cost-output">$0.00</span>
-        <span class="label" id="total-bf-output">0.0 Board Feet</span>
+        <h3>Capitalization Rate (Cap Rate)</h3>
+        <span class="value" id="cap-rate-output">0.00%</span>
+        <span class="label" id="noi-output">Net Operating Income: $0.00</span>
     </div>
     
     <div class="note">
-        <strong>Note:</strong> A "Board Foot" is a volume measurement equal to 144 cubic inches (12" x 12" x 1").
+        <strong>Target:</strong> Most investors look for a Cap Rate between <strong>5% and 10%</strong>. Higher is generally better (more return), but often comes with higher risk.
     </div>
 </div>
 
 <script>
-    const THICKNESS_INPUT = document.getElementById('thickness-input');
-    const WIDTH_INPUT = document.getElementById('width-input');
-    const LENGTH_INPUT = document.getElementById('length-input');
-    const QUANTITY_INPUT = document.getElementById('quantity-input');
     const PRICE_INPUT = document.getElementById('price-input');
+    const RENT_INPUT = document.getElementById('rent-input');
+    const EXPENSE_INPUT = document.getElementById('expense-input');
     
-    const TOTAL_COST_OUTPUT = document.getElementById('total-cost-output');
-    const TOTAL_BF_OUTPUT = document.getElementById('total-bf-output');
+    const CAP_RATE_OUTPUT = document.getElementById('cap-rate-output');
+    const NOI_OUTPUT = document.getElementById('noi-output');
 
     const formatCurrency = (value) => '$' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-    function calculateBoardFeet() {
-        const thickness = parseFloat(THICKNESS_INPUT.value);
-        const width = parseFloat(WIDTH_INPUT.value);
-        const length = parseFloat(LENGTH_INPUT.value);
-        const quantity = parseInt(QUANTITY_INPUT.value);
+    function calculateCapRate() {
         const price = parseFloat(PRICE_INPUT.value);
+        const monthlyRent = parseFloat(RENT_INPUT.value);
+        const annualExpense = parseFloat(EXPENSE_INPUT.value);
 
         // Validation
-        if (isNaN(thickness) || isNaN(width) || isNaN(length) || isNaN(quantity) || 
-            thickness <= 0 || width <= 0 || length <= 0 || quantity <= 0) {
-            TOTAL_COST_OUTPUT.textContent = '$0.00';
-            TOTAL_BF_OUTPUT.textContent = '0.0 Board Feet';
+        if (isNaN(price) || isNaN(monthlyRent) || isNaN(annualExpense) || price <= 0) {
+            CAP_RATE_OUTPUT.textContent = '0.00%';
+            NOI_OUTPUT.textContent = 'Net Operating Income: $0.00';
             return;
         }
 
-        // --- 1. Calculate Board Feet per Board ---
-        // Formula: (T_in * W_in * L_ft) / 12
-        const bfPerBoard = (thickness * width * length) / 12;
-        
-        // --- 2. Calculate Total Board Feet ---
-        const totalBF = bfPerBoard * quantity;
-        
-        // --- 3. Calculate Cost ---
-        let totalCost = 0;
-        if (!isNaN(price) && price >= 0) {
-            totalCost = totalBF * price;
-        }
+        // 1. Calculate Annual Gross Income
+        const annualGrossIncome = monthlyRent * 12;
+
+        // 2. Calculate Net Operating Income (NOI)
+        // Formula: Annual Income - Annual Expenses
+        const noi = annualGrossIncome - annualExpense;
+
+        // 3. Calculate Cap Rate
+        // Formula: (NOI / Price) * 100
+        const capRate = (noi / price) * 100;
 
         // --- Output Results ---
         
-        TOTAL_BF_OUTPUT.textContent = totalBF.toFixed(2) + " Board Feet";
-        TOTAL_COST_OUTPUT.textContent = formatCurrency(totalCost);
+        CAP_RATE_OUTPUT.textContent = capRate.toFixed(2) + "%";
+        NOI_OUTPUT.textContent = "Net Operating Income: " + formatCurrency(noi);
+        
+        // Visual Logic: Color code the result
+        if (capRate >= 8.0) {
+             CAP_RATE_OUTPUT.style.color = '#5A946E'; // Excellent
+        } else if (capRate >= 5.0) {
+             CAP_RATE_OUTPUT.style.color = '#f39c12'; // Good/Average
+        } else {
+             CAP_RATE_OUTPUT.style.color = '#E74C3C'; // Low/Risky
+        }
     }
 
     // Run calculation on initial page load
     window.onload = function() {
-        calculateBoardFeet();
+        calculateCapRate();
     };
 </script>
 </body>

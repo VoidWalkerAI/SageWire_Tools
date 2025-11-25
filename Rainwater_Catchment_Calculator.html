@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Rainwater Catchment</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+        
+        .output-box.total {
+            grid-column: 1 / span 2;
+            background-color: #1e2b24;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌧️ HerdMate | Rainwater Calc</h1>
+    <p>Calculate the gallons of water harvested from a roof area during a rain event.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="length-input">Roof Length (Feet)</label>
+            <input type="number" id="length-input" value="60" min="1" oninput="calculateRainwater()">
+        </div>
+        <div>
+            <label for="width-input">Roof Width (Feet)</label>
+            <input type="number" id="width-input" value="40" min="1" oninput="calculateRainwater()">
+        </div>
+    </div>
+    
+    <label for="rain-input">Rainfall Event (Inches)</label>
+    <input type="number" id="rain-input" value="1.0" min="0.1" step="0.1" oninput="calculateRainwater()">
+
+    <div class="output-grid">
+        <div class="output-box total">
+            <h3>Total Harvested</h3>
+            <span class="value" id="gallons-output">0 Gal</span>
+            <span class="label">Gallons of Water</span>
+        </div>
+        
+        <div class="output-box">
+            <h3>Roof Footprint</h3>
+            <span class="value" id="sqft-output">0 sq ft</span>
+            <span class="label">Catchment Area</span>
+        </div>
+        <div class="output-box">
+            <h3>Weight Added</h3>
+            <span class="value" id="weight-output">0 Lbs</span>
+            <span class="label">Water Weight (8.34 lb/gal)</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Fact:</strong> A 1,000 sq ft roof captures approximately 600 gallons of water from just 1 inch of rain.
+    </div>
+</div>
+
+<script>
+    const LENGTH_INPUT = document.getElementById('length-input');
+    const WIDTH_INPUT = document.getElementById('width-input');
+    const RAIN_INPUT = document.getElementById('rain-input');
+    
+    const GALLONS_OUTPUT = document.getElementById('gallons-output');
+    const SQFT_OUTPUT = document.getElementById('sqft-output');
+    const WEIGHT_OUTPUT = document.getElementById('weight-output');
+
+    // Conversion Factor: 1 sq ft * 1 inch deep = 0.623 gallons
+    const GALLONS_PER_SQFT_INCH = 0.623;
+    const LBS_PER_GALLON = 8.34;
+
+    function calculateRainwater() {
+        const length = parseFloat(LENGTH_INPUT.value);
+        const width = parseFloat(WIDTH_INPUT.value);
+        const rain = parseFloat(RAIN_INPUT.value);
+
+        // Validation
+        if (isNaN(length) || isNaN(width) || isNaN(rain) || length <= 0 || width <= 0 || rain < 0) {
+            GALLONS_OUTPUT.textContent = '0 Gal';
+            SQFT_OUTPUT.textContent = '0 sq ft';
+            WEIGHT_OUTPUT.textContent = '0 Lbs';
+            return;
+        }
+
+        // 1. Calculate Catchment Area (Footprint)
+        // Note: Use the horizontal footprint (length x width), not the slope of the roof.
+        const areaSqFt = length * width;
+
+        // 2. Calculate Gallons Harvested
+        // Formula: Area * Rainfall * 0.623
+        const totalGallons = areaSqFt * rain * GALLONS_PER_SQFT_INCH;
+        
+        // 3. Calculate Weight
+        const totalWeight = totalGallons * LBS_PER_GALLON;
+
+        // --- Output Results ---
+        
+        GALLONS_OUTPUT.textContent = Math.round(totalGallons).toLocaleString() + " Gal";
+        SQFT_OUTPUT.textContent = areaSqFt.toLocaleString() + " sq ft";
+        WEIGHT_OUTPUT.textContent = Math.round(totalWeight).toLocaleString() + " Lbs";
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateRainwater();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Heat Stress Index</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 1.2em;
+            text-align: center;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Default Green Border */
+            background-color: #34343d;
+            transition: border-color 0.3s;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 3em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .output-box .label {
+            font-size: 1.1em;
+            color: #f4f6f7;
+            text-transform: uppercase;
+            font-weight: bold;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+
+        /* Risk Level Colors */
+        .risk-normal .value { color: #5A946E; }
+        .risk-normal { border-color: #5A946E; }
+        
+        .risk-alert .value { color: #f1c40f; }
+        .risk-alert { border-color: #f1c40f; }
+        
+        .risk-danger .value { color: #e67e22; }
+        .risk-danger { border-color: #e67e22; }
+        
+        .risk-emergency .value { color: #E74C3C; }
+        .risk-emergency { border-color: #E74C3C; background-color: #2b1e1e; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌡️ HerdMate | Heat Stress</h1>
+    <p>Calculate the Temperature-Humidity Index (THI) to protect livestock from heat exhaustion.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="temp-input">Air Temperature (°F)</label>
+            <input type="number" id="temp-input" value="85" min="0" max="130" oninput="calculateTHI()">
+        </div>
+        <div>
+            <label for="humidity-input">Humidity (%)</label>
+            <input type="number" id="humidity-input" value="60" min="0" max="100" oninput="calculateTHI()">
+        </div>
+    </div>
+
+    <div id="result-container" class="output-box risk-normal">
+        <h3>THI Score</h3>
+        <span class="value" id="thi-output">72</span>
+        <span class="label" id="risk-output">Normal</span>
+    </div>
+    
+    <div class="note">
+        <strong>Warning:</strong> Cattle accumulate heat load. If the THI stays above 72 at night, they cannot cool down, increasing the risk of death the following day.
+    </div>
+</div>
+
+<script>
+    const TEMP_INPUT = document.getElementById('temp-input');
+    const HUMIDITY_INPUT = document.getElementById('humidity-input');
+    
+    const THI_OUTPUT = document.getElementById('thi-output');
+    const RISK_OUTPUT = document.getElementById('risk-output');
+    const BOX = document.getElementById('result-container');
+
+    function calculateTHI() {
+        const temp = parseFloat(TEMP_INPUT.value);
+        const humidity = parseFloat(HUMIDITY_INPUT.value);
+
+        // Validation
+        if (isNaN(temp) || isNaN(humidity)) {
+            THI_OUTPUT.textContent = '--';
+            RISK_OUTPUT.textContent = 'Enter Data';
+            return;
+        }
+
+        // --- Calculate THI ---
+        // Formula: T - [0.55 - (0.55 * RH/100)] * (T - 58)
+        const rhDecimal = humidity / 100;
+        const thi = temp - (0.55 - (0.55 * rhDecimal)) * (temp - 58);
+
+        // --- Output Results ---
+        
+        const finalTHI = Math.round(thi);
+        THI_OUTPUT.textContent = finalTHI;
+        
+        // --- Determine Risk Level ---
+        
+        // Reset Classes
+        BOX.classList.remove('risk-normal', 'risk-alert', 'risk-danger', 'risk-emergency');
+        
+        if (finalTHI < 72) {
+            RISK_OUTPUT.textContent = "COMFORTABLE (No Stress)";
+            BOX.classList.add('risk-normal');
+        } else if (finalTHI < 79) {
+            RISK_OUTPUT.textContent = "MILD STRESS (Alert)";
+            BOX.classList.add('risk-alert');
+        } else if (finalTHI < 84) {
+            RISK_OUTPUT.textContent = "SEVERE STRESS (Danger)";
+            BOX.classList.add('risk-danger');
+        } else {
+            RISK_OUTPUT.textContent = "EMERGENCY (Loss Likely)";
+            BOX.classList.add('risk-emergency');
+        }
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateTHI();
+    };
+</script>
+</body>
+</html>

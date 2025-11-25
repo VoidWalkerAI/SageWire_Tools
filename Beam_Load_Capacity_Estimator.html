@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Beam Load Capacity Estimator</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 20px; background-color: #e8f4f8; }
+        .calculator { max-width: 600px; margin: 0 auto; padding: 25px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1); }
+        h2 { text-align: center; color: #004d99; border-bottom: 3px solid #004d99; padding-bottom: 10px; margin-bottom: 25px; }
+        .input-group, .select-group { margin-bottom: 20px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        input[type="number"], select { width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 1em; }
+        button { width: 100%; padding: 14px; margin-top: 25px; background-color: #ff6347; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; transition: background-color 0.3s; }
+        button:hover { background-color: #e5533d; }
+        .result-section { margin-top: 30px; padding: 20px; border: 2px solid #28a745; border-radius: 8px; background-color: #e6fff0; }
+        .result-section h3 { margin-top: 0; color: #28a745; }
+        .load-output { font-size: 1.2em; margin: 10px 0; }
+        .governing-limit { font-weight: bold; color: #dc3545; }
+        .governing-message { margin-top: 15px; padding: 10px; background-color: #fff3cd; border: 1px solid #ffeeba; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>🏗️ Beam Load Capacity Estimator</h2>
+        <p>Calculates max allowable load for a simply supported beam (Imperial units assumed: psi, in, lb).</p>
+
+        <div class="input-group">
+            <label for="spanLength">Beam Span Length (L, inches):</label>
+            <input type="number" id="spanLength" value="180" placeholder="e.g., 180 (15 feet)">
+        </div>
+
+        <div class="input-group">
+            <label for="allowableStress">Allowable Stress ($\sigma_{\text{allow}}$, psi):</label>
+            <input type="number" id="allowableStress" value="20000" placeholder="e.g., 20000 (Steel)">
+        </div>
+        
+        <div class="input-group">
+            <label for="modulusElasticity">Modulus of Elasticity (E, psi):</label>
+            <input type="number" id="modulusElasticity" value="29000000" placeholder="e.g., 29000000 (Steel)">
+        </div>
+
+        <div class="input-group">
+            <label for="sectionModulus">Section Modulus (S, in³):</label>
+            <input type="number" id="sectionModulus" value="10" placeholder="e.g., 10 (S)">
+        </div>
+
+        <div class="input-group">
+            <label for="momentInertia">Moment of Inertia (I, in⁴):</label>
+            <input type="number" id="momentInertia" value="200" placeholder="e.g., 200 (I)">
+        </div>
+
+        <div class="select-group">
+            <label for="loadingCondition">Loading Condition:</label>
+            <select id="loadingCondition">
+                <option value="P_CENTER">Point Load (P) at Center</option>
+                <option value="W_UNIFORM">Uniform Distributed Load (w) across span</option>
+            </select>
+        </div>
+
+        <button onclick="calculateCapacity()">Estimate Maximum Load Capacity</button>
+
+        <div class="result-section">
+            <h3>Max Allowable Load</h3>
+            <div class="load-output">
+                Load Limit (Strength/Stress): <strong id="loadStress">--</strong>
+            </div>
+            <div class="load-output">
+                Load Limit (Stiffness/Deflection): <strong id="loadDeflection">--</strong>
+            </div>
+            <div class="governing-message">
+                Governing Limit: <span class="governing-limit" id="governingLimit">--</span>
+                <br>
+                **Maximum Load Capacity:** <strong class="governing-limit" id="maxCapacity">--</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculateCapacity() {
+            const L = parseFloat(document.getElementById('spanLength').value);
+            const sigma_allow = parseFloat(document.getElementById('allowableStress').value);
+            const E = parseFloat(document.getElementById('modulusElasticity').value);
+            const S = parseFloat(document.getElementById('sectionModulus').value);
+            const I = parseFloat(document.getElementById('momentInertia').value);
+            const condition = document.getElementById('loadingCondition').value;
+
+            if (isNaN(L) || isNaN(sigma_allow) || isNaN(E) || isNaN(S) || isNaN(I) || L <= 0) {
+                alert('Please enter valid, non-zero inputs for all beam properties.');
+                return;
+            }
+
+            // --- 1. Sizing for STRENGTH (Stress Limit) ---
+            let P_stress = 0; // Point Load
+            let w_stress = 0; // Distributed Load
+
+            // M_max = S * sigma_allow
+            const M_max = S * sigma_allow;
+
+            if (condition === 'P_CENTER') {
+                // P_max = (4 * M_max) / L  (since M_max = P*L/4)
+                P_stress = (4 * M_max) / L;
+                w_stress = 0; 
+            } else if (condition === 'W_UNIFORM') {
+                // w_max = (8 * M_max) / L^2 (since M_max = w*L^2/8)
+                w_stress = (8 * M_max) / (L * L);
+                P_stress = 0; 
+            }
+
+            // --- 2. Sizing for STIFFNESS (Deflection Limit) ---
+            // Allowable Deflection (Commonly L/360 for floors)
+            const delta_allow = L / 360; 
+            
+            let P_deflection = 0; // Point Load
+            let w_deflection = 0; // Distributed Load
+
+            if (condition === 'P_CENTER') {
+                // P_max = (48 * E * I * delta_allow) / L^3 (Coefficient 1/48)
+                P_deflection = (48 * E * I * delta_allow) / (L * L * L);
+                w_deflection = 0;
+            } else if (condition === 'W_UNIFORM') {
+                // w_max = (384 * E * I * delta_allow) / (5 * L^3) (Coefficient 5/384)
+                w_deflection = (384 * E * I * delta_allow) / (5 * L * L * L);
+                P_deflection = 0;
+            }
+
+            // --- 3. Determine Governing Limit ---
+            let maxCapacity, loadUnit, loadStressValue, loadDeflectionValue, governingLimitMessage;
+
+            if (condition === 'P_CENTER') {
+                loadStressValue = P_stress;
+                loadDeflectionValue = P_deflection;
+                loadUnit = 'lb';
+            } else {
+                loadStressValue = w_stress;
+                loadDeflectionValue = w_deflection;
+                loadUnit = 'lb/in'; 
+            }
+
+            // The Max Capacity is the MINIMUM of the two checks
+            maxCapacity = Math.min(loadStressValue, loadDeflectionValue);
+            
+            if (loadStressValue < loadDeflectionValue) {
+                governingLimitMessage = `STRENGTH (Stress) Limit Governs.`;
+            } else {
+                governingLimitMessage = `STIFFNESS (Deflection: L/${(L/delta_allow).toFixed(0)}) Limit Governs.`;
+            }
+
+
+            document.getElementById('loadStress').textContent = `${loadStressValue.toFixed(2)} ${loadUnit}`;
+            document.getElementById('loadDeflection').textContent = `${loadDeflectionValue.toFixed(2)} ${loadUnit}`;
+            document.getElementById('governingLimit').textContent = governingLimitMessage;
+            document.getElementById('maxCapacity').textContent = `${maxCapacity.toFixed(2)} ${loadUnit}`;
+        }
+    </script>
+</body>
+</html>

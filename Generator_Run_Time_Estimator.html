@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Run Time Estimator</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f7f6; }
+        .calculator { max-width: 450px; margin: 0 auto; padding: 20px; background-color: #fff; border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); }
+        h2 { text-align: center; color: #333; border-bottom: 2px solid #007bff; padding-bottom: 10px; margin-bottom: 20px; }
+        label { display: block; margin-top: 15px; font-weight: bold; color: #555; }
+        input[type="number"] { width: 90%; padding: 10px; margin-top: 5px; border: 1px solid #ccc; border-radius: 4px; }
+        button { width: 100%; padding: 12px; margin-top: 25px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; transition: background-color 0.3s; }
+        button:hover { background-color: #0056b3; }
+        .result { margin-top: 30px; padding: 15px; border: 2px solid #28a745; background-color: #e6ffed; border-radius: 6px; text-align: center; }
+        .result p { margin: 0; font-size: 1.1em; color: #155724; }
+        .result strong { font-size: 1.4em; color: #28a745; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>⛽ Generator Run Time Estimator</h2>
+        <p>Calculates operational hours based on tank size and consumption rate.</p>
+
+        <label for="tankSize">Fuel Tank Size (Gallons/Liters):</label>
+        <input type="number" id="tankSize" value="10" placeholder="e.g., 10">
+
+        <label for="consumptionRate">Fuel Consumption Rate (Units/Hour):</label>
+        <input type="number" id="consumptionRate" value="0.8" placeholder="e.g., 0.8 (Gallons/Liters per hour)">
+        
+        <button onclick="calculateRuntime()">Calculate Estimated Runtime</button>
+
+        <div class="result" id="runtimeResult">
+            <p>Estimated Runtime:</p>
+            <strong>-- Hours</strong>
+        </div>
+    </div>
+
+    <script>
+        function calculateRuntime() {
+            const tankSize = parseFloat(document.getElementById('tankSize').value);
+            const consumptionRate = parseFloat(document.getElementById('consumptionRate').value);
+            const resultDiv = document.getElementById('runtimeResult');
+
+            if (isNaN(tankSize) || isNaN(consumptionRate) || consumptionRate <= 0) {
+                resultDiv.innerHTML = '<p>Error:</p><strong>Invalid inputs. Check consumption rate.</strong>';
+                resultDiv.style.borderColor = '#dc3545';
+                resultDiv.style.backgroundColor = '#f8d7da';
+                return;
+            }
+
+            // Core Formula: Runtime = Tank Size / Consumption Rate
+            const runtime = tankSize / consumptionRate;
+
+            resultDiv.innerHTML = '<p>Estimated Runtime:</p><strong>' + runtime.toFixed(2) + ' Hours</strong>';
+            resultDiv.style.borderColor = '#28a745';
+            resultDiv.style.backgroundColor = '#e6ffed';
+        }
+    </script>
+</body>
+</html>
+Q

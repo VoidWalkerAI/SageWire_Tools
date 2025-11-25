@@ -1,0 +1,300 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SageWire Tools | Tire Size Comparator</title>
+    
+    <style>
+        /* --- SAGEWIRE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        
+        /* Header Styling */
+        .header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #5dade2;
+        }
+        .header-brand h1 { 
+            color: #B85C38; /* Rust Accent */
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .header-brand p {
+            color: #aeb6bf;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        /* Input Layout */
+        .tire-section {
+            background-color: #34343d;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 4px solid #7D716A;
+        }
+        
+        .tire-section h3 {
+            margin-top: 0;
+            color: #5dade2;
+            font-size: 1.1em;
+            margin-bottom: 10px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+        }
+
+        .input-group {
+            flex: 1;
+        }
+
+        label { display: block; margin-bottom: 5px; color: #aeb6bf; font-size: 0.8em; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; 
+            border-radius: 5px;
+            background-color: #14141A; 
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        /* Comparison Table */
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        
+        .results-table th {
+            text-align: left;
+            color: #B85C38;
+            padding: 10px;
+            border-bottom: 1px solid #7D716A;
+        }
+        
+        .results-table td {
+            padding: 10px;
+            border-bottom: 1px solid #34343d;
+        }
+        
+        .results-table td.label { font-weight: bold; color: #f4f6f7; }
+        .results-table td.diff { font-weight: bold; }
+        
+        .positive { color: #5A946E; } /* Green for bigger */
+        .negative { color: #E74C3C; } /* Red for smaller */
+
+        /* Speedometer Box */
+        .speed-box {
+            margin-top: 25px;
+            padding: 20px;
+            background-color: #14141A;
+            border: 2px solid #5A946E;
+            border-radius: 8px;
+            text-align: center;
+        }
+        
+        .speed-box h4 { margin: 0 0 10px 0; color: #5dade2; }
+        .speed-reading { font-size: 1.4em; color: #f4f6f7; }
+        .speed-highlight { color: #f39c12; font-weight: bold; }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-brand">
+        <h1>SageWire Tools</h1>
+        <p>We tend the fire while you're out living life.</p>
+    </div>
+    
+    <h2 style="text-align:center; color:#5dade2;">🚗 Tire Size Comparator</h2>
+    <p style="text-align:center; color:#ccc;">Compare dimensions and speedometer changes between old and new tires.</p>
+
+    <div class="tire-section">
+        <h3>Current Tire (Old)</h3>
+        <div class="input-row">
+            <div class="input-group">
+                <label>Width (mm)</label>
+                <input type="number" id="w1" value="265" oninput="calculateTire()">
+            </div>
+            <div class="input-group">
+                <label>Ratio (%)</label>
+                <input type="number" id="r1" value="70" oninput="calculateTire()">
+            </div>
+            <div class="input-group">
+                <label>Rim (in)</label>
+                <input type="number" id="d1" value="17" oninput="calculateTire()">
+            </div>
+        </div>
+    </div>
+
+    <div class="tire-section" style="border-left-color: #5A946E;">
+        <h3>New Tire (Target)</h3>
+        <div class="input-row">
+            <div class="input-group">
+                <label>Width (mm)</label>
+                <input type="number" id="w2" value="285" oninput="calculateTire()">
+            </div>
+            <div class="input-group">
+                <label>Ratio (%)</label>
+                <input type="number" id="r2" value="75" oninput="calculateTire()">
+            </div>
+            <div class="input-group">
+                <label>Rim (in)</label>
+                <input type="number" id="d2" value="16" oninput="calculateTire()">
+            </div>
+        </div>
+    </div>
+
+    <table class="results-table">
+        <thead>
+            <tr>
+                <th>Measurement</th>
+                <th>Old</th>
+                <th>New</th>
+                <th>Diff</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="label">Diameter (Height)</td>
+                <td id="res-dia-1">0.0"</td>
+                <td id="res-dia-2">0.0"</td>
+                <td id="res-dia-diff">0.0"</td>
+            </tr>
+            <tr>
+                <td class="label">Width</td>
+                <td id="res-wid-1">0.0"</td>
+                <td id="res-wid-2">0.0"</td>
+                <td id="res-wid-diff">0.0"</td>
+            </tr>
+            <tr>
+                <td class="label">Sidewall Height</td>
+                <td id="res-wall-1">0.0"</td>
+                <td id="res-wall-2">0.0"</td>
+                <td id="res-wall-diff">0.0"</td>
+            </tr>
+            <tr>
+                <td class="label">Revs Per Mile</td>
+                <td id="res-rev-1">0</td>
+                <td id="res-rev-2">0</td>
+                <td id="res-rev-diff">0</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <div class="speed-box">
+        <h4>Speedometer Reading</h4>
+        <div class="speed-reading">
+            When speedometer reads <strong>60 mph</strong>,<br>
+            you are actually traveling <span id="speed-actual" class="speed-highlight">60.0 mph</span>.
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Safety Warning:</strong> Significantly larger tires may rub against suspension components or wheel wells. Always check vehicle clearance tolerances.
+    </div>
+</div>
+
+<script>
+    function calculateTire() {
+        // Get Inputs
+        const w1 = parseFloat(document.getElementById('w1').value);
+        const r1 = parseFloat(document.getElementById('r1').value);
+        const d1 = parseFloat(document.getElementById('d1').value);
+        
+        const w2 = parseFloat(document.getElementById('w2').value);
+        const r2 = parseFloat(document.getElementById('r2').value);
+        const d2 = parseFloat(document.getElementById('d2').value);
+
+        if ([w1, r1, d1, w2, r2, d2].some(val => isNaN(val) || val <= 0)) return;
+
+        // --- Calculations ---
+        
+        // Helper: Get Stats for a single tire
+        function getStats(w, r, d) {
+            const widthInches = w / 25.4;
+            const sidewallInches = widthInches * (r / 100);
+            const diameter = (sidewallInches * 2) + d;
+            const circumference = diameter * Math.PI;
+            const revsPerMile = 63360 / circumference; // 63360 inches in a mile
+            return { diameter, widthInches, sidewallInches, revsPerMile };
+        }
+
+        const t1 = getStats(w1, r1, d1);
+        const t2 = getStats(w2, r2, d2);
+
+        // --- Display Results ---
+        
+        // Update Table
+        updateRow('res-dia', t1.diameter, t2.diameter, 1);
+        updateRow('res-wid', t1.widthInches, t2.widthInches, 1);
+        updateRow('res-wall', t1.sidewallInches, t2.sidewallInches, 2);
+        updateRow('res-rev', t1.revsPerMile, t2.revsPerMile, 0);
+
+        // --- Speedometer Calc ---
+        // Logic: If new tire is bigger, you travel further per rev, so actual speed > reading.
+        // Formula: 60 * (OldRevs / NewRevs)
+        const actualSpeed = 60 * (t1.revsPerMile / t2.revsPerMile);
+        
+        const speedEl = document.getElementById('speed-actual');
+        speedEl.textContent = actualSpeed.toFixed(1) + " mph";
+        
+        // Color code speed warning
+        if (actualSpeed > 61) speedEl.style.color = '#E74C3C'; // Faster (Ticket risk)
+        else if (actualSpeed < 59) speedEl.style.color = '#f1c40f'; // Slower
+        else speedEl.style.color = '#2ecc71'; // Close to stock
+    }
+
+    function updateRow(idBase, val1, val2, decimals) {
+        const diff = val2 - val1;
+        const el1 = document.getElementById(`${idBase}-1`);
+        const el2 = document.getElementById(`${idBase}-2`);
+        const elDiff = document.getElementById(`${idBase}-diff`);
+
+        el1.textContent = val1.toFixed(decimals) + (idBase !== 'res-rev' ? '"' : '');
+        el2.textContent = val2.toFixed(decimals) + (idBase !== 'res-rev' ? '"' : '');
+        
+        let diffText = diff > 0 ? "+" : "";
+        diffText += diff.toFixed(decimals) + (idBase !== 'res-rev' ? '"' : '');
+        
+        elDiff.textContent = diffText;
+        
+        // Color coding
+        elDiff.className = diff > 0 ? 'positive' : (diff < 0 ? 'negative' : '');
+    }
+
+    // Init
+    window.onload = calculateTire;
+</script>
+</body>
+</html>

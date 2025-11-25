@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barter Value Equivalents Calculator</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; margin: 20px; background-color: #f7f9f9; }
+        .calculator { max-width: 600px; margin: 0 auto; padding: 30px; background-color: #ffffff; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); }
+        h2 { text-align: center; color: #5cb85c; border-bottom: 2px solid #5cb85c; padding-bottom: 10px; margin-bottom: 25px; }
+        .input-group { display: flex; gap: 20px; margin-bottom: 20px; }
+        .item-input { flex: 1; padding: 15px; border: 1px solid #ddd; border-radius: 8px; background-color: #f9f9f9; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        input[type="text"] { width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; margin-bottom: 10px; }
+        input[type="number"] { width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        button { width: 100%; padding: 12px; margin-top: 25px; background-color: #007bff; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; transition: background-color 0.3s; }
+        button:hover { background-color: #0056b3; }
+        .result-section { margin-top: 30px; padding: 20px; border: 2px solid #ff9800; border-radius: 8px; background-color: #fff8e1; }
+        .result-section h3 { margin-top: 0; color: #ff9800; }
+        .ratio-output { font-size: 1.2em; margin: 10px 0; line-height: 1.6; }
+        .ratio-output strong { color: #d32f2f; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>⚖️ Barter Value Equivalents</h2>
+        <p>Calculates the non-monetary exchange ratio based on the Fair Market Value (FMV).</p>
+
+        <div class="input-group">
+            <div class="item-input">
+                <label for="nameA">Item A Name:</label>
+                <input type="text" id="nameA" value="Hour of Labor" placeholder="e.g., Hour of Labor">
+                <label for="valueA">FMV of Item A ($V_A$):</label>
+                <input type="number" id="valueA" value="50" placeholder="e.g., 50.00">
+            </div>
+
+            <div class="item-input">
+                <label for="nameB">Item B Name:</label>
+                <input type="text" id="nameB" value="Basket of Produce" placeholder="e.g., Basket of Produce">
+                <label for="valueB">FMV of Item B ($V_B$):</label>
+                <input type="number" id="valueB" value="15" placeholder="e.g., 15.00">
+            </div>
+        </div>
+
+        <button onclick="calculateBarterRatio()">Calculate Exchange Ratios</button>
+
+        <div class="result-section">
+            <h3>Exchange Rates</h3>
+            <div class="ratio-output" id="ratioAB">--</div>
+            <div class="ratio-output" id="ratioBA">--</div>
+        </div>
+    </div>
+
+    <script>
+        function calculateBarterRatio() {
+            const nameA = document.getElementById('nameA').value || 'Item A';
+            const nameB = document.getElementById('nameB').value || 'Item B';
+            const V_A = parseFloat(document.getElementById('valueA').value);
+            const V_B = parseFloat(document.getElementById('valueB').value);
+            
+            const ratioABDiv = document.getElementById('ratioAB');
+            const ratioBADiv = document.getElementById('ratioBA');
+
+            if (isNaN(V_A) || isNaN(V_B) || V_A <= 0 || V_B <= 0) {
+                ratioABDiv.innerHTML = '<strong>Error:</strong> Please enter valid, non-zero monetary values.';
+                ratioBADiv.innerHTML = '';
+                return;
+            }
+
+            // Ratio A:B (Units of A needed for 1 Unit of B)
+            const R_AB = V_B / V_A;
+
+            // Ratio B:A (Units of B needed for 1 Unit of A)
+            const R_BA = V_A / V_B;
+
+            ratioABDiv.innerHTML = `
+                ${nameB} for ${nameA}: You need <strong>${R_AB.toFixed(2)}</strong> units of ${nameA} for 1 unit of ${nameB}.
+            `;
+            
+            ratioBADiv.innerHTML = `
+                ${nameA} for ${nameB}: You need <strong>${R_BA.toFixed(2)}</strong> units of ${nameB} for 1 unit of ${nameA}.
+            `;
+        }
+    </script>
+</body>
+</html>

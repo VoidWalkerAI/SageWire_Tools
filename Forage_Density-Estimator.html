@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Forage Density Estimator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌾 HerdMate | Forage Estimator</h1>
+    <p>Estimate total available dry matter and grazing days based on pasture density and herd size.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="acres-input">Pasture Size (Acres)</label>
+            <input type="number" id="acres-input" value="50" min="1" oninput="calculateForage()">
+        </div>
+        <div>
+            <label for="height-input">Average Forage Height (Inches)</label>
+            <input type="number" id="height-input" value="8" min="1" oninput="calculateForage()">
+        </div>
+    </div>
+
+    <label for="density-select">Stand Density (Lbs Dry Matter / Inch / Acre)</label>
+    <select id="density-select" onchange="calculateForage()">
+        <option value="150">Light (150 lbs/inch) - Thin stand, sunlight hits ground</option>
+        <option value="250" selected>Medium (250 lbs/inch) - Good stand, little ground visible</option>
+        <option value="350">Heavy (350 lbs/inch) - Lush, dense, no ground visible</option>
+        <option value="450">Legume/Mix (450 lbs/inch) - Very dense clover/alfalfa mix</option>
+    </select>
+
+    <div class="input-grid" style="margin-top: 20px;">
+        <div>
+            <label for="herd-size-input">Herd Size (Head)</label>
+            <input type="number" id="herd-size-input" value="40" min="1" oninput="calculateForage()">
+        </div>
+        <div>
+            <label for="consumption-input">Daily Intake (Lbs/Head)</label>
+            <input type="number" id="consumption-input" value="30" min="1" oninput="calculateForage()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Total Available Forage</h3>
+            <span class="value" id="total-forage-output">0 Lbs</span>
+            <span class="label">Total Dry Matter in Pasture</span>
+        </div>
+        <div class="output-box">
+            <h3>Grazing Days Remaining</h3>
+            <span class="value" id="grazing-days-output">0 Days</span>
+            <span class="label">Until 3" Residual Height</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        Calculation assumes leaving a 3-inch residual (stubble) to protect regrowth. Total forage is calculated only on the usable height (Total Height - 3 inches).
+    </div>
+</div>
+
+<script>
+    const ACRES_INPUT = document.getElementById('acres-input');
+    const HEIGHT_INPUT = document.getElementById('height-input');
+    const DENSITY_SELECT = document.getElementById('density-select');
+    const HERD_SIZE_INPUT = document.getElementById('herd-size-input');
+    const CONSUMPTION_INPUT = document.getElementById('consumption-input');
+    
+    const TOTAL_FORAGE_OUTPUT = document.getElementById('total-forage-output');
+    const GRAZING_DAYS_OUTPUT = document.getElementById('grazing-days-output');
+
+    // Standard minimum residual height to leave behind (protects roots)
+    const RESIDUAL_HEIGHT = 3; 
+
+    function calculateForage() {
+        const acres = parseFloat(ACRES_INPUT.value);
+        const totalHeight = parseFloat(HEIGHT_INPUT.value);
+        const densityPerInch = parseFloat(DENSITY_SELECT.value);
+        const herdSize = parseFloat(HERD_SIZE_INPUT.value);
+        const dailyIntake = parseFloat(CONSUMPTION_INPUT.value);
+
+        // Validation
+        if (isNaN(acres) || isNaN(totalHeight) || isNaN(herdSize) || isNaN(dailyIntake) || 
+            acres <= 0 || totalHeight <= 0 || herdSize <= 0 || dailyIntake <= 0) {
+            TOTAL_FORAGE_OUTPUT.textContent = '0 Lbs';
+            GRAZING_DAYS_OUTPUT.textContent = '0 Days';
+            return;
+        }
+
+        // 1. Calculate Usable Height
+        // We assume we must leave 3 inches behind. If grass is shorter than 3", no grazing.
+        let usableHeight = totalHeight - RESIDUAL_HEIGHT;
+        if (usableHeight < 0) usableHeight = 0;
+
+        // 2. Calculate Total Available Forage (Lbs)
+        // Formula: Usable Height * Density * Acres
+        const totalForage = usableHeight * densityPerInch * acres;
+
+        // 3. Calculate Daily Herd Demand
+        const dailyDemand = herdSize * dailyIntake;
+
+        // 4. Calculate Grazing Days
+        const grazingDays = totalForage / dailyDemand;
+
+        // --- Output Results ---
+        
+        // Format number with commas
+        TOTAL_FORAGE_OUTPUT.textContent = Math.floor(totalForage).toLocaleString() + " Lbs";
+        
+        if (grazingDays > 0 && isFinite(grazingDays)) {
+            GRAZING_DAYS_OUTPUT.textContent = Math.floor(grazingDays) + " Days";
+            
+            // Visual feedback for low days
+            if (grazingDays < 3) {
+                GRAZING_DAYS_OUTPUT.style.color = '#E74C3C'; // Red warning
+            } else {
+                GRAZING_DAYS_OUTPUT.style.color = '#5A946E'; // Green
+            }
+        } else {
+            GRAZING_DAYS_OUTPUT.textContent = "0 Days";
+            GRAZING_DAYS_OUTPUT.style.color = '#E74C3C';
+        }
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateForage();
+    };
+</script>
+</body>
+</html>

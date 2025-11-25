@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Shrink Loss Calculator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .loss-box {
+            grid-column: 1 / span 2;
+            background-color: #2b1e1e; /* Dark Red BG */
+            border-color: #E74C3C;
+        }
+        .loss-box .value { color: #E74C3C; } /* Red Value */
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>📉 HerdMate | Shrink Loss</h1>
+    <p>Calculate the "Pay Weight" and revenue lost due to stress and transport shrink.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="weight-input">Ranch Weight (Lbs)</label>
+            <input type="number" id="weight-input" value="600" min="100" oninput="calculateShrink()">
+        </div>
+        <div>
+            <label for="price-input">Market Price ($/CWT)</label>
+            <input type="number" id="price-input" value="245.00" min="0" step="0.50" placeholder="e.g. 245.00" oninput="calculateShrink()">
+        </div>
+    </div>
+    
+    <label for="shrink-select">Estimated Shrink %</label>
+    <select id="shrink-select" onchange="calculateShrink()">
+        <option value="2">2% (Pencil Shrink / Farm Scale)</option>
+        <option value="3">3% (Short Haul / Low Stress)</option>
+        <option value="4" selected>4% (Auction Barn / Standard)</option>
+        <option value="6">6% (Long Haul / High Stress)</option>
+        <option value="8">8% (Extreme Stress / Weaning)</option>
+    </select>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Pay Weight</h3>
+            <span class="value" id="pay-weight-output">0 Lbs</span>
+            <span class="label">After Shrink Deduction</span>
+        </div>
+        <div class="output-box">
+            <h3>Gross Check Value</h3>
+            <span class="value" id="check-value-output">$0.00</span>
+            <span class="label">Estimated Revenue</span>
+        </div>
+        
+        <div class="output-box loss-box">
+            <h3>Total Cost of Shrink</h3>
+            <span class="value" id="loss-output">$0.00</span>
+            <span class="label">Revenue Lost to Weight Loss</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Fact:</strong> A 600lb calf shrinking 4% loses 24 lbs. At $2.45/lb, that is nearly <strong>$60 lost per head</strong> just from the truck ride.
+    </div>
+</div>
+
+<script>
+    const WEIGHT_INPUT = document.getElementById('weight-input');
+    const PRICE_INPUT = document.getElementById('price-input');
+    const SHRINK_SELECT = document.getElementById('shrink-select');
+    
+    const PAY_WEIGHT_OUTPUT = document.getElementById('pay-weight-output');
+    const CHECK_VALUE_OUTPUT = document.getElementById('check-value-output');
+    const LOSS_OUTPUT = document.getElementById('loss-output');
+
+    const formatCurrency = (value) => '$' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    function calculateShrink() {
+        const ranchWeight = parseFloat(WEIGHT_INPUT.value);
+        const priceCwt = parseFloat(PRICE_INPUT.value);
+        const shrinkPercent = parseFloat(SHRINK_SELECT.value);
+
+        // Validation
+        if (isNaN(ranchWeight) || isNaN(priceCwt) || isNaN(shrinkPercent) || ranchWeight <= 0 || priceCwt < 0) {
+            PAY_WEIGHT_OUTPUT.textContent = '0 Lbs';
+            CHECK_VALUE_OUTPUT.textContent = '$0.00';
+            LOSS_OUTPUT.textContent = '$0.00';
+            return;
+        }
+
+        // 1. Calculate Pounds Lost (Shrink)
+        const lbsLost = ranchWeight * (shrinkPercent / 100);
+
+        // 2. Calculate Pay Weight
+        const payWeight = ranchWeight - lbsLost;
+
+        // 3. Calculate Prices
+        // Market Price is usually per CWT (100 lbs). Convert to per Lb.
+        const pricePerLb = priceCwt / 100;
+        
+        const totalValue = payWeight * pricePerLb;
+        const valueLost = lbsLost * pricePerLb;
+
+        // --- Output Results ---
+        
+        PAY_WEIGHT_OUTPUT.textContent = Math.round(payWeight).toLocaleString() + " Lbs";
+        CHECK_VALUE_OUTPUT.textContent = formatCurrency(totalValue);
+        LOSS_OUTPUT.textContent = formatCurrency(valueLost);
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateShrink();
+    };
+</script>
+</body>
+</html>

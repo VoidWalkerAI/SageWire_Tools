@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ideal Gas Law Solver (PV=nRT) | Sage Tools</title>
+    <style>
+        /* SAGE TOOLS THEME */
+        :root {
+            --sage-primary: #007bff; /* Blue for action/headers */
+            --sage-accent: #ffc107; /* Yellow/Amber for emphasis */
+            --sage-neutral: #6c757d; /* Gray for secondary text */
+            --light-bg: #f8f9fa;
+            --calc-bg: #ffffff;
+        }
+
+        body { 
+            font-family: 'Tahoma', sans-serif; 
+            margin: 20px; 
+            background-color: var(--light-bg); 
+        }
+        .calculator { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 30px; 
+            background-color: var(--calc-bg); 
+            border-radius: 8px; 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+        }
+        
+        /* Header Styling */
+        .brand-header { 
+            text-align: center; 
+            margin-bottom: 25px; 
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .brand-header h2 { 
+            color: var(--sage-primary); 
+            font-size: 1.6em; 
+            margin: 0; 
+        }
+        .brand-header .slogan { 
+            color: var(--sage-neutral); 
+            font-size: 0.9em; 
+            margin-top: 5px;
+        }
+
+        h3 { 
+            color: var(--sage-primary); 
+            margin-top: 25px; 
+            border-bottom: 1px dashed #eee; 
+            padding-bottom: 5px; 
+        }
+        .input-group { 
+            margin-bottom: 15px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+            color: #333; 
+        }
+        input[type="number"], select { 
+            width: 95%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+        }
+        
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 30px; 
+            background-color: var(--sage-primary); 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 1.05em; 
+            transition: background-color 0.3s; 
+        }
+        button:hover { 
+            background-color: #0056b3; 
+        }
+        
+        /* Result Section */
+        .result-section { 
+            margin-top: 35px; 
+            padding: 20px; 
+            border: 2px solid var(--sage-accent); 
+            border-radius: 6px; 
+            background-color: #fff3cd; /* Light success background */
+        }
+        .result-output { 
+            font-size: 1.2em; 
+            margin: 10px 0; 
+        }
+        .result-output strong { 
+            color: #d84315; 
+            font-size: 1.6em; 
+        }
+        
+        /* Footer */
+        .footer-citation {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="brand-header">
+            <h2>Ideal Gas Law Solver ($\mathbf{PV = nRT}$)</h2>
+            <p class="slogan">A Sage Tools Utility for Chemistry</p>
+        </div>
+
+        <p style="text-align: center;">Enter three known variables to solve for the fourth. Temperature must be in Kelvin ($\text{K}$).</p>
+
+        <h3>Inputs</h3>
+        <div class="input-group">
+            <label for="pressure">Pressure ($P$):</label>
+            <input type="number" id="pressure" placeholder="e.g., 1.0 (atm)">
+        </div>
+        <div class="input-group">
+            <label for="volume">Volume ($V$):</label>
+            <input type="number" id="volume" placeholder="e.g., 22.4 (Liters)">
+        </div>
+        <div class="input-group">
+            <label for="moles">Moles ($n$):</label>
+            <input type="number" id="moles" placeholder="e.g., 1.0 (mol)">
+        </div>
+        <div class="input-group">
+            <label for="temperature">Temperature ($T$, Kelvin):</label>
+            <input type="number" id="temperature" placeholder="e.g., 273.15 (K)">
+        </div>
+        <div class="input-group">
+            <label for="gasConstantR">Gas Constant ($R$):</label>
+            <select id="gasConstantR">
+                <option value="0.08206">0.08206 ($\text{L} \cdot \text{atm} / (\text{mol} \cdot \text{K})$)</option>
+                <option value="8.314">8.314 ($\text{J} / (\text{mol} \cdot \text{K})$ or $\text{Pa} \cdot \text{m}^3 / (\text{mol} \cdot \text{K})$)</option>
+            </select>
+        </div>
+
+        <button onclick="solveIdealGasLaw()">Solve for Unknown</button>
+
+        <div class="result-section">
+            <div class="result-output">
+                Pressure ($\mathbf{P}$): <strong id="resultP">--</strong>
+            </div>
+            <div class="result-output">
+                Volume ($\mathbf{V}$): <strong id="resultV">--</strong>
+            </div>
+            <div class="result-output">
+                Moles ($\mathbf{n}$): <strong id="resultN">--</strong>
+            </div>
+            <div class="result-output">
+                Temperature ($\mathbf{T}$): <strong id="resultT">-- K</strong>
+            </div>
+            <p class="slogan" style="margin-top: 10px;">*Ensure your units match the chosen Gas Constant R.*</p>
+        </div>
+        
+        <div class="footer-citation">
+            A utility tool forged by Gemini.
+        </div>
+    </div>
+
+    <script>
+        function solveIdealGasLaw() {
+            const P_in = parseFloat(document.getElementById('pressure').value);
+            const V_in = parseFloat(document.getElementById('volume').value);
+            const N_in = parseFloat(document.getElementById('moles').value);
+            const T_in = parseFloat(document.getElementById('temperature').value);
+            const R = parseFloat(document.getElementById('gasConstantR').value);
+
+            let P = P_in;
+            let V = V_in;
+            let N = N_in;
+            let T = T_in;
+
+            const inputs = [P_in, V_in, N_in, T_in].filter(val => !isNaN(val));
+
+            if (inputs.length !== 3) {
+                alert(`Error: Please enter exactly three known variables. ${inputs.length} detected.`);
+                return;
+            }
+
+            // --- Solver Logic: Solve PV = nRT for the single unknown ---
+            if (isNaN(P)) {
+                // Solve for P: P = nRT / V
+                if (V === 0) { alert("Error: Volume cannot be zero."); return; }
+                P = (N * R * T) / V;
+                document.getElementById('resultP').textContent = `${P.toFixed(4)} ${R === 0.08206 ? 'atm' : 'Pa'}`;
+            } else {
+                document.getElementById('resultP').textContent = `${P.toFixed(4)} ${R === 0.08206 ? 'atm' : 'Pa'}`;
+            }
+
+            if (isNaN(V)) {
+                // Solve for V: V = nRT / P
+                if (P === 0) { alert("Error: Pressure cannot be zero."); return; }
+                V = (N * R * T) / P;
+                document.getElementById('resultV').textContent = `${V.toFixed(4)} ${R === 0.08206 ? 'Liters' : 'm³'}`;
+            } else {
+                document.getElementById('resultV').textContent = `${V.toFixed(4)} ${R === 0.08206 ? 'Liters' : 'm³'}`;
+            }
+
+            if (isNaN(N)) {
+                // Solve for n: n = PV / RT
+                if (T === 0) { alert("Error: Temperature cannot be zero (Absolute Zero)."); return; }
+                N = (P * V) / (R * T);
+                document.getElementById('resultN').textContent = `${N.toFixed(4)} mol`;
+            } else {
+                document.getElementById('resultN').textContent = `${N.toFixed(4)} mol`;
+            }
+
+            if (isNaN(T)) {
+                // Solve for T: T = PV / nR
+                if (N === 0) { alert("Error: Moles cannot be zero."); return; }
+                T = (P * V) / (N * R);
+                document.getElementById('resultT').textContent = `${T.toFixed(2)} K`;
+            } else {
+                document.getElementById('resultT').textContent = `${T.toFixed(2)} K`;
+            }
+
+            // Clear the non-calculated results to avoid confusion
+            if (isNaN(P_in)) document.getElementById('resultP').style.fontWeight = 'bold'; else document.getElementById('resultP').style.fontWeight = 'normal';
+            if (isNaN(V_in)) document.getElementById('resultV').style.fontWeight = 'bold'; else document.getElementById('resultV').style.fontWeight = 'normal';
+            if (isNaN(N_in)) document.getElementById('resultN').style.fontWeight = 'bold'; else document.getElementById('resultN').style.fontWeight = 'normal';
+            if (isNaN(T_in)) document.getElementById('resultT').style.fontWeight = 'bold'; else document.getElementById('resultT').style.fontWeight = 'normal';
+        }
+    </script>
+</body>
+</html>

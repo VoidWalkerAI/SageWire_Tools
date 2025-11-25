@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insulation R-Value Cost/Benefit Analyzer | Sage Tools</title>
+    <style>
+        /* SAGE TOOLS THEME */
+        :root {
+            --sage-primary: #007bff; /* Blue for action/headers */
+            --sage-accent: #28a745; /* Green for success/results */
+            --sage-neutral: #6c757d; /* Gray for secondary text */
+            --light-bg: #f8f9fa;
+            --calc-bg: #ffffff;
+        }
+
+        body { 
+            font-family: 'Tahoma', sans-serif; 
+            margin: 20px; 
+            background-color: var(--light-bg); 
+        }
+        .calculator { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            padding: 30px; 
+            background-color: var(--calc-bg); 
+            border-radius: 8px; 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+        }
+        
+        /* Header Styling */
+        .brand-header { 
+            text-align: center; 
+            margin-bottom: 25px; 
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .brand-header h2 { 
+            color: var(--sage-primary); 
+            font-size: 1.6em; 
+            margin: 0; 
+        }
+        .brand-header .slogan { 
+            color: var(--sage-neutral); 
+            font-size: 0.9em; 
+            margin-top: 5px;
+        }
+
+        h3 { 
+            color: var(--sage-neutral); 
+            margin-top: 25px; 
+            border-bottom: 1px dashed #eee; 
+            padding-bottom: 5px; 
+        }
+        .input-group { 
+            margin-bottom: 15px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+            color: #333; 
+        }
+        input[type="number"] { 
+            width: 95%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+        }
+        
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 30px; 
+            background-color: var(--sage-primary); 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 1.05em; 
+            transition: background-color 0.3s; 
+        }
+        button:hover { 
+            background-color: #0056b3; 
+        }
+        
+        /* Result Section */
+        .result-section { 
+            margin-top: 35px; 
+            padding: 20px; 
+            border: 2px solid var(--sage-accent); 
+            border-radius: 6px; 
+            background-color: #e9f7ef; /* Light green success background */
+            text-align: center;
+        }
+        .result-output { 
+            font-size: 1.2em; 
+            margin: 10px 0; 
+        }
+        .result-output strong { 
+            color: #d84315; 
+            font-size: 1.6em; 
+        }
+        
+        /* Footer */
+        .footer-citation {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="brand-header">
+            <h2>Insulation R-Value Cost/Benefit Analyzer</h2>
+            <p class="slogan">A Sage Tools Utility</p>
+        </div>
+
+        <p style="text-align: center;">Calculates the Payback Period for an R-Value upgrade based on energy savings.</p>
+
+        <h3>1. Project & Cost Data (Dollars and sq ft)</h3>
+        <div class="input-group">
+            <label for="area">Area to Insulate ($\text{sq ft}$):</label>
+            <input type="number" id="area" value="1000" placeholder="e.g., 1000">
+        </div>
+        <div class="input-group">
+            <label for="installedCost">Initial Installed Cost (Total $):</label>
+            <input type="number" id="installedCost" value="1500" placeholder="e.g., 1500">
+        </div>
+
+        <h3>2. Thermal Parameters (R-Value)</h3>
+        <div class="input-group">
+            <label for="rBase">Baseline R-Value (Existing):</label>
+            <input type="number" id="rBase" value="10" placeholder="e.g., 10">
+        </div>
+        <div class="input-group">
+            <label for="rTarget">Target R-Value (Upgrade To):</label>
+            <input type="number" id="rTarget" value="49" placeholder="e.g., 49">
+        </div>
+        
+        <h3>3. Climate & Energy Data</h3>
+        <div class="input-group">
+            <label for="degreeDays">Heating Degree Days (HDD - Local Climate Data):</label>
+            <input type="number" id="degreeDays" value="5000" placeholder="e.g., 5000">
+        </div>
+        <div class="input-group">
+            <label for="costPerBtu">Energy Cost Factor ($/BTU Saved per Year):</label>
+            <input type="number" id="costPerBtu" value="0.00003" placeholder="e.g., 0.00003 (Requires unit conversion)">
+        </div>
+
+        <button onclick="calculatePayback()">Calculate Payback Period</button>
+
+        <div class="result-section">
+            <div class="result-output">
+                Annual Energy Savings: <strong id="annualSavings">-- $</strong>
+            </div>
+            <div class="result-output">
+                Payback Period: 
+                <strong id="paybackPeriod">-- Years</strong>
+            </div>
+            <p style="font-size: 0.9em; margin-top: 15px; color: #009688;">
+                *Note: Savings are calculated using HDD and relative heat loss reduction.*
+            </p>
+        </div>
+        
+        <div class="footer-citation">
+            A utility tool forged by Gemini.
+        </div>
+    </div>
+
+    <script>
+        // Constant for 24 hours in a day
+        const HOURS_PER_DAY = 24;
+
+        function calculatePayback() {
+            const A = parseFloat(document.getElementById('area').value);
+            const C_ins = parseFloat(document.getElementById('installedCost').value);
+            const R_base = parseFloat(document.getElementById('rBase').value);
+            const R_target = parseFloat(document.getElementById('rTarget').value);
+            const D_deg = parseFloat(document.getElementById('degreeDays').value);
+            const C_energy = parseFloat(document.getElementById('costPerBtu').value); // $/BTU factor
+
+            if ([A, C_ins, R_base, R_target, D_deg, C_energy].some(isNaN) || A <= 0 || C_ins <= 0 || R_base <= 0 || R_target <= R_base) {
+                alert('Please enter valid, positive inputs. Target R-Value must be higher than Baseline R-Value.');
+                return;
+            }
+
+            // --- 1. Calculate Annual Heat Loss (BTU/Year) ---
+            // Formula: Q = (A * 24 * D_deg) / R
+            const Q_base = (A * HOURS_PER_DAY * D_deg) / R_base;
+            const Q_target = (A * HOURS_PER_DAY * D_deg) / R_target;
+
+            // --- 2. Calculate Annual Savings (S_annual) ---
+            // Reduction in Heat Loss (BTU)
+            const delta_Q = Q_base - Q_target; 
+            
+            // Convert BTU savings to Dollar savings (S_annual = delta_Q * C_energy)
+            // C_energy here assumes a single factor covering BTU conversion and system efficiency.
+            const S_annual = delta_Q * C_energy; 
+
+            // --- 3. Calculate Payback Period ---
+            // Formula: P_payback = C_ins / S_annual
+            const P_payback = C_ins / S_annual;
+
+            // Output
+            document.getElementById('annualSavings').textContent = `$${S_annual.toFixed(2)}`;
+            
+            if (P_payback > 0 && P_payback < 100) {
+                document.getElementById('paybackPeriod').textContent = `${P_payback.toFixed(1)} Years`;
+                document.getElementById('paybackPeriod').style.color = (P_payback < 7) ? '#007bff' : '#d84315';
+            } else {
+                document.getElementById('paybackPeriod').textContent = `Very Long (>100 Years) or Not Economical`;
+                document.getElementById('paybackPeriod').style.color = '#dc3545';
+            }
+        }
+    </script>
+</body>
+</html>

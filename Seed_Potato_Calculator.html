@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Seed Potato Calc</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🥔 HerdMate | Seed Potato Calc</h1>
+    <p>Calculate total seed weight required to plant your field or garden rows.</p>
+
+    <h3 class="section-title">1. Field Dimensions</h3>
+    <div class="input-grid">
+        <div>
+            <label for="acres-input">Area to Plant (Acres)</label>
+            <input type="number" id="acres-input" value="5" min="0.1" step="0.1" oninput="calculateSeed()">
+        </div>
+        <div>
+            <label for="row-width-input">Row Width (Inches)</label>
+            <input type="number" id="row-width-input" value="34" min="20" oninput="calculateSeed()">
+        </div>
+    </div>
+
+    <h3 class="section-title">2. Seed Details</h3>
+    <div class="input-grid">
+        <div>
+            <label for="spacing-input">Seed Spacing (Inches)</label>
+            <input type="number" id="spacing-input" value="12" min="6" oninput="calculateSeed()">
+        </div>
+        <div>
+            <label for="seed-weight-input">Avg Cut Weight (oz)</label>
+            <input type="number" id="seed-weight-input" value="2.0" min="1.0" step="0.1" oninput="calculateSeed()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Total Seed Needed</h3>
+            <span class="value" id="total-lbs-output">0 Lbs</span>
+            <span class="label" id="cwt-output">(0 CWT)</span>
+        </div>
+        <div class="output-box">
+            <h3>Plant Population</h3>
+            <span class="value" id="pop-output">0 Plants</span>
+            <span class="label">Total Stand Count</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Tip:</strong> Commercial seed is often sold by the "Hundredweight" (CWT), which equals 100 lbs. Standard seed pieces are cut to 1.5 - 2.5 oz.
+    </div>
+</div>
+
+<script>
+    const ACRES_INPUT = document.getElementById('acres-input');
+    const ROW_WIDTH_INPUT = document.getElementById('row-width-input');
+    const SPACING_INPUT = document.getElementById('spacing-input');
+    const SEED_WEIGHT_INPUT = document.getElementById('seed-weight-input');
+    
+    const TOTAL_LBS_OUTPUT = document.getElementById('total-lbs-output');
+    const CWT_OUTPUT = document.getElementById('cwt-output');
+    const POP_OUTPUT = document.getElementById('pop-output');
+
+    // Constants
+    const SQ_FT_PER_ACRE = 43560;
+
+    function calculateSeed() {
+        const acres = parseFloat(ACRES_INPUT.value);
+        const rowWidth = parseFloat(ROW_WIDTH_INPUT.value);
+        const seedSpacing = parseFloat(SPACING_INPUT.value);
+        const seedOz = parseFloat(SEED_WEIGHT_INPUT.value);
+
+        // Validation
+        if (isNaN(acres) || isNaN(rowWidth) || isNaN(seedSpacing) || isNaN(seedOz) || 
+            acres <= 0 || rowWidth <= 0 || seedSpacing <= 0 || seedOz <= 0) {
+            TOTAL_LBS_OUTPUT.textContent = '0 Lbs';
+            CWT_OUTPUT.textContent = '(0 CWT)';
+            POP_OUTPUT.textContent = '0 Plants';
+            return;
+        }
+
+        // 1. Calculate Total Row Feet available in the acreage
+        // Row Feet = (Acres * 43560) / (Row Width in Feet)
+        const rowWidthFt = rowWidth / 12;
+        const totalRowFeet = (acres * SQ_FT_PER_ACRE) / rowWidthFt;
+
+        // 2. Calculate Total Plants (Population)
+        // Plants = Total Row Feet / (Seed Spacing in Feet)
+        const seedSpacingFt = seedSpacing / 12;
+        const totalPlants = totalRowFeet / seedSpacingFt;
+
+        // 3. Calculate Total Weight Needed
+        // Weight in Oz = Plants * Avg Seed Weight
+        const totalOz = totalPlants * seedOz;
+        
+        // Convert to Lbs (16 oz per lb)
+        const totalLbs = totalOz / 16;
+        
+        // Convert to CWT (100 lbs)
+        const totalCWT = totalLbs / 100;
+
+        // --- Output Results ---
+        
+        TOTAL_LBS_OUTPUT.textContent = Math.ceil(totalLbs).toLocaleString() + " Lbs";
+        CWT_OUTPUT.textContent = `(${totalCWT.toFixed(1)} CWT)`;
+        POP_OUTPUT.textContent = Math.floor(totalPlants).toLocaleString() + " Plants";
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateSeed();
+    };
+</script>
+</body>
+</html>

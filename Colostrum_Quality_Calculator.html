@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Colostrum Quality</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 1.2em;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #7D716A;
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; /* Rust Accent */
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        /* Status Colors */
+        .status-good { color: #5A946E; border-color: #5A946E; }
+        .status-fair { color: #f39c12; border-color: #f39c12; }
+        .status-poor { color: #E74C3C; border-color: #E74C3C; }
+        
+        .recommendation-box {
+            grid-column: 1 / span 2;
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #1a1a2e;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px dashed #aeb6bf;
+        }
+        #action-text { font-weight: bold; font-size: 1.1em; }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🍼 HerdMate | Colostrum Quality</h1>
+    <p>Convert Brix refractometer readings into IgG quality estimates for newborn calf health.</p>
+
+    <label for="brix-input">Enter Brix Refractometer Reading (%)</label>
+    <input type="number" id="brix-input" value="22.0" min="0" max="40" step="0.1" oninput="calculateQuality()">
+
+    <div class="output-grid">
+        <div class="output-box" id="quality-box">
+            <h3>Colostrum Grade</h3>
+            <span class="value" id="quality-output">Good</span>
+            <span class="label">Quality Classification</span>
+        </div>
+
+        <div class="output-box">
+            <h3>Est. IgG Level</h3>
+            <span class="value" id="igg-output">> 50 g/L</span>
+            <span class="label">Antibody Concentration</span>
+        </div>
+        
+        <div class="recommendation-box">
+            <span style="color:#aeb6bf; font-size:0.8em; text-transform:uppercase;">Recommended Action</span>
+            <div id="action-text">Safe for first feeding.</div>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Benchmark:</strong> High-quality colostrum (>22% Brix) contains over 50g/L of IgG antibodies, essential for passive immunity transfer in the first 24 hours.
+    </div>
+</div>
+
+<script>
+    const BRIX_INPUT = document.getElementById('brix-input');
+    const QUALITY_OUTPUT = document.getElementById('quality-output');
+    const QUALITY_BOX = document.getElementById('quality-box');
+    const IGG_OUTPUT = document.getElementById('igg-output');
+    const ACTION_TEXT = document.getElementById('action-text');
+
+    function calculateQuality() {
+        const brix = parseFloat(BRIX_INPUT.value);
+
+        if (isNaN(brix)) {
+            QUALITY_OUTPUT.textContent = '--';
+            IGG_OUTPUT.textContent = '--';
+            return;
+        }
+
+        // Reset Classes
+        QUALITY_BOX.classList.remove('status-good', 'status-fair', 'status-poor');
+        QUALITY_OUTPUT.classList.remove('status-good', 'status-fair', 'status-poor');
+
+        if (brix >= 22.0) {
+            // HIGH QUALITY
+            QUALITY_OUTPUT.textContent = "EXCELLENT";
+            IGG_OUTPUT.textContent = "> 50 g/L";
+            ACTION_TEXT.textContent = "✅ Ideal for first feeding. Freeze surplus for future use.";
+            
+            QUALITY_BOX.style.borderColor = '#5A946E';
+            QUALITY_OUTPUT.style.color = '#5A946E';
+            ACTION_TEXT.style.color = '#5A946E';
+
+        } else if (brix >= 18.0) {
+            // FAIR QUALITY
+            QUALITY_OUTPUT.textContent = "FAIR";
+            IGG_OUTPUT.textContent = "20 - 50 g/L";
+            ACTION_TEXT.textContent = "⚠️ Acceptable for 2nd/3rd feeding. Supplement with high-quality colostrum replacer if using for newborn.";
+            
+            QUALITY_BOX.style.borderColor = '#f39c12';
+            QUALITY_OUTPUT.style.color = '#f39c12';
+            ACTION_TEXT.style.color = '#f39c12';
+
+        } else {
+            // POOR QUALITY
+            QUALITY_OUTPUT.textContent = "POOR";
+            IGG_OUTPUT.textContent = "< 20 g/L";
+            ACTION_TEXT.textContent = "❌ DO NOT USE for first feeding. Low antibody levels. Discard or use for older calves only.";
+            
+            QUALITY_BOX.style.borderColor = '#E74C3C';
+            QUALITY_OUTPUT.style.color = '#E74C3C';
+            ACTION_TEXT.style.color = '#E74C3C';
+        }
+    }
+
+    // Initialize on load
+    window.onload = function() {
+        calculateQuality();
+    };
+</script>
+</body>
+</html>

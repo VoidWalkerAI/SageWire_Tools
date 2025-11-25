@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Honey Flow Predictor</title>
+    <style>
+        body { font-family: 'Times New Roman', serif; margin: 20px; background-color: #fffaf0; }
+        .calculator { max-width: 650px; margin: 0 auto; padding: 30px; background-color: #ffffff; border-radius: 15px; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); }
+        h2 { text-align: center; color: #ff9800; border-bottom: 3px solid #ff9800; padding-bottom: 10px; margin-bottom: 25px; }
+        h3 { color: #00796b; margin-top: 25px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="number"], select { width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; margin-top: 30px; background-color: #ffc107; color: #333; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s; }
+        button:hover { background-color: #ffb300; }
+        .result-section { margin-top: 35px; padding: 20px; border: 2px solid #ff9800; border-radius: 8px; background-color: #fff3e0; text-align: center; }
+        .output-value { font-size: 1.4em; margin: 10px 0; font-weight: 600; color: #d84315; }
+        .action-message { font-size: 1.1em; color: #00796b; margin-top: 10px; }
+        .note { font-size: 0.9em; color: #777; margin-top: 15px; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>🍯 Honey Flow Predictor</h2>
+        <p style="text-align: center;">Estimates the flow intensity based on botanical, biological, and meteorological factors.</p>
+
+        <h3>1. Botanical Factors (Nectar Availability)</h3>
+        <div class="input-group">
+            <label for="bloomIntensity">Bloom Intensity (0-10, 10=Peak Bloom):</label>
+            <input type="number" id="bloomIntensity" value="7" min="0" max="10">
+        </div>
+        <div class="input-group">
+            <label for="plantHealth">Plant Health (0-10, 10=Well-Hydrated/Vigorous):</label>
+            <input type="number" id="plantHealth" value="8" min="0" max="10">
+        </div>
+        
+        <h3>2. Biological Factors (Colony Strength)</h3>
+        <div class="input-group">
+            <label for="colonyStrength">Colony Strength (0-10, 10=Max Foraging Population):</label>
+            <input type="number" id="colonyStrength" value="9" min="0" max="10">
+        </div>
+        <div class="input-group">
+            <label for="swarmRisk">Swarm Risk (0=Low, 10=Imminent Swarm):</label>
+            <input type="number" id="swarmRisk" value="2" min="0" max="10">
+        </div>
+
+        <h3>3. Meteorological Factors (Weather)</h3>
+        <div class="input-group">
+            <label for="weatherScore">Weather Condition Score (0-10, 10=Warm, Sunny, Calm):</label>
+            <input type="number" id="weatherScore" value="8" min="0" max="10">
+        </div>
+        <div class="input-group">
+            <label for="humidityScore">Humidity/Rainfall Impact (0-10, 10=Low Humidity/Dry):</label>
+            <input type="number" id="humidityScore" value="9" min="0" max="10">
+        </div>
+        
+        <button onclick="calculateHoneyFlow()">Predict Honey Flow Intensity</button>
+
+        <div class="result-section">
+            <h3>Predicted Flow Score</h3>
+            <div class="output-value" id="flowScore">-- / 10</div>
+            
+            <div class="action-message" id="actionMessage">--</div>
+        </div>
+        
+        <p class="note">Prediction Formula: Weighted average of the three component scores.</p>
+    </div>
+
+    <script>
+        function calculateHoneyFlow() {
+            // Botanical Factors (Weighted 40%)
+            const bloom = parseFloat(document.getElementById('bloomIntensity').value);
+            const plantHealth = parseFloat(document.getElementById('plantHealth').value);
+            
+            // Biological Factors (Weighted 40%)
+            const strength = parseFloat(document.getElementById('colonyStrength').value);
+            const swarm = parseFloat(document.getElementById('swarmRisk').value);
+
+            // Meteorological Factors (Weighted 20%)
+            const weather = parseFloat(document.getElementById('weatherScore').value);
+            const humidity = parseFloat(document.getElementById('humidityScore').value);
+
+            // Input Validation (Simplified)
+            const inputs = [bloom, plantHealth, strength, swarm, weather, humidity];
+            if (inputs.some(isNaN) || inputs.some(v => v < 0 || v > 10)) {
+                alert('Please enter scores between 0 and 10 for all fields.');
+                return;
+            }
+
+            // --- 1. Calculate Component Scores ---
+            const botanicalScore = (bloom + plantHealth) / 2;
+            
+            // Swarm risk is a penalty: reduce score if swarm risk is high
+            let biologicalScore = strength;
+            if (swarm > 7) {
+                biologicalScore *= 0.5; // Halve effective strength if swarm is imminent
+            } else if (swarm > 4) {
+                biologicalScore *= 0.8;
+            }
+
+            const meteorologicalScore = (weather + humidity) / 2;
+
+            // --- 2. Apply Weighted Average (40% Botanical, 40% Biological, 20% Meteorological) ---
+            const flowScore = (
+                (botanicalScore * 0.40) + 
+                (biologicalScore * 0.40) + 
+                (meteorologicalScore * 0.20)
+            );
+            
+            const finalScore = Math.min(10, flowScore); // Cap at 10
+
+            // --- 3. Determine Action Message ---
+            let message = '';
+            let color = '#d84315'; // Default to strong flow
+
+            if (finalScore < 4) {
+                message = 'No Flow Predicted (Consumption Period). Monitor food stores.';
+                color = '#555';
+            } else if (finalScore < 7) {
+                message = 'Sustaining Flow Predicted. Expect population growth; check for room.';
+                color = '#ff9800';
+            } else {
+                message = 'Major Honey Flow Predicted! **Add supers immediately** to capture the surplus.';
+                color = '#2e7d32';
+            }
+
+
+            // --- Output ---
+            document.getElementById('flowScore').textContent = `${finalScore.toFixed(1)} / 10`;
+            document.getElementById('flowScore').style.color = color;
+            document.getElementById('actionMessage').textContent = message;
+            document.getElementById('actionMessage').style.color = color;
+        }
+    </script>
+</body>
+</html>

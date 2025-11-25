@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Loan Amortization</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box.interest {
+            border-color: #B85C38; /* Rust for Interest Cost */
+            background-color: #1e2b24;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+        
+        .output-box.interest .value { color: #B85C38; }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        /* Schedule Table */
+        .schedule-container {
+            margin-top: 30px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #7D716A;
+            border-radius: 8px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9em;
+        }
+        th {
+            background-color: #34343d;
+            color: #5dade2;
+            position: sticky;
+            top: 0;
+            padding: 10px;
+            text-align: right;
+            border-bottom: 2px solid #7D716A;
+        }
+        td {
+            padding: 8px 10px;
+            border-bottom: 1px solid #34343d;
+            text-align: right;
+            color: #ccc;
+        }
+        tr:nth-child(even) { background-color: #2f2f36; }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>💰 HerdMate | Loan Schedule</h1>
+    <p>Calculate payments and visualize interest costs for land, equipment, or operating loans.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="amount-input">Loan Amount ($)</label>
+            <input type="number" id="amount-input" value="50000" min="1000" step="1000" oninput="calculateLoan()">
+        </div>
+        <div>
+            <label for="rate-input">Interest Rate (%)</label>
+            <input type="number" id="rate-input" value="7.5" min="0.1" step="0.1" oninput="calculateLoan()">
+        </div>
+    </div>
+    
+    <div class="input-grid">
+        <div>
+            <label for="years-input">Loan Term (Years)</label>
+            <input type="number" id="years-input" value="5" min="1" oninput="calculateLoan()">
+        </div>
+        <div>
+            <label for="frequency-select">Payment Frequency</label>
+            <select id="frequency-select" onchange="calculateLoan()">
+                <option value="12">Monthly (12/yr)</option>
+                <option value="4">Quarterly (4/yr)</option>
+                <option value="2">Semi-Annual (2/yr)</option>
+                <option value="1" selected>Annual (1/yr)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Payment Amount</h3>
+            <span class="value" id="payment-output">$0.00</span>
+            <span class="label" id="freq-label">Per Year</span>
+        </div>
+        <div class="output-box interest">
+            <h3>Total Interest</h3>
+            <span class="value" id="total-interest-output">$0.00</span>
+            <span class="label">Cost of Borrowing</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Amortization Schedule:</strong> Scroll below to see how each payment is split between Principal (paying down debt) and Interest (bank profit).
+    </div>
+
+    <div class="schedule-container">
+        <table>
+            <thead>
+                <tr>
+                    <th style="text-align:center;">#</th>
+                    <th>Payment</th>
+                    <th>Principal</th>
+                    <th>Interest</th>
+                    <th>Balance</th>
+                </tr>
+            </thead>
+            <tbody id="schedule-body">
+                </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const AMOUNT_INPUT = document.getElementById('amount-input');
+    const RATE_INPUT = document.getElementById('rate-input');
+    const YEARS_INPUT = document.getElementById('years-input');
+    const FREQ_SELECT = document.getElementById('frequency-select');
+    
+    const PAYMENT_OUTPUT = document.getElementById('payment-output');
+    const INTEREST_OUTPUT = document.getElementById('total-interest-output');
+    const FREQ_LABEL = document.getElementById('freq-label');
+    const TABLE_BODY = document.getElementById('schedule-body');
+
+    const formatCurrency = (value) => '$' + value.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+
+    function calculateLoan() {
+        const P = parseFloat(AMOUNT_INPUT.value);
+        const annualRate = parseFloat(RATE_INPUT.value);
+        const years = parseFloat(YEARS_INPUT.value);
+        const paymentsPerYear = parseFloat(FREQ_SELECT.value);
+
+        // Validation
+        if (isNaN(P) || isNaN(annualRate) || isNaN(years) || P <= 0 || annualRate <= 0 || years <= 0) {
+            PAYMENT_OUTPUT.textContent = '$0.00';
+            INTEREST_OUTPUT.textContent = '$0.00';
+            TABLE_BODY.innerHTML = '';
+            return;
+        }
+
+        // --- Calculations ---
+        const r = annualRate / 100 / paymentsPerYear; // Rate per period
+        const n = years * paymentsPerYear; // Total number of payments
+        
+        // Amortization Formula: A = P * (r * (1+r)^n) / ((1+r)^n - 1)
+        const payment = P * ( (r * Math.pow(1+r, n)) / (Math.pow(1+r, n) - 1) );
+        
+        const totalPaid = payment * n;
+        const totalInterest = totalPaid - P;
+
+        // --- Update Summary ---
+        PAYMENT_OUTPUT.textContent = formatCurrency(payment);
+        INTEREST_OUTPUT.textContent = formatCurrency(totalInterest);
+        
+        let freqText = "Per Month";
+        if (paymentsPerYear === 4) freqText = "Per Quarter";
+        if (paymentsPerYear === 2) freqText = "Semi-Annually";
+        if (paymentsPerYear === 1) freqText = "Per Year";
+        FREQ_LABEL.textContent = freqText;
+
+        // --- Generate Schedule Table ---
+        let balance = P;
+        let htmlRows = '';
+        
+        for (let i = 1; i <= n; i++) {
+            const interestPart = balance * r;
+            const principalPart = payment - interestPart;
+            balance -= principalPart;
+            
+            if (balance < 0) balance = 0; // Handle tiny float errors at end
+
+            htmlRows += `
+                <tr>
+                    <td style="text-align:center;">${i}</td>
+                    <td>${formatCurrency(payment)}</td>
+                    <td style="color:#5A946E;">${formatCurrency(principalPart)}</td>
+                    <td style="color:#B85C38;">${formatCurrency(interestPart)}</td>
+                    <td>${formatCurrency(balance)}</td>
+                </tr>
+            `;
+        }
+        TABLE_BODY.innerHTML = htmlRows;
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculateLoan();
+    };
+</script>
+</body>
+</html>

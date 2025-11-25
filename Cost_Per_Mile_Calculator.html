@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SageWire Tools | Cost Per Mile</title>
+    
+    <style>
+        /* --- SAGEWIRE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 750px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        
+        /* Header Styling */
+        .header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #5dade2;
+        }
+        .header-brand h1 { 
+            color: #B85C38; /* Rust Accent */
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .header-brand p {
+            color: #aeb6bf;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        h2 { margin-top: 0; color: #5dade2; text-align: center; margin-bottom: 20px; }
+        
+        .section-header {
+            color: #f39c12;
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; font-size: 0.9em; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5dade2;
+            background-color: #34343d;
+        }
+        
+        .output-box.main-result {
+            grid-column: 1 / span 2;
+            border-color: #5A946E;
+            background-color: #1e2b24;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #f4f6f7;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .output-box.main-result .value { color: #5A946E; }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-brand">
+        <h1>SageWire Tools</h1>
+        <p>We tend the fire while you're out living life.</p>
+    </div>
+    
+    <h2>🚚 Cost Per Mile Calculator</h2>
+    <p style="text-align:center; color:#ccc;">Determine your true break-even point to ensure every load is profitable.</p>
+
+    <div class="section-header">1. Mileage Baseline</div>
+    <label for="monthly-miles">Estimated Monthly Miles</label>
+    <input type="number" id="monthly-miles" value="10000" min="100" oninput="calculateCPM()">
+
+    <div class="section-header">2. Monthly Fixed Costs ($)</div>
+    <div class="input-grid">
+        <div>
+            <label>Truck/Trailer Payment</label>
+            <input type="number" id="fixed-payment" value="1500" min="0" oninput="calculateCPM()">
+        </div>
+        <div>
+            <label>Insurance</label>
+            <input type="number" id="fixed-insurance" value="800" min="0" oninput="calculateCPM()">
+        </div>
+    </div>
+    <div class="input-grid">
+        <div>
+            <label>Licenses / Permits / ELD</label>
+            <input type="number" id="fixed-permits" value="150" min="0" oninput="calculateCPM()">
+        </div>
+        <div>
+            <label>Cell / Office / Overhead</label>
+            <input type="number" id="fixed-overhead" value="100" min="0" oninput="calculateCPM()">
+        </div>
+    </div>
+
+    <div class="section-header">3. Variable Costs</div>
+    <div class="input-grid">
+        <div>
+            <label>Fuel Price ($/Gallon)</label>
+            <input type="number" id="var-fuel-price" value="4.25" step="0.01" oninput="calculateCPM()">
+        </div>
+        <div>
+            <label>Average MPG</label>
+            <input type="number" id="var-mpg" value="8.5" step="0.1" oninput="calculateCPM()">
+        </div>
+    </div>
+    <div class="input-grid">
+        <div>
+            <label>Driver Pay (Cents Per Mile)</label>
+            <input type="number" id="var-driver" value="0.50" step="0.01" placeholder="e.g. 0.50" oninput="calculateCPM()">
+        </div>
+        <div>
+            <label>Maintenance/Tires (CPM)</label>
+            <input type="number" id="var-maint" value="0.15" step="0.01" placeholder="e.g. 0.15" oninput="calculateCPM()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Fixed Cost</h3>
+            <span class="value" id="fixed-cpm-output">$0.00</span>
+            <span class="label">Per Mile</span>
+        </div>
+        <div class="output-box">
+            <h3>Variable Cost</h3>
+            <span class="value" id="variable-cpm-output">$0.00</span>
+            <span class="label">Per Mile (Fuel + Maint)</span>
+        </div>
+        
+        <div class="output-box main-result">
+            <h3>BREAK-EVEN CPM</h3>
+            <span class="value" id="total-cpm-output">$0.00</span>
+            <span class="label">Minimum Rate To Cover Costs</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Strategy:</strong> Any rate below your Break-Even CPM means you are paying to haul the freight. Aim for at least $0.50 - $1.00 above this number for profit.
+    </div>
+</div>
+
+<script>
+    // Inputs
+    const MILES_INPUT = document.getElementById('monthly-miles');
+    
+    // Fixed
+    const PAY_INPUT = document.getElementById('fixed-payment');
+    const INS_INPUT = document.getElementById('fixed-insurance');
+    const PERM_INPUT = document.getElementById('fixed-permits');
+    const OVER_INPUT = document.getElementById('fixed-overhead');
+    
+    // Variable
+    const FUEL_PRICE_INPUT = document.getElementById('var-fuel-price');
+    const MPG_INPUT = document.getElementById('var-mpg');
+    const DRIVER_INPUT = document.getElementById('var-driver');
+    const MAINT_INPUT = document.getElementById('var-maint');
+    
+    // Outputs
+    const FIXED_OUT = document.getElementById('fixed-cpm-output');
+    const VAR_OUT = document.getElementById('variable-cpm-output');
+    const TOTAL_OUT = document.getElementById('total-cpm-output');
+
+    function calculateCPM() {
+        const miles = parseFloat(MILES_INPUT.value) || 1; // Avoid divide by zero
+        
+        // 1. Calculate Total Monthly Fixed Costs
+        const fixedTotal = (parseFloat(PAY_INPUT.value) || 0) + 
+                           (parseFloat(INS_INPUT.value) || 0) + 
+                           (parseFloat(PERM_INPUT.value) || 0) + 
+                           (parseFloat(OVER_INPUT.value) || 0);
+                           
+        // Fixed Cost Per Mile
+        const fixedCPM = fixedTotal / miles;
+
+        // 2. Calculate Variable Costs
+        const fuelPrice = parseFloat(FUEL_PRICE_INPUT.value) || 0;
+        const mpg = parseFloat(MPG_INPUT.value) || 1;
+        const driverPay = parseFloat(DRIVER_INPUT.value) || 0;
+        const maintCost = parseFloat(MAINT_INPUT.value) || 0;
+
+        // Fuel Cost Per Mile
+        const fuelCPM = fuelPrice / mpg;
+        
+        // Total Variable CPM
+        const variableCPM = fuelCPM + driverPay + maintCost;
+
+        // 3. Total Break-Even
+        const totalCPM = fixedCPM + variableCPM;
+
+        // --- Output Results ---
+        const fmt = (val) => '$' + val.toFixed(3); // 3 decimals for precision in logistics
+
+        FIXED_OUT.textContent = fmt(fixedCPM);
+        VAR_OUT.textContent = fmt(variableCPM);
+        TOTAL_OUT.textContent = fmt(totalCPM);
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculateCPM();
+    };
+</script>
+</body>
+</html>

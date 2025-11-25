@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SageWire Tools | Board Feet Calculator</title>
+    <title>SageWire Tools | Green Giant Estimator</title>
     
     <style>
         /* --- SAGEWIRE BRANDING CSS --- */
@@ -15,7 +15,7 @@
             font-size: 1.05em;
         }
         .container { 
-            max-width: 650px; 
+            max-width: 700px; 
             margin: 0 auto; 
             background: #292930; /* Soil/Dark Taupe */
             padding: 30px; 
@@ -42,8 +42,6 @@
             font-style: italic;
         }
 
-        h2 { margin-top: 0; color: #5dade2; text-align: center; margin-bottom: 20px; }
-
         .input-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -52,19 +50,25 @@
         }
 
         label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
-        input[type="number"] {
+        
+        input[type="number"], select {
             width: 100%;
-            padding: 12px;
-            border: 2px solid #7D716A; /* Aged Bronze Border */
+            padding: 10px;
+            border: 2px solid #7D716A; 
             border-radius: 5px;
             background-color: #34343d; 
             color: #fff;
             font-size: 16px;
-            text-align: center;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
         }
 
         .output-box {
-            margin-top: 30px;
             padding: 20px;
             border-radius: 8px;
             text-align: center;
@@ -81,7 +85,7 @@
         }
 
         .output-box .value {
-            font-size: 2.5em;
+            font-size: 2em;
             color: #5A946E; 
             font-weight: bold;
             display: block;
@@ -110,94 +114,102 @@
         <p>We tend the fire while you're out living life.</p>
     </div>
     
-    <h2>🪵 Board Feet & Cost Calculator</h2>
-    <p style="text-align:center; color:#ccc;">Calculate total board footage and estimated material cost for lumber orders.</p>
+    <h2 style="text-align:center; color:#5dade2;">🌲 Green Giant Calculator</h2>
+    <p style="text-align:center; color:#ccc;">Calculate trees needed for a privacy screen or living fence.</p>
 
     <div class="input-grid">
         <div>
-            <label>Thickness (Inches)</label>
-            <input type="number" id="thickness-input" value="1" min="0.25" step="0.25" oninput="calculateBoardFeet()">
+            <label>Fence Line Length (Feet)</label>
+            <input type="number" id="length-input" value="100" min="5" oninput="calculateTrees()">
         </div>
         <div>
-            <label>Width (Inches)</label>
-            <input type="number" id="width-input" value="6" min="1" oninput="calculateBoardFeet()">
+            <label>Spacing (Center to Center)</label>
+            <select id="spacing-select" onchange="calculateTrees()">
+                <option value="5">5 Ft (Tight / Instant Screen)</option>
+                <option value="6" selected>6 Ft (Standard Privacy)</option>
+                <option value="8">8 Ft (Healthy Growth)</option>
+                <option value="10">10 Ft (Windbreak / Open)</option>
+                <option value="12">12 Ft (Specimen Planting)</option>
+            </select>
         </div>
     </div>
-    
+
     <div class="input-grid">
         <div>
-            <label>Length (Feet)</label>
-            <input type="number" id="length-input" value="8" min="1" oninput="calculateBoardFeet()">
+            <label>Row Layout</label>
+            <select id="layout-select" onchange="calculateTrees()">
+                <option value="1">Single Row (Standard)</option>
+                <option value="2">Staggered Double Row (Zig-Zag)</option>
+            </select>
         </div>
         <div>
-            <label>Quantity (Boards)</label>
-            <input type="number" id="quantity-input" value="10" min="1" oninput="calculateBoardFeet()">
+            <label>Cost Per Tree ($)</label>
+            <input type="number" id="cost-input" value="45.00" min="0" step="0.01" oninput="calculateTrees()">
         </div>
     </div>
 
-    <label>Price Per Board Foot ($)</label>
-    <input type="number" id="price-input" value="3.50" min="0" step="0.10" placeholder="e.g. 3.50" oninput="calculateBoardFeet()">
-
-    <div class="output-box">
-        <h3>Total Estimate</h3>
-        <span class="value" id="total-cost-output">$0.00</span>
-        <span class="label" id="total-bf-output">0.0 Board Feet</span>
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Total Trees Needed</h3>
+            <span class="value" id="tree-count-output">0</span>
+            <span class="label">Green Giant Arborvitae</span>
+        </div>
+        <div class="output-box">
+            <h3>Total Material Cost</h3>
+            <span class="value" id="total-cost-output">$0.00</span>
+            <span class="label">Estimated Budget</span>
+        </div>
     </div>
     
     <div class="note">
-        <strong>Note:</strong> A "Board Foot" is a volume measurement equal to 144 cubic inches (12" x 12" x 1").
+        <strong>Tip:</strong> For a Staggered (Zig-Zag) row, trees are typically offset to fill gaps faster. This doubles the tree count but provides a denser sound and sight barrier.
     </div>
 </div>
 
 <script>
-    const THICKNESS_INPUT = document.getElementById('thickness-input');
-    const WIDTH_INPUT = document.getElementById('width-input');
     const LENGTH_INPUT = document.getElementById('length-input');
-    const QUANTITY_INPUT = document.getElementById('quantity-input');
-    const PRICE_INPUT = document.getElementById('price-input');
+    const SPACING_SELECT = document.getElementById('spacing-select');
+    const LAYOUT_SELECT = document.getElementById('layout-select');
+    const COST_INPUT = document.getElementById('cost-input');
     
+    const TREE_COUNT_OUTPUT = document.getElementById('tree-count-output');
     const TOTAL_COST_OUTPUT = document.getElementById('total-cost-output');
-    const TOTAL_BF_OUTPUT = document.getElementById('total-bf-output');
 
     const formatCurrency = (value) => '$' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 
-    function calculateBoardFeet() {
-        const thickness = parseFloat(THICKNESS_INPUT.value);
-        const width = parseFloat(WIDTH_INPUT.value);
+    function calculateTrees() {
         const length = parseFloat(LENGTH_INPUT.value);
-        const quantity = parseInt(QUANTITY_INPUT.value);
-        const price = parseFloat(PRICE_INPUT.value);
+        const spacing = parseFloat(SPACING_SELECT.value);
+        const rows = parseInt(LAYOUT_SELECT.value);
+        const cost = parseFloat(COST_INPUT.value);
 
         // Validation
-        if (isNaN(thickness) || isNaN(width) || isNaN(length) || isNaN(quantity) || 
-            thickness <= 0 || width <= 0 || length <= 0 || quantity <= 0) {
+        if (isNaN(length) || length <= 0 || isNaN(cost) || cost < 0) {
+            TREE_COUNT_OUTPUT.textContent = '0';
             TOTAL_COST_OUTPUT.textContent = '$0.00';
-            TOTAL_BF_OUTPUT.textContent = '0.0 Board Feet';
             return;
         }
 
-        // --- 1. Calculate Board Feet per Board ---
-        // Formula: (T_in * W_in * L_ft) / 12
-        const bfPerBoard = (thickness * width * length) / 12;
-        
-        // --- 2. Calculate Total Board Feet ---
-        const totalBF = bfPerBoard * quantity;
-        
-        // --- 3. Calculate Cost ---
-        let totalCost = 0;
-        if (!isNaN(price) && price >= 0) {
-            totalCost = totalBF * price;
-        }
+        // 1. Calculate Trees Per Row
+        // Formula: (Length / Spacing) + 1 (to cover the end)
+        // However, for hedging, usually Length/Spacing is sufficient if filling a span.
+        // We will use Math.ceil(Length / Spacing) + 1 to ensure full coverage start-to-end.
+        const treesPerRow = Math.ceil(length / spacing) + 1;
+
+        // 2. Calculate Total Trees
+        const totalTrees = treesPerRow * rows;
+
+        // 3. Calculate Total Cost
+        const totalCost = totalTrees * cost;
 
         // --- Output Results ---
-        
-        TOTAL_BF_OUTPUT.textContent = totalBF.toFixed(2) + " Board Feet";
+        TREE_COUNT_OUTPUT.textContent = totalTrees;
         TOTAL_COST_OUTPUT.textContent = formatCurrency(totalCost);
     }
 
     // Run calculation on initial page load
     window.onload = function() {
-        calculateBoardFeet();
+        calculateTrees();
     };
 </script>
 </body>

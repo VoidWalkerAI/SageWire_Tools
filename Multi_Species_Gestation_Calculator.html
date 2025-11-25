@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Multi-Species Gestation</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        select, input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 20px;
+        }
+
+        .output-box {
+            margin-top: 10px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; /* Rust Accent */
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #5A946E; /* Forage Green Value */
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+            margin-top: 5px;
+            display: block;
+        }
+        
+        .days-left {
+            font-size: 1.2em;
+            color: #f4f6f7;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🗓️ HerdMate | Gestation Calc</h1>
+    <p>Universal due date calculator for every animal on the farm.</p>
+
+    <label for="species-select">Select Species</label>
+    <select id="species-select" onchange="calculateDueDate()">
+        <option value="283">Cattle (Cow) - 283 Days</option>
+        <option value="114">Swine (Sow) - 114 Days</option>
+        <option value="147">Sheep (Ewe) - 147 Days</option>
+        <option value="150">Goat (Doe) - 150 Days</option>
+        <option value="340">Horse (Mare) - 340 Days</option>
+        <option value="336">Donkey (Jenny) - 336 Days</option>
+        <option value="280">Bison (Cow) - 280 Days</option>
+        <option value="63">Dog (Bitch) - 63 Days</option>
+        <option value="65">Cat (Queen) - 65 Days</option>
+        <option value="31">Rabbit (Doe) - 31 Days</option>
+        <option value="28">Duck/Goose (Incubation) - 28 Days</option>
+        <option value="21">Chicken (Incubation) - 21 Days</option>
+    </select>
+
+    <label for="breeding-date">Breeding / Exposure Date</label>
+    <input type="date" id="breeding-date" onchange="calculateDueDate()">
+
+    <div class="output-box">
+        <h3>Estimated Due Date</h3>
+        <span class="value" id="due-date-output">--/--/----</span>
+        <span class="days-left" id="days-remaining-output"></span>
+    </div>
+    
+    <div class="note">
+        <strong>Note:</strong> Gestation periods are averages. Actual due dates can vary by +/- 5 to 10 days depending on the breed, age, and conditions.
+    </div>
+</div>
+
+<script>
+    const SPECIES_SELECT = document.getElementById('species-select');
+    const BREEDING_DATE_INPUT = document.getElementById('breeding-date');
+    const DUE_DATE_OUTPUT = document.getElementById('due-date-output');
+    const DAYS_REMAINING_OUTPUT = document.getElementById('days-remaining-output');
+
+    function calculateDueDate() {
+        const gestationDays = parseInt(SPECIES_SELECT.value);
+        const inputDate = BREEDING_DATE_INPUT.value;
+
+        if (!inputDate) {
+            DUE_DATE_OUTPUT.textContent = '--/--/----';
+            DAYS_REMAINING_OUTPUT.textContent = '';
+            return;
+        }
+
+        // Create Date object from input (T12:00:00 ensures no timezone rollback issues)
+        const breedingDate = new Date(inputDate + 'T12:00:00');
+
+        // Calculate Due Date
+        const dueDate = new Date(breedingDate);
+        dueDate.setDate(breedingDate.getDate() + gestationDays);
+
+        // Calculate Days Remaining
+        const today = new Date();
+        today.setHours(0, 0, 0, 0); // Normalize today to midnight
+        
+        // Calculate difference in time
+        const diffTime = dueDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+
+        // --- Output Results ---
+        
+        // Format Date
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        DUE_DATE_OUTPUT.textContent = dueDate.toLocaleDateString('en-US', options);
+
+        // Format Days Remaining
+        if (diffDays > 0) {
+            DAYS_REMAINING_OUTPUT.textContent = `${diffDays} Days Remaining`;
+            DAYS_REMAINING_OUTPUT.style.color = '#f4f6f7';
+        } else if (diffDays === 0) {
+            DAYS_REMAINING_OUTPUT.textContent = "DUE TODAY!";
+            DAYS_REMAINING_OUTPUT.style.color = '#E74C3C'; // Red Alert
+        } else {
+            DAYS_REMAINING_OUTPUT.textContent = `Overdue by ${Math.abs(diffDays)} Days`;
+            DAYS_REMAINING_OUTPUT.style.color = '#E74C3C'; // Red Alert
+        }
+    }
+
+    // Initialize
+    window.onload = function() {
+        // Default to today's date for breeding input just to show format
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        BREEDING_DATE_INPUT.value = `${year}-${month}-${day}`;
+        
+        calculateDueDate();
+    };
+</script>
+</body>
+</html>

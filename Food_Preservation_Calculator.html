@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SageWire Tools | Food Preservation Calc</title>
+    
+    <style>
+        /* --- SAGEWIRE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        
+        /* Header Styling */
+        .header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #5dade2;
+        }
+        .header-brand h1 { 
+            color: #B85C38; /* Rust Accent */
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .header-brand p {
+            color: #aeb6bf;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        h2 { margin-top: 0; color: #5dade2; text-align: center; margin-bottom: 20px; }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; 
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #E74C3C; /* Warning/Safety */
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-brand">
+        <h1>SageWire Tools</h1>
+        <p>We tend the fire while you're out living life.</p>
+    </div>
+    
+    <h2>🥫 Food Preservation Calculator</h2>
+    <p style="text-align:center; color:#ccc;">Calculate critical salt or sugar ratios for safe canning, pickling, and jamming.</p>
+
+    <label for="method-select">Preservation Method</label>
+    <select id="method-select" onchange="updateInputs()">
+        <option value="brine" selected>Pickling Brine (Salt Content)</option>
+        <option value="jam">Jam / Jelly (Sugar Content)</option>
+        <option value="dry">Dry Curing (Salt Rub)</option>
+    </select>
+
+    <div id="brine-inputs">
+        <div style="margin-top: 20px;">
+            <label for="water-volume-input">Volume of Water (Quarts)</label>
+            <input type="number" id="water-volume-input" value="4" min="0.1" oninput="calculatePreservation()">
+        </div>
+        <label for="salt-target-input">Target Salt Concentration (%)</label>
+        <input type="number" id="salt-target-input" value="5" min="1" max="15" step="0.5" oninput="calculatePreservation()">
+    </div>
+    
+    <div id="jam-inputs" style="display: none;">
+        <div style="margin-top: 20px;">
+            <label for="fruit-weight-input">Fruit Weight (Lbs) - *Pulp or Juice*</label>
+            <input type="number" id="fruit-weight-input" value="5" min="0.1" oninput="calculatePreservation()">
+        </div>
+    </div>
+    
+    <div id="dry-inputs" style="display: none;">
+        <div style="margin-top: 20px;">
+            <label for="meat-weight-input">Meat Weight (Lbs)</label>
+            <input type="number" id="meat-weight-input" value="10" min="0.1" oninput="calculatePreservation()">
+        </div>
+        <label for="salt-ratio-input">Salt Percentage of Meat Weight (%)</label>
+        <input type="number" id="salt-ratio-input" value="2.5" min="1" max="5" step="0.1" oninput="calculatePreservation()">
+    </div>
+
+
+    <div class="output-box">
+        <h3>Required Ingredient</h3>
+        <span class="value" id="amount-output">0.0</span>
+        <span class="label" id="unit-label">Ounces of Salt</span>
+    </div>
+    
+    <div class="note">
+        <strong>Safety Warning:</strong> Always use non-iodized salt (Pickling or Kosher). Salt and sugar are essential for inhibiting bacterial growth in preservation.
+    </div>
+</div>
+
+<script>
+    const METHOD_SELECT = document.getElementById('method-select');
+    
+    const WATER_VOL_INPUT = document.getElementById('water-volume-input');
+    const SALT_TARGET_INPUT = document.getElementById('salt-target-input');
+    const FRUIT_WEIGHT_INPUT = document.getElementById('fruit-weight-input');
+    const MEAT_WEIGHT_INPUT = document.getElementById('meat-weight-input');
+    const SALT_RATIO_INPUT = document.getElementById('salt-ratio-input');
+    
+    const AMOUNT_OUTPUT = document.getElementById('amount-output');
+    const UNIT_LABEL = document.getElementById('unit-label');
+
+    // Constants
+    const LBS_PER_QUART_WATER = 2.08; // 1 quart = 2.08 lbs (approx)
+    const OUNCES_PER_LB = 16;
+    const JAM_SUGAR_PCT = 0.60; // Target 60% sugar content for stability
+    
+
+    function updateInputs() {
+        const method = METHOD_SELECT.value;
+        
+        document.getElementById('brine-inputs').style.display = 'none';
+        document.getElementById('jam-inputs').style.display = 'none';
+        document.getElementById('dry-inputs').style.display = 'none';
+
+        if (method === 'brine') {
+            document.getElementById('brine-inputs').style.display = 'block';
+            UNIT_LABEL.textContent = 'Ounces of Salt';
+        } else if (method === 'jam') {
+            document.getElementById('jam-inputs').style.display = 'block';
+            UNIT_LABEL.textContent = 'Lbs of Sugar';
+        } else if (method === 'dry') {
+            document.getElementById('dry-inputs').style.display = 'block';
+            UNIT_LABEL.textContent = 'Ounces of Salt';
+        }
+        calculatePreservation();
+    }
+
+    function calculatePreservation() {
+        const method = METHOD_SELECT.value;
+        let requiredAmount = 0;
+        let unit = 'Lbs';
+
+        if (method === 'brine') {
+            const volWater = parseFloat(WATER_VOL_INPUT.value);
+            const targetPct = parseFloat(SALT_TARGET_INPUT.value);
+            
+            if (volWater > 0 && targetPct > 0) {
+                // 1. Water weight: Quarts * Lbs/Quart
+                const weightWaterLbs = volWater * LBS_PER_QUART_WATER;
+                
+                // 2. Salt Lbs needed: Total weight * (Target % / 100)
+                // This formula calculates salt needed to make a solution, which is slightly complex.
+                // Simplified: Salt Weight = Water Weight * (Target % / 100)
+                const saltLbs = weightWaterLbs * (targetPct / 100);
+                
+                requiredAmount = saltLbs * OUNCES_PER_LB; // Output in Ounces
+                unit = 'Ounces of Salt';
+            }
+
+        } else if (method === 'jam') {
+            const fruitWt = parseFloat(FRUIT_WEIGHT_INPUT.value);
+            
+            if (fruitWt > 0) {
+                // Simplified Rule: Total solution should be 60% sugar. 
+                // Sugar Needed = (0.60 * Fruit Wt) / (1 - 0.60) ? No.
+                // Simpler: Use a 1:1 or 1:0.75 ratio.
+                // Standard: For every 1 Lb of fruit, you need ~0.75 Lbs of sugar.
+                const SUGAR_RATIO = 0.75; 
+                requiredAmount = fruitWt * SUGAR_RATIO;
+                unit = 'Lbs of Sugar';
+            }
+            
+        } else if (method === 'dry') {
+            const meatWt = parseFloat(MEAT_WEIGHT_INPUT.value);
+            const ratioPct = parseFloat(SALT_RATIO_INPUT.value);
+            
+            if (meatWt > 0 && ratioPct > 0) {
+                // Salt Weight = Meat Weight * (Ratio % / 100)
+                const saltLbs = meatWt * (ratioPct / 100);
+                requiredAmount = saltLbs * OUNCES_PER_LB; // Output in Ounces
+                unit = 'Ounces of Salt';
+            }
+        }
+        
+        AMOUNT_OUTPUT.textContent = requiredAmount.toFixed(1);
+        UNIT_LABEL.textContent = unit;
+    }
+
+    // Initialize
+    window.onload = function() {
+        updateInputs();
+    };
+</script>
+</body>
+</html>

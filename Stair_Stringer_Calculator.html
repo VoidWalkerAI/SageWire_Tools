@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Stair Stringer Layout</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #14141A; color: #f4f6f7; font-size: 1.05em; }
+        .container { max-width: 700px; margin: 0 auto; background: #292930; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        
+        h1 { color: #B85C38; text-align: center; margin-bottom: 5px; }
+        p { color: #ccc; text-align: center; margin-bottom: 25px; }
+
+        .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+        
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        input[type="number"] { width: 100%; padding: 12px; border: 2px solid #7D716A; border-radius: 5px; background-color: #34343d; color: #fff; font-size: 16px; }
+
+        .output-box { padding: 20px; border-radius: 8px; text-align: center; border: 2px solid #5A946E; background-color: #34343d; margin-top: 20px; }
+        .output-box h3 { margin: 0; color: #B85C38; border-bottom: 1px solid #7D716A; padding-bottom: 5px; font-size: 1.1em; }
+        .output-box .value { font-size: 2em; color: #5A946E; font-weight: bold; display: block; }
+        .output-box .label { font-size: 0.9em; color: #aeb6bf; text-transform: uppercase; }
+        
+        .diagram-box { margin-top: 20px; padding: 15px; background-color: #1a1e2b; border: 1px dashed #7D716A; border-radius: 5px; font-family: monospace; white-space: pre; text-align: center; color: #5dade2; }
+
+        .note { margin-top: 20px; padding: 10px; background-color: #34343d; border-left: 5px solid #B85C38; font-size: 0.9em; color: #f4f6f7; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🔨 Stair Stringer Layout</h1>
+    <p>Calculate precise rise, run, and stringer length for safe, code-compliant stairs.</p>
+
+    <div class="input-grid">
+        <div>
+            <label>Total Rise (Inches)</label>
+            <input type="number" id="total-rise" value="36" oninput="calculateStairs()">
+        </div>
+        <div>
+            <label>Target Run (Inches)</label>
+            <input type="number" id="target-run" value="10" oninput="calculateStairs()">
+        </div>
+    </div>
+
+    <div class="output-box">
+        <h3>Layout Specs</h3>
+        <span class="label">Step Rise / Run</span>
+        <span class="value" id="unit-dims">0" / 0"</span>
+        
+        <hr style="border-color: #7D716A; opacity: 0.3; margin: 15px 0;">
+        
+        <span class="label">Number of Steps</span>
+        <span class="value" id="num-steps">0</span>
+    </div>
+
+    <div class="output-box" style="border-color: #5dade2;">
+        <h3>Stringer Board Length</h3>
+        <span class="value" id="stringer-len">0 Ft</span>
+        <span class="label">Minimum Lumber Length Required</span>
+    </div>
+    
+    <div class="note">
+        <strong>Ideal Rise:</strong> 7" - 7.75" <br>
+        <strong>Ideal Run:</strong> 10" - 11" <br>
+        <strong>Rule of 17-18:</strong> Rise + Run should equal roughly 17.5 inches.
+    </div>
+</div>
+
+<script>
+    const RISE_INPUT = document.getElementById('total-rise');
+    const RUN_INPUT = document.getElementById('target-run');
+    const UNIT_DIMS = document.getElementById('unit-dims');
+    const NUM_STEPS = document.getElementById('num-steps');
+    const STRINGER_LEN = document.getElementById('stringer-len');
+
+    function calculateStairs() {
+        const totalRise = parseFloat(RISE_INPUT.value);
+        const targetRun = parseFloat(RUN_INPUT.value);
+
+        if (isNaN(totalRise) || totalRise <= 0 || isNaN(targetRun) || targetRun <= 0) {
+            UNIT_DIMS.textContent = '-';
+            return;
+        }
+
+        // 1. Calculate Number of Risers
+        // Standard max rise is usually 7.75", target 7"
+        let numRisers = Math.round(totalRise / 7);
+        if (numRisers === 0) numRisers = 1;
+
+        // 2. Calculate Exact Unit Rise
+        const exactRise = totalRise / numRisers;
+
+        // 3. Calculate Stringer Hypotenuse (Pythagoras)
+        // a^2 + b^2 = c^2 (Rise^2 + Run^2 = Stringer^2) per step
+        const stepHypotenuse = Math.sqrt(Math.pow(exactRise, 2) + Math.pow(targetRun, 2));
+        const totalStringerInches = stepHypotenuse * numRisers;
+        
+        // Convert to feet for lumber purchasing (round up to nearest even foot usually, but here we show raw feet)
+        const stringerFeet = Math.ceil(totalStringerInches / 12);
+        
+        // Standardize lumber lengths (Next even number)
+        let buyLength = stringerFeet;
+        if (buyLength % 2 !== 0) buyLength += 1;
+
+        // --- Output ---
+        UNIT_DIMS.textContent = `${exactRise.toFixed(2)}" Rise / ${targetRun}" Run`;
+        NUM_STEPS.textContent = `${numRisers} Risers`;
+        STRINGER_LEN.textContent = `${buyLength} Ft Board`;
+        
+        // Visual warning for code violation (approximate)
+        if (exactRise > 7.75) {
+            UNIT_DIMS.style.color = '#E74C3C';
+            UNIT_DIMS.textContent += ' (Too Steep!)';
+        } else {
+            UNIT_DIMS.style.color = '#5A946E';
+        }
+    }
+
+    window.onload = calculateStairs;
+</script>
+</body>
+</html>

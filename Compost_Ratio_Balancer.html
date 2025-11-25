@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Compost Balancer</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .section-header {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        /* Input Grids */
+        .material-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: end;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; font-size: 0.9em; }
+        
+        select, input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+            margin-bottom: 10px;
+        }
+        
+        .status-msg {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #f4f6f7;
+        }
+
+        .status-perfect { color: #5A946E; }
+        .status-warning { color: #f39c12; }
+        .status-bad { color: #E74C3C; }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>♻️ HerdMate | Compost Balancer</h1>
+    <p>Calculate the Carbon-to-Nitrogen (C:N) ratio to build a hot, fast-working compost pile.</p>
+
+    <div class="section-header">1. "Brown" Material (Carbon)</div>
+    <div class="material-grid">
+        <div>
+            <label>Material Type</label>
+            <select id="brown-type" onchange="updatePresets(); calculateRatio();">
+                <option value="400">Sawdust / Wood Chips (400:1)</option>
+                <option value="80" selected>Wheat Straw (80:1)</option>
+                <option value="60">Dry Leaves (60:1)</option>
+                <option value="50">Corn Stalks (50:1)</option>
+                <option value="30">Dry Hay (30:1)</option>
+            </select>
+        </div>
+        <div>
+            <label>Parts (Volume)</label>
+            <input type="number" id="brown-amount" value="3" min="0" oninput="calculateRatio()">
+        </div>
+    </div>
+
+    <div class="section-header">2. "Green" Material (Nitrogen)</div>
+    <div class="material-grid">
+        <div>
+            <label>Material Type</label>
+            <select id="green-type" onchange="updatePresets(); calculateRatio();">
+                <option value="20" selected>Cattle Manure (20:1)</option>
+                <option value="15">Horse Manure (15:1)</option>
+                <option value="12">Poultry Litter (12:1)</option>
+                <option value="20">Grass Clippings (20:1)</option>
+                <option value="15">Vegetable Scraps (15:1)</option>
+                <option value="25">Coffee Grounds (25:1)</option>
+            </select>
+        </div>
+        <div>
+            <label>Parts (Volume)</label>
+            <input type="number" id="green-amount" value="1" min="0" oninput="calculateRatio()">
+        </div>
+    </div>
+
+    <div class="output-box" id="result-box">
+        <h3>Total C:N Ratio</h3>
+        <span class="value" id="ratio-output">0 : 1</span>
+        <div class="status-msg" id="status-output">Enter materials...</div>
+    </div>
+    
+    <div class="note">
+        <strong>The Golden Rule:</strong> Aim for a ratio between <strong>25:1 and 35:1</strong>. 
+        <br>• Too High (>40:1): Pile sits cold, won't break down.
+        <br>• Too Low (<20:1): Pile smells like ammonia, loses nitrogen.
+    </div>
+</div>
+
+<script>
+    const BROWN_TYPE = document.getElementById('brown-type');
+    const BROWN_AMT = document.getElementById('brown-amount');
+    
+    const GREEN_TYPE = document.getElementById('green-type');
+    const GREEN_AMT = document.getElementById('green-amount');
+    
+    const RATIO_OUT = document.getElementById('ratio-output');
+    const STATUS_OUT = document.getElementById('status-output');
+    const RESULT_BOX = document.getElementById('result-box');
+
+    // Simplified calculation based on weighted averages
+    // Formula: ((C1 * Q1) + (C2 * Q2)) / (Q1 + Q2)
+    // Note: This is a volumetric approximation commonly used in farming. 
+    // True lab analysis requires dry weight/moisture correction, but this is the field standard.
+
+    function updatePresets() {
+        // Just a trigger to recalculate
+        calculateRatio();
+    }
+
+    function calculateRatio() {
+        const c1 = parseFloat(BROWN_TYPE.value);
+        const q1 = parseFloat(BROWN_AMT.value);
+        
+        const c2 = parseFloat(GREEN_TYPE.value);
+        const q2 = parseFloat(GREEN_AMT.value);
+
+        if (isNaN(q1) || isNaN(q2) || (q1 + q2) <= 0) {
+            RATIO_OUT.textContent = '-- : 1';
+            STATUS_OUT.textContent = 'Enter Amounts';
+            return;
+        }
+
+        // Calculate Weighted Average C:N
+        // ((RatioA * AmountA) + (RatioB * AmountB)) / (AmountA + AmountB)
+        const totalCarbonFactor = (c1 * q1) + (c2 * q2);
+        const totalAmount = q1 + q2;
+        const finalRatio = totalCarbonFactor / totalAmount;
+
+        // --- Output Results ---
+        
+        RATIO_OUT.textContent = Math.round(finalRatio) + " : 1";
+        
+        // Visual Logic
+        RESULT_BOX.style.borderColor = '#f39c12'; // Default
+        
+        if (finalRatio >= 25 && finalRatio <= 35) {
+            // PERFECT
+            STATUS_OUT.innerHTML = "✅ PERFECT! Ideal for hot composting.";
+            STATUS_OUT.className = "status-msg status-perfect";
+            RESULT_BOX.style.borderColor = '#5A946E';
+        } else if (finalRatio > 35) {
+            // TOO MUCH CARBON
+            STATUS_OUT.innerHTML = "⚠️ Too Much Carbon (Browns).<br>Pile will be cold/slow. Add more Green.";
+            STATUS_OUT.className = "status-msg status-warning";
+            RESULT_BOX.style.borderColor = '#f39c12';
+        } else {
+            // TOO MUCH NITROGEN
+            STATUS_OUT.innerHTML = "❌ Too Much Nitrogen (Greens).<br>Pile may smell/rot. Add more Brown.";
+            STATUS_OUT.className = "status-msg status-bad";
+            RESULT_BOX.style.borderColor = '#E74C3C';
+        }
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculateRatio();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Produce Yield Estimator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        select, input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E; /* Green Accent */
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🍅 HerdMate | Produce Yield</h1>
+    <p>Estimate harvest volumes for market garden planning and sales projections.</p>
+
+    <label for="crop-select">Select Crop Type</label>
+    <select id="crop-select" onchange="updateInputLabel(); calculateYield()">
+        <option value="tomato_slicing" data-unit="plant">Tomatoes (Slicing) - Per Plant</option>
+        <option value="tomato_cherry" data-unit="plant">Tomatoes (Cherry) - Per Plant</option>
+        <option value="pepper_bell" data-unit="plant">Peppers (Bell) - Per Plant</option>
+        <option value="cucumber" data-unit="plant">Cucumbers - Per Plant</option>
+        <option value="lettuce_head" data-unit="plant">Lettuce (Head) - Per Plant</option>
+        <option value="carrot" data-unit="row">Carrots - Per Row Foot</option>
+        <option value="beet" data-unit="row">Beets - Per Row Foot</option>
+        <option value="bean_bush" data-unit="row">Beans (Bush) - Per Row Foot</option>
+        <option value="potato" data-unit="row">Potatoes - Per Row Foot</option>
+        <option value="onion" data-unit="row">Onions (Bulb) - Per Row Foot</option>
+    </select>
+
+    <div class="input-grid" style="margin-top: 15px;">
+        <div>
+            <label id="quantity-label">Number of Plants</label>
+            <input type="number" id="quantity-input" value="50" min="1" oninput="calculateYield()">
+        </div>
+        <div>
+            <label>Est. Success Rate (%)</label>
+            <input type="number" id="success-rate" value="90" min="10" max="100" oninput="calculateYield()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Total Weight</h3>
+            <span class="value" id="weight-output">0 Lbs</span>
+            <span class="label">Expected Harvest</span>
+        </div>
+        <div class="output-box">
+            <h3>Market Units</h3>
+            <span class="value" id="units-output">0 Units</span>
+            <span class="label" id="unit-type-label">Bunches / Pints / Heads</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Data Source:</strong> Estimates based on standard intensive market garden yields (e.g., high tunnel or well-managed field beds). Actual yield varies by weather and soil health.
+    </div>
+</div>
+
+<script>
+    const CROP_SELECT = document.getElementById('crop-select');
+    const QUANTITY_INPUT = document.getElementById('quantity-input');
+    const SUCCESS_INPUT = document.getElementById('success-rate');
+    const QUANTITY_LABEL = document.getElementById('quantity-label');
+    
+    const WEIGHT_OUTPUT = document.getElementById('weight-output');
+    const UNITS_OUTPUT = document.getElementById('units-output');
+    const UNIT_TYPE_LABEL = document.getElementById('unit-type-label');
+
+    // Yield Data (Average per Unit)
+    // yield: Lbs per plant OR per row foot
+    // marketUnit: conversion factor (e.g., 1 pint cherry toms = 0.75 lbs)
+    const CROP_DATA = {
+        'tomato_slicing': { yield: 12, unitName: 'Lbs', marketFactor: 1, marketLabel: 'Lbs Sold' },
+        'tomato_cherry':  { yield: 8, unitName: 'Pints', marketFactor: 0.75, marketLabel: 'Pints' }, // ~0.75lb per pint
+        'pepper_bell':    { yield: 4, unitName: 'Count', marketFactor: 0.33, marketLabel: 'Peppers (Count)' }, // ~3 peppers per lb? No, yield is lbs. 4lbs/plant. 
+        // Let's standardize: yield is LBS. Market unit converts LBS to Units.
+        
+        // Refined Data: Yield is LBS per Plant/Foot. Factor is LBS per Market Unit.
+        'tomato_slicing': { yield: 15, factor: 1, label: 'Lbs Bulk' },
+        'tomato_cherry':  { yield: 10, factor: 0.75, label: 'Pints' },
+        'pepper_bell':    { yield: 3.5, factor: 0.4, label: 'Peppers (Approx Count)' }, // ~0.4lb per pepper
+        'cucumber':       { yield: 12, factor: 0.6, label: 'Cukes (Approx Count)' },
+        'lettuce_head':   { yield: 0.8, factor: 0.8, label: 'Heads' },
+        
+        'carrot':         { yield: 1.0, factor: 1.0, label: 'Bunches (1 lb)' }, // 1 lb per foot
+        'beet':           { yield: 1.2, factor: 1.2, label: 'Bunches' },
+        'bean_bush':      { yield: 0.6, factor: 1, label: 'Lbs Bulk' },
+        'potato':         { yield: 1.5, factor: 1, label: 'Lbs Bulk' },
+        'onion':          { yield: 1.2, factor: 0.5, label: 'Bulbs (Approx Count)' }
+    };
+
+    function updateInputLabel() {
+        const selectedOption = CROP_SELECT.options[CROP_SELECT.selectedIndex];
+        const unitType = selectedOption.getAttribute('data-unit');
+        
+        if (unitType === 'plant') {
+            QUANTITY_LABEL.textContent = 'Number of Plants';
+        } else {
+            QUANTITY_LABEL.textContent = 'Row Feet Planted';
+        }
+    }
+
+    function calculateYield() {
+        const cropKey = CROP_SELECT.value;
+        const quantity = parseFloat(QUANTITY_INPUT.value);
+        const success = parseFloat(SUCCESS_INPUT.value);
+
+        if (isNaN(quantity) || isNaN(success) || quantity <= 0) {
+            WEIGHT_OUTPUT.textContent = '0 Lbs';
+            UNITS_OUTPUT.textContent = '0';
+            return;
+        }
+
+        const data = CROP_DATA[cropKey];
+        const successDecimal = success / 100;
+
+        // 1. Calculate Total Weight (Lbs)
+        // Yield * Quantity * Success Rate
+        const totalWeight = data.yield * quantity * successDecimal;
+
+        // 2. Calculate Market Units
+        // Total Weight / Weight per Unit
+        const totalUnits = totalWeight / data.factor;
+
+        // --- Output ---
+        
+        WEIGHT_OUTPUT.textContent = Math.floor(totalWeight).toLocaleString() + " Lbs";
+        UNITS_OUTPUT.textContent = Math.floor(totalUnits).toLocaleString();
+        UNIT_TYPE_LABEL.textContent = data.label;
+    }
+
+    // Initialize
+    window.onload = function() {
+        updateInputLabel();
+        calculateYield();
+    };
+</script>
+</body>
+</html>

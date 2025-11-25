@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ohm's Law Solver (V, I, R, P) | Sage Tools</title>
+    <style>
+        /* SAGE TOOLS THEME */
+        :root {
+            --sage-primary: #007bff; /* Blue for action/headers */
+            --sage-accent: #ffc107; /* Yellow/Amber for electricity warning/accents */
+            --sage-neutral: #6c757d; /* Gray for secondary text */
+            --light-bg: #f8f9fa;
+            --calc-bg: #ffffff;
+        }
+
+        body { 
+            font-family: 'Tahoma', sans-serif; 
+            margin: 20px; 
+            background-color: var(--light-bg); 
+        }
+        .calculator { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 30px; 
+            background-color: var(--calc-bg); 
+            border-radius: 8px; 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+        }
+        
+        /* Header Styling */
+        .brand-header { 
+            text-align: center; 
+            margin-bottom: 25px; 
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .brand-header h2 { 
+            color: var(--sage-primary); 
+            font-size: 1.6em; 
+            margin: 0; 
+        }
+        .brand-header .slogan { 
+            color: var(--sage-neutral); 
+            font-size: 0.9em; 
+            margin-top: 5px;
+        }
+
+        h3 { 
+            color: var(--sage-primary); 
+            margin-top: 25px; 
+            border-bottom: 1px dashed #eee; 
+            padding-bottom: 5px; 
+        }
+        .input-group { 
+            margin-bottom: 15px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+            color: #333; 
+        }
+        input[type="number"] { 
+            width: 95%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+        }
+        
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 30px; 
+            background-color: var(--sage-primary); 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 1.05em; 
+            transition: background-color 0.3s; 
+        }
+        button:hover { 
+            background-color: #0056b3; 
+        }
+        
+        /* Result Section */
+        .result-section { 
+            margin-top: 35px; 
+            padding: 20px; 
+            border: 2px solid var(--sage-accent); 
+            border-radius: 6px; 
+            background-color: #fff3cd; /* Light amber/yellow background */
+        }
+        .result-output { 
+            font-size: 1.2em; 
+            margin: 10px 0; 
+        }
+        .result-output strong { 
+            color: #d84315; 
+            font-size: 1.6em; 
+        }
+        
+        /* Footer */
+        .footer-citation {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="brand-header">
+            <h2>Ohm's Law Solver (V, I, R, P)</h2>
+            <p class="slogan">A Sage Tools Electrical Utility</p>
+        </div>
+
+        <p style="text-align: center;">Enter any two values to solve for the remaining two unknowns.</p>
+
+        <h3>Inputs</h3>
+        <div class="input-group">
+            <label for="voltage">Voltage ($V$, Volts):</label>
+            <input type="number" id="voltage" placeholder="e.g., 12">
+        </div>
+        <div class="input-group">
+            <label for="current">Current ($I$, Amperes):</label>
+            <input type="number" id="current" placeholder="e.g., 5">
+        </div>
+        <div class="input-group">
+            <label for="resistance">Resistance ($R$, Ohms):</label>
+            <input type="number" id="resistance" placeholder="e.g., 8">
+        </div>
+        <div class="input-group">
+            <label for="power">Power ($P$, Watts):</label>
+            <input type="number" id="power" placeholder="e.g., 60">
+        </div>
+
+        <button onclick="solveOhmLaw()">Solve Circuit</button>
+
+        <div class="result-section">
+            <div class="result-output">
+                Voltage ($\mathbf{V}$): <strong id="resultV">-- V</strong>
+            </div>
+            <div class="result-output">
+                Current ($\mathbf{I}$): <strong id="resultI">-- A</strong>
+            </div>
+            <div class="result-output">
+                Resistance ($\mathbf{R}$): <strong id="resultR">-- Ω</strong>
+            </div>
+            <div class="result-output">
+                Power ($\mathbf{P}$): <strong id="resultP">-- W</strong>
+            </div>
+        </div>
+        
+        <div class="footer-citation">
+            A utility tool forged by Gemini.
+        </div>
+    </div>
+
+    <script>
+        function solveOhmLaw() {
+            const V_in = parseFloat(document.getElementById('voltage').value);
+            const I_in = parseFloat(document.getElementById('current').value);
+            const R_in = parseFloat(document.getElementById('resistance').value);
+            const P_in = parseFloat(document.getElementById('power').value);
+
+            let V = V_in;
+            let I = I_in;
+            let R = R_in;
+            let P = P_in;
+
+            // Count how many values were provided
+            const inputs = [V_in, I_in, R_in, P_in].filter(val => !isNaN(val));
+
+            if (inputs.length !== 2) {
+                alert(`Error: Please enter exactly two known values. ${inputs.length} detected.`);
+                return;
+            }
+
+            // --- Primary Solver Logic: Iterate until all unknowns are solved ---
+
+            // Attempt 1: Solve V, I, R, P using the two inputs
+            if (isNaN(V)) {
+                if (!isNaN(I) && !isNaN(R)) V = I * R;
+                else if (!isNaN(P) && !isNaN(I)) V = P / I;
+                else if (!isNaN(P) && !isNaN(R)) V = Math.sqrt(P * R);
+            }
+            if (isNaN(I)) {
+                if (!isNaN(V) && !isNaN(R)) I = V / R;
+                else if (!isNaN(P) && !isNaN(V)) I = P / V;
+                else if (!isNaN(P) && !isNaN(R)) I = Math.sqrt(P / R);
+            }
+            if (isNaN(R)) {
+                if (!isNaN(V) && !isNaN(I)) R = V / I;
+                else if (!isNaN(V) && !isNaN(P)) R = (V * V) / P;
+                else if (!isNaN(P) && !isNaN(I)) R = P / (I * I);
+            }
+            if (isNaN(P)) {
+                if (!isNaN(V) && !isNaN(I)) P = V * I;
+                else if (!isNaN(V) && !isNaN(R)) P = (V * V) / R;
+                else if (!isNaN(I) && !isNaN(R)) P = I * I * R;
+            }
+
+            // Attempt 2: If we still have an unknown, try again (since we now have three values)
+            // (Only needed for robustness, but ensures all four are calculated)
+            if (isNaN(V) || isNaN(I) || isNaN(R) || isNaN(P)) {
+                // Re-run the logic cycle to catch the final unknown using the newly solved third variable
+                if (isNaN(V)) V = I * R || P / I || Math.sqrt(P * R);
+                if (isNaN(I)) I = V / R || P / V || Math.sqrt(P / R);
+                if (isNaN(R)) R = V / I || (V * V) / P || P / (I * I);
+                if (isNaN(P)) P = V * I || (V * V) / R || I * I * R;
+            }
+
+            // Output Results
+            const format = (val, unit) => isNaN(val) ? '--' : `${val.toFixed(2)} ${unit}`;
+
+            document.getElementById('resultV').textContent = format(V, 'V');
+            document.getElementById('resultI').textContent = format(I, 'A');
+            document.getElementById('resultR').textContent = format(R, 'Ω');
+            document.getElementById('resultP').textContent = format(P, 'W');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Milk Replacer Calculator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🍼 HerdMate | Milk Replacer</h1>
+    <p>Calculate the exact water and powder needed for a single calf or a batch mix.</p>
+
+    <h3 class="section-title">1. Feeding Target</h3>
+    <div class="input-grid">
+        <div>
+            <label for="calves-input">Number of Calves</label>
+            <input type="number" id="calves-input" value="1" min="1" oninput="calculateMix()">
+        </div>
+        <div>
+            <label for="volume-input">Volume Per Calf (Quarts)</label>
+            <input type="number" id="volume-input" value="2.0" min="0.5" step="0.5" oninput="calculateMix()">
+        </div>
+    </div>
+
+    <h3 class="section-title">2. Bag Instructions</h3>
+    <div class="input-grid">
+        <div>
+            <label for="ratio-oz">Powder Amount (Oz)</label>
+            <input type="number" id="ratio-oz" value="10" min="1" placeholder="e.g. 10 oz" oninput="calculateMix()">
+        </div>
+        <div>
+            <label for="ratio-water">Per Water Amount (Quarts)</label>
+            <input type="number" id="ratio-water" value="2" min="1" placeholder="e.g. 2 qts" oninput="calculateMix()">
+        </div>
+    </div>
+    <div style="font-size: 0.85em; color: #aeb6bf; margin-top: -10px; margin-bottom: 20px; text-align: center;">
+        (Standard is often 10 oz powder per 2 quarts water)
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Total Water Needed</h3>
+            <span class="value" id="water-output">0 Qts</span>
+            <span class="label" id="water-gal-label">(0 Gallons)</span>
+        </div>
+        <div class="output-box">
+            <h3>Total Powder Needed</h3>
+            <span class="value" id="powder-lbs-output">0.00 Lbs</span>
+            <span class="label" id="powder-oz-label">0 Oz</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Mixing Tip:</strong> Fill bucket with HALF the required warm water (110-120°F). Add powder and whisk until dissolved. Then add remaining water to reach final volume.
+    </div>
+</div>
+
+<script>
+    const CALVES_INPUT = document.getElementById('calves-input');
+    const VOL_PER_CALF_INPUT = document.getElementById('volume-input');
+    const RATIO_OZ_INPUT = document.getElementById('ratio-oz');
+    const RATIO_WATER_INPUT = document.getElementById('ratio-water');
+    
+    const WATER_OUTPUT = document.getElementById('water-output');
+    const WATER_GAL_LABEL = document.getElementById('water-gal-label');
+    const POWDER_LBS_OUTPUT = document.getElementById('powder-lbs-output');
+    const POWDER_OZ_LABEL = document.getElementById('powder-oz-label');
+
+    function calculateMix() {
+        const calves = parseFloat(CALVES_INPUT.value);
+        const volPerCalf = parseFloat(VOL_PER_CALF_INPUT.value);
+        const ratioOz = parseFloat(RATIO_OZ_INPUT.value);
+        const ratioWater = parseFloat(RATIO_WATER_INPUT.value);
+
+        // Validation
+        if (isNaN(calves) || isNaN(volPerCalf) || isNaN(ratioOz) || isNaN(ratioWater) || 
+            calves <= 0 || volPerCalf <= 0 || ratioOz <= 0 || ratioWater <= 0) {
+            WATER_OUTPUT.textContent = '0 Qts';
+            POWDER_LBS_OUTPUT.textContent = '0.00 Lbs';
+            return;
+        }
+
+        // 1. Calculate Total Water Volume (Quarts)
+        // Formula: Calves * Volume per Calf
+        const totalQuarts = calves * volPerCalf;
+        const totalGallons = totalQuarts / 4;
+
+        // 2. Calculate Powder Required (Ounces)
+        // Determine concentration: Oz per 1 Quart
+        const ozPerQuart = ratioOz / ratioWater;
+        
+        const totalOz = totalQuarts * ozPerQuart;
+        const totalLbs = totalOz / 16;
+
+        // --- Output Results ---
+        
+        WATER_OUTPUT.textContent = totalQuarts + " Qts";
+        WATER_GAL_LABEL.textContent = `(${totalGallons.toFixed(2)} Gallons)`;
+        
+        POWDER_LBS_OUTPUT.textContent = totalLbs.toFixed(2) + " Lbs";
+        POWDER_OZ_LABEL.textContent = Math.round(totalOz) + " Oz";
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateMix();
+    };
+</script>
+</body>
+</html>

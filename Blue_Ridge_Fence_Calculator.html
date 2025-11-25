@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Blue Ridge Fence Estimator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        
+        h1 { 
+            color: #B85C38; /* Rust Accent */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        .dedication {
+            text-align: center;
+            color: #5A946E; /* Forage Green */
+            font-style: italic;
+            font-weight: bold;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #7D716A;
+        }
+
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 25px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; font-size: 0.9em; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #7D716A; 
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        /* Highlight the Auto-Calculated Fields */
+        .auto-field {
+            border-color: #5A946E;
+            background-color: #1e2b24;
+            color: #5A946E;
+            font-weight: bold;
+        }
+
+        /* BOM Output Styling */
+        .bom-container {
+            background-color: #1a1e2b;
+            border: 2px solid #B85C38;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 30px;
+        }
+        
+        .bom-header {
+            text-align: center;
+            color: #B85C38;
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+        }
+
+        .bom-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 0;
+            border-bottom: 1px solid #34495e;
+            font-size: 1.1em;
+        }
+        .bom-item:last-child { border-bottom: none; }
+        
+        .bom-qty { color: #5A946E; font-weight: bold; min-width: 60px; }
+        .bom-name { flex-grow: 1; color: #f4f6f7; }
+        .bom-cost { color: #aeb6bf; }
+
+        .total-cost-box {
+            margin-top: 20px;
+            text-align: right;
+            font-size: 1.5em;
+            color: #5A946E;
+            font-weight: bold;
+            padding-top: 10px;
+            border-top: 2px dashed #7D716A;
+        }
+        
+        .footer-note {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 0.9em;
+            color: #7D716A;
+            font-style: italic;
+        }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🚧 Blue Ridge Fence Estimator</h1>
+    
+    <div class="dedication">
+        Dedicated to Ray and the Blue Ridge crew. Thanks for the knowledge.
+    </div>
+
+    <h3 class="section-title">1. Line Specifications</h3>
+    <div class="input-grid">
+        <div>
+            <label>Fence Type</label>
+            <select id="fence-type" onchange="loadPresets()">
+                <option value="barb4">Barbed Wire (4 Strand)</option>
+                <option value="barb5">Barbed Wire (5 Strand)</option>
+                <option value="woven">Woven Wire / Field Fence</option>
+                <option value="ht">High Tensile (1 Strand)</option>
+                <option value="board">Wood Board (3 Rail)</option>
+                <option value="panel">Cattle/Hog Panels (Only)</option>
+                <option value="board_panel">Board + Panel Combo</option>
+            </select>
+        </div>
+        <div>
+            <label>Total Fence Length (Feet)</label>
+            <input type="number" id="length-input" value="1320" min="10" oninput="calculateFence()">
+        </div>
+    </div>
+    
+    <div class="input-grid">
+        <div><label>Line Post Spacing (Ft)</label><input type="number" id="spacing-input" value="12" oninput="calculateFence()"></div>
+        <div><label>Strands / Rails</label><input type="number" id="strands-input" value="4" oninput="calculateFence()"></div>
+    </div>
+
+    <div class="input-grid" id="roll-logic-group">
+        <div>
+            <label>Standard Roll Length (Ft)</label>
+            <input type="number" id="roll-len-input" class="auto-field" value="1320" oninput="calculateFence()">
+        </div>
+        <div>
+            <label>Total Linear Feet Needed</label>
+            <input type="text" id="total-linear-feet" class="auto-field" value="5280" readonly>
+        </div>
+    </div>
+    
+    <div class="input-grid hidden" id="panel-options">
+        <div><label>Panel Length (Ft)</label><input type="number" id="panel-length-input" value="16" oninput="calculateFence()"></div>
+        <div><label>Panel Cost ($/Each)</label><input type="number" id="cost-panel" value="35.00" oninput="calculateFence()"></div>
+    </div>
+
+    <h3 class="section-title">2. Brace Assembly Configuration</h3>
+    <div class="input-grid">
+        <div>
+            <label>Total 90° Corners</label>
+            <input type="number" id="corners-input" value="4" min="0" oninput="calculateFence()">
+        </div>
+        <div>
+            <label>Corner Build Style</label>
+            <select id="corner-style" onchange="calculateFence()">
+                <option value="1">Single H (Standard)</option>
+                <option value="2">Double H (Heavy Duty)</option>
+            </select>
+        </div>
+    </div>
+    <div class="input-grid">
+        <div>
+            <label>Total Gates / Ends</label>
+            <input type="number" id="ends-input" value="2" min="0" oninput="calculateFence()">
+        </div>
+        <div>
+            <label>End Build Style</label>
+            <select id="end-style" onchange="calculateFence()">
+                <option value="1">Single H (Standard)</option>
+                <option value="2">Double H (Heavy Duty)</option>
+            </select>
+        </div>
+    </div>
+
+    <h3 class="section-title">3. Material Unit Costs ($)</h3>
+    <div class="input-grid">
+        <div><label>Line Post (T-Post)</label><input type="number" id="cost-line" value="6.50" oninput="calculateFence()"></div>
+        <div><label>Master Corner/End Post (Heavy)</label><input type="number" id="cost-master" value="35.00" oninput="calculateFence()"></div>
+    </div>
+    <div class="input-grid">
+        <div><label>Brace Post (Support)</label><input type="number" id="cost-brace-post" value="18.00" oninput="calculateFence()"></div>
+        <div><label>Top Rail / Cross Member</label><input type="number" id="cost-cross" value="12.00" oninput="calculateFence()"></div>
+    </div>
+    <div class="input-grid">
+        <div id="wire-cost-group"><label>Wire Roll / Board Cost</label><input type="number" id="cost-roll" value="85.00" oninput="calculateFence()"></div>
+        <div><label>Tension Wire / Pin Kit</label><input type="number" id="cost-kit" value="8.00" oninput="calculateFence()"></div>
+    </div>
+
+    <div class="bom-container">
+        <div class="bom-header">📋 Blue Ridge Material List</div>
+        
+        <div class="bom-item">
+            <span class="bom-qty" id="qty-master">0</span>
+            <span class="bom-name">Master Corner/End Posts</span>
+            <span class="bom-cost" id="total-master">$0.00</span>
+        </div>
+        
+        <div class="bom-item">
+            <span class="bom-qty" id="qty-brace-post">0</span>
+            <span class="bom-name">Brace/Support Posts</span>
+            <span class="bom-cost" id="total-brace-post">$0.00</span>
+        </div>
+        
+        <div class="bom-item">
+            <span class="bom-qty" id="qty-cross">0</span>
+            <span class="bom-name">Horizontal Cross Members</span>
+            <span class="bom-cost" id="total-cross">$0.00</span>
+        </div>
+
+        <div class="bom-item">
+            <span class="bom-qty" id="qty-line">0</span>
+            <span class="bom-name">Line Posts</span>
+            <span class="bom-cost" id="total-line">$0.00</span>
+        </div>
+        
+        <div class="bom-item" id="row-wire">
+            <span class="bom-qty" id="qty-wire">0</span>
+            <span class="bom-name">Rolls of Wire / Boards</span>
+            <span class="bom-cost" id="total-wire">$0.00</span>
+        </div>
+
+        <div class="bom-item hidden" id="row-panel">
+            <span class="bom-qty" id="qty-panel">0</span>
+            <span class="bom-name">Stock Panels</span>
+            <span class="bom-cost" id="total-panel">$0.00</span>
+        </div>
+
+        <div class="bom-item">
+            <span class="bom-qty" id="qty-kit">0</span>
+            <span class="bom-name">Brace Tension Kits</span>
+            <span class="bom-cost" id="total-kit">$0.00</span>
+        </div>
+
+        <div class="total-cost-box" id="grand-total">
+            Total Estimate: $0.00
+        </div>
+    </div>
+    
+    <div class="footer-note">Thanks Ray.</div>
+</div>
+
+<script>
+    // Inputs
+    const FENCE_TYPE = document.getElementById('fence-type');
+    const LENGTH = document.getElementById('length-input');
+    const SPACING = document.getElementById('spacing-input');
+    const STRANDS = document.getElementById('strands-input');
+    const ROLL_LEN = document.getElementById('roll-len-input');
+    const LINEAR_FT_OUT = document.getElementById('total-linear-feet');
+    const PANEL_LEN = document.getElementById('panel-length-input');
+    
+    const CORNERS = document.getElementById('corners-input');
+    const CORNER_STYLE = document.getElementById('corner-style');
+    const ENDS = document.getElementById('ends-input');
+    const END_STYLE = document.getElementById('end-style');
+    
+    // Costs
+    const C_LINE = document.getElementById('cost-line');
+    const C_MASTER = document.getElementById('cost-master');
+    const C_BRACE_POST = document.getElementById('cost-brace-post');
+    const C_CROSS = document.getElementById('cost-cross');
+    const C_ROLL = document.getElementById('cost-roll');
+    const C_PANEL = document.getElementById('cost-panel');
+    const C_KIT = document.getElementById('cost-kit');
+
+    // UI Elements
+    const PANEL_OPTIONS = document.getElementById('panel-options');
+    const WIRE_COST_GROUP = document.getElementById('wire-cost-group');
+    const ROLL_LOGIC_GROUP = document.getElementById('roll-logic-group');
+    const ROW_WIRE = document.getElementById('row-wire');
+    const ROW_PANEL = document.getElementById('row-panel');
+
+    // Presets with specific roll lengths
+    const PRESETS = {
+        'barb4': { spacing: 12, strands: 4, rollLen: 1320, hasWire: true, hasPanel: false },
+        'barb5': { spacing: 10, strands: 5, rollLen: 1320, hasWire: true, hasPanel: false },
+        'woven': { spacing: 10, strands: 1, rollLen: 330, hasWire: true, hasPanel: false },
+        'ht':    { spacing: 50, strands: 1, rollLen: 4000, hasWire: true, hasPanel: false },
+        'board': { spacing: 8, strands: 3, rollLen: 16, hasWire: true, hasPanel: false }, // Assuming 16ft boards standard
+        'panel': { spacing: 8, strands: 0, rollLen: 0, hasWire: false, hasPanel: true },
+        'board_panel': { spacing: 8, strands: 1, rollLen: 16, hasWire: true, hasPanel: true }
+    };
+    
+    function loadPresets() {
+        const data = PRESETS[FENCE_TYPE.value];
+        if (data) {
+            SPACING.value = data.spacing;
+            STRANDS.value = data.strands;
+            
+            if (data.hasWire) {
+                ROLL_LEN.value = data.rollLen;
+                ROLL_LOGIC_GROUP.classList.remove('hidden');
+                WIRE_COST_GROUP.classList.remove('hidden');
+                ROW_WIRE.classList.remove('hidden');
+                
+                const label = WIRE_COST_GROUP.querySelector('label');
+                const outName = ROW_WIRE.querySelector('.bom-name');
+                if (FENCE_TYPE.value.includes('board')) {
+                    label.textContent = 'Board Cost (Each)';
+                    outName.textContent = 'Wood Boards (16ft)';
+                } else {
+                    label.textContent = 'Wire Roll Cost';
+                    outName.textContent = 'Rolls of Wire';
+                }
+            } else {
+                ROLL_LOGIC_GROUP.classList.add('hidden');
+                WIRE_COST_GROUP.classList.add('hidden');
+                ROW_WIRE.classList.add('hidden');
+            }
+
+            if (data.hasPanel) {
+                PANEL_OPTIONS.classList.remove('hidden');
+                ROW_PANEL.classList.remove('hidden');
+            } else {
+                PANEL_OPTIONS.classList.add('hidden');
+                ROW_PANEL.classList.add('hidden');
+            }
+            
+            calculateFence();
+        }
+    }
+
+    function calculateFence() {
+        const len = parseFloat(LENGTH.value) || 0;
+        const space = parseFloat(SPACING.value) || 12;
+        const strandCount = parseFloat(STRANDS.value) || 0;
+        const rollLength = parseFloat(ROLL_LEN.value) || 1;
+        const panelLength = parseFloat(PANEL_LEN.value) || 16;
+        
+        const numCorners = parseInt(CORNERS.value) || 0;
+        const styleCorner = parseInt(CORNER_STYLE.value);
+        const numEnds = parseInt(ENDS.value) || 0;
+        const styleEnd = parseInt(END_STYLE.value);
+
+        // 1. Assembly Components
+        const totalMaster = numCorners + numEnds;
+        const bracePerCorner = styleCorner === 1 ? 2 : 4;
+        const bracePerEnd = styleEnd === 1 ? 1 : 2;
+        const totalBracePosts = (numCorners * bracePerCorner) + (numEnds * bracePerEnd);
+        const totalCrossMembers = totalBracePosts;
+        const totalKits = totalBracePosts;
+
+        // 2. Line Posts
+        const totalPostsNeeded = Math.ceil(len / space);
+        let totalLinePosts = totalPostsNeeded - (totalMaster + totalBracePosts);
+        if (totalLinePosts < 0) totalLinePosts = 0;
+
+        // 3. Materials (Wire / Board / Panel)
+        let totalWireUnits = 0;
+        let totalPanels = 0;
+        
+        // Calculate Total Linear Feet needed
+        const totalLinear = len * strandCount;
+        LINEAR_FT_OUT.value = totalLinear.toLocaleString() + " ft";
+
+        if (PRESETS[FENCE_TYPE.value].hasWire) {
+            // Formula: Total Linear Feet / Length of one unit (Roll or Board)
+            totalWireUnits = Math.ceil(totalLinear / rollLength);
+        }
+        
+        if (PRESETS[FENCE_TYPE.value].hasPanel) {
+            totalPanels = Math.ceil(len / panelLength);
+        }
+
+        // 4. Financials
+        const costMaster = totalMaster * parseFloat(C_MASTER.value);
+        const costBraceP = totalBracePosts * parseFloat(C_BRACE_POST.value);
+        const costCross = totalCrossMembers * parseFloat(C_CROSS.value);
+        const costLine = totalLinePosts * parseFloat(C_LINE.value);
+        const costWire = totalWireUnits * parseFloat(C_ROLL.value);
+        const costPanel = totalPanels * parseFloat(C_PANEL.value);
+        const costKits = totalKits * parseFloat(C_KIT.value);
+        
+        const grandTotal = costMaster + costBraceP + costCross + costLine + costWire + costPanel + costKits;
+
+        // Render
+        const fmt = (n) => '$' + n.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+
+        updateRow('qty-master', 'total-master', totalMaster, costMaster);
+        updateRow('qty-brace-post', 'total-brace-post', totalBracePosts, costBraceP);
+        updateRow('qty-cross', 'total-cross', totalCrossMembers, costCross);
+        updateRow('qty-line', 'total-line', totalLinePosts, costLine);
+        
+        if (PRESETS[FENCE_TYPE.value].hasWire) updateRow('qty-wire', 'total-wire', totalWireUnits, costWire);
+        if (PRESETS[FENCE_TYPE.value].hasPanel) updateRow('qty-panel', 'total-panel', totalPanels, costPanel);
+
+        updateRow('qty-kit', 'total-kit', totalKits, costKits);
+        document.getElementById('grand-total').textContent = "Total Estimate: " + fmt(grandTotal);
+    }
+
+    function updateRow(qtyId, costId, qty, cost) {
+        const qEl = document.getElementById(qtyId);
+        const cEl = document.getElementById(costId);
+        if(qEl) qEl.textContent = qty;
+        if(cEl) cEl.textContent = '$' + cost.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2});
+    }
+
+    window.onload = function() { loadPresets(); };
+</script>
+</body>
+</html>

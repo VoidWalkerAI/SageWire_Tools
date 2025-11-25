@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Trailer Density</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+        
+        #total-weight-output {
+            color: #f39c12; /* Caution color for weight */
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+        
+        /* Warning style for overload */
+        .warning {
+            color: #E74C3C !important;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🚛 HerdMate | Trailer Density</h1>
+    <p>Calculate safe loading capacity to prevent overcrowding and verify payload limits.</p>
+
+    <h3 class="section-title">1. Trailer Specs</h3>
+    <div class="input-grid">
+        <div>
+            <label for="length-input">Floor Length (Feet)</label>
+            <input type="number" id="length-input" value="24" min="1" oninput="calculateLoad()">
+        </div>
+        <div>
+            <label for="width-input">Inside Width (Feet)</label>
+            <input type="number" id="width-input" value="7" min="1" oninput="calculateLoad()">
+        </div>
+    </div>
+    <label for="max-payload">Max Payload Capacity (Lbs) - *Optional*</label>
+    <input type="number" id="max-payload" value="14000" placeholder="GVWR minus Empty Weight" oninput="calculateLoad()">
+
+    <h3 class="section-title">2. Livestock Details</h3>
+    <div class="input-grid">
+        <div>
+            <label for="animal-type">Animal Type</label>
+            <select id="animal-type" onchange="calculateLoad()">
+                <option value="cattle">Cattle (Adult/Yearling)</option>
+                <option value="calves">Calves (under 600lbs)</option>
+                <option value="hogs">Hogs / Swine</option>
+                <option value="sheep">Sheep / Goats</option>
+                <option value="horses">Horses</option>
+            </select>
+        </div>
+        <div>
+            <label for="avg-weight">Average Weight (Lbs)</label>
+            <input type="number" id="avg-weight" value="1200" min="1" oninput="calculateLoad()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Max Head Capacity</h3>
+            <span class="value" id="max-head-output">0 Head</span>
+            <span class="label">Based on Safe Space/Head</span>
+        </div>
+        <div class="output-box">
+            <h3>Total Load Weight</h3>
+            <span class="value" id="total-weight-output">0 Lbs</span>
+            <span class="label" id="weight-status">Estimated Payload</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Weather Tip:</strong> Reduce load by 10-15% in extreme heat to allow for better airflow and cooling. This calculator assumes standard temperate conditions.
+    </div>
+</div>
+
+<script>
+    const LENGTH_INPUT = document.getElementById('length-input');
+    const WIDTH_INPUT = document.getElementById('width-input');
+    const MAX_PAYLOAD_INPUT = document.getElementById('max-payload');
+    const ANIMAL_TYPE_SELECT = document.getElementById('animal-type');
+    const AVG_WEIGHT_INPUT = document.getElementById('avg-weight');
+    
+    const MAX_HEAD_OUTPUT = document.getElementById('max-head-output');
+    const TOTAL_WEIGHT_OUTPUT = document.getElementById('total-weight-output');
+    const WEIGHT_STATUS = document.getElementById('weight-status');
+
+    function calculateLoad() {
+        const length = parseFloat(LENGTH_INPUT.value);
+        const width = parseFloat(WIDTH_INPUT.value);
+        const weight = parseFloat(AVG_WEIGHT_INPUT.value);
+        const maxPayload = parseFloat(MAX_PAYLOAD_INPUT.value);
+        const type = ANIMAL_TYPE_SELECT.value;
+
+        // Validation
+        if (isNaN(length) || isNaN(width) || isNaN(weight) || length <= 0 || width <= 0 || weight <= 0) {
+            MAX_HEAD_OUTPUT.textContent = '0 Head';
+            TOTAL_WEIGHT_OUTPUT.textContent = '0 Lbs';
+            return;
+        }
+
+        // 1. Calculate Trailer Area
+        const trailerSqFt = length * width;
+
+        // 2. Determine Required Sq Ft Per Head based on Weight & Type
+        // Formulas based on transport industry standards (approximate)
+        let sqFtPerHead = 0;
+
+        if (type === 'cattle') {
+            // Standard: (Weight / 100) + 1 to 2 sq ft buffer? 
+            // Industry chart: 600lb->9sqft, 1000lb->12sqft, 1400lb->15sqft
+            // Linear approx: Weight * 0.011 + 1.5
+            sqFtPerHead = (weight * 0.011) + 1.5;
+        } else if (type === 'calves') {
+            // Calves need a bit more room relative to weight to lay down if long haul
+            sqFtPerHead = (weight * 0.013) + 1.2; 
+        } else if (type === 'hogs') {
+            // ~4 sq ft for 250lb hog
+            sqFtPerHead = (weight * 0.012) + 1.0;
+        } else if (type === 'sheep') {
+            // ~3-4 sq ft for market lamb
+            sqFtPerHead = (weight * 0.025) + 0.5;
+        } else if (type === 'horses') {
+            // Horses need significantly more room (stalls/slant)
+            // Approx 25-30 sq ft minimum for safety
+            sqFtPerHead = 28; 
+        }
+
+        // 3. Calculate Max Head
+        let maxHead = Math.floor(trailerSqFt / sqFtPerHead);
+
+        // 4. Calculate Total Weight
+        const totalWeight = maxHead * weight;
+
+        // --- Check Payload Limits ---
+        // If Total Weight exceeds Max Payload, reduce head count
+        let weightWarning = false;
+        
+        if (!isNaN(maxPayload) && maxPayload > 0) {
+            if (totalWeight > maxPayload) {
+                // Calculate max head based on weight limit instead of space
+                const maxHeadByWeight = Math.floor(maxPayload / weight);
+                
+                // Use the lower of the two numbers
+                if (maxHeadByWeight < maxHead) {
+                    maxHead = maxHeadByWeight;
+                    weightWarning = true;
+                }
+            }
+        }
+        
+        // Recalculate final weight based on final head count
+        const finalTotalWeight = maxHead * weight;
+
+        // --- Output Results ---
+        
+        MAX_HEAD_OUTPUT.textContent = maxHead + " Head";
+        TOTAL_WEIGHT_OUTPUT.textContent = finalTotalWeight.toLocaleString() + " Lbs";
+        
+        // Visual Feedback
+        if (weightWarning) {
+            TOTAL_WEIGHT_OUTPUT.classList.add('warning');
+            WEIGHT_STATUS.textContent = "LIMITED BY WEIGHT RATING!";
+            WEIGHT_STATUS.style.color = '#E74C3C';
+        } else {
+            TOTAL_WEIGHT_OUTPUT.classList.remove('warning');
+            WEIGHT_STATUS.textContent = "Safe Payload";
+            WEIGHT_STATUS.style.color = '#aeb6bf';
+        }
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculateLoad();
+    };
+</script>
+</body>
+</html>

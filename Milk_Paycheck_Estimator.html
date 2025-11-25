@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Milk Paycheck Estimator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 750px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        /* Component Breakdown Styles */
+        .breakdown-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+        .breakdown-table th { text-align: left; color: #B85C38; border-bottom: 1px solid #7D716A; padding: 5px; }
+        .breakdown-table td { padding: 8px 5px; border-bottom: 1px solid #34343d; color: #ccc; }
+        .breakdown-table td.money { text-align: right; color: #5A946E; font-weight: bold; }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>💰 HerdMate | Milk Paycheck</h1>
+    <p>Estimate gross revenue and mailbox price based on component pricing and production.</p>
+
+    <label for="milk-volume-input">Total Milk Shipped (Lbs)</label>
+    <input type="number" id="milk-volume-input" value="50000" min="0" step="100" oninput="calculatePaycheck()">
+
+    <h3 class="section-title">1. Component Tests (%)</h3>
+    <div class="input-grid">
+        <div>
+            <label for="fat-percent">Butterfat %</label>
+            <input type="number" id="fat-percent" value="4.1" min="0" step="0.01" oninput="calculatePaycheck()">
+        </div>
+        <div>
+            <label for="protein-percent">Protein %</label>
+            <input type="number" id="protein-percent" value="3.2" min="0" step="0.01" oninput="calculatePaycheck()">
+        </div>
+        <div>
+            <label for="solids-percent">Other Solids %</label>
+            <input type="number" id="solids-percent" value="5.7" min="0" step="0.01" oninput="calculatePaycheck()">
+        </div>
+        <div>
+            <label for="ppd-input">PPD / CWT ($) - *Optional*</label>
+            <input type="number" id="ppd-input" value="0.50" step="0.01" placeholder="Producer Price Diff" oninput="calculatePaycheck()">
+        </div>
+    </div>
+
+    <h3 class="section-title">2. Market Prices ($ per Lb)</h3>
+    <div class="input-grid">
+        <div>
+            <label for="fat-price">Fat Price ($/lb)</label>
+            <input type="number" id="fat-price" value="3.10" min="0" step="0.01" oninput="calculatePaycheck()">
+        </div>
+        <div>
+            <label for="protein-price">Protein Price ($/lb)</label>
+            <input type="number" id="protein-price" value="1.90" min="0" step="0.01" oninput="calculatePaycheck()">
+        </div>
+        <div>
+            <label for="solids-price">Other Solids Price ($/lb)</label>
+            <input type="number" id="solids-price" value="0.25" min="0" step="0.01" oninput="calculatePaycheck()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Gross Milk Value</h3>
+            <span class="value" id="total-value-output">$0.00</span>
+            <span class="label">Total Revenue</span>
+        </div>
+        <div class="output-box">
+            <h3>Mailbox Price</h3>
+            <span class="value" id="mailbox-price-output">$0.00</span>
+            <span class="label">Per CWT (100 Lbs)</span>
+        </div>
+    </div>
+    
+    <table class="breakdown-table">
+        <thead>
+            <tr>
+                <th>Component</th>
+                <th>Lbs Sold</th>
+                <th>Value</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Butterfat</td>
+                <td id="fat-lbs-display">0</td>
+                <td class="money" id="fat-value-display">$0.00</td>
+            </tr>
+            <tr>
+                <td>Protein</td>
+                <td id="protein-lbs-display">0</td>
+                <td class="money" id="protein-value-display">$0.00</td>
+            </tr>
+            <tr>
+                <td>Other Solids</td>
+                <td id="solids-lbs-display">0</td>
+                <td class="money" id="solids-value-display">$0.00</td>
+            </tr>
+             <tr>
+                <td>PPD / Other Adj.</td>
+                <td>(Per CWT)</td>
+                <td class="money" id="ppd-value-display">$0.00</td>
+            </tr>
+        </tbody>
+    </table>
+    
+    <div class="note">
+        <strong>Mailbox Price</strong> is the standardized metric (Price per CWT) used to compare milk checks across the industry.
+    </div>
+</div>
+
+<script>
+    // Inputs
+    const VOLUME = document.getElementById('milk-volume-input');
+    
+    const FAT_PCT = document.getElementById('fat-percent');
+    const PROT_PCT = document.getElementById('protein-percent');
+    const SOL_PCT = document.getElementById('solids-percent');
+    const PPD_INPUT = document.getElementById('ppd-input');
+    
+    const FAT_PRICE = document.getElementById('fat-price');
+    const PROT_PRICE = document.getElementById('protein-price');
+    const SOL_PRICE = document.getElementById('solids-price');
+    
+    // Outputs
+    const TOTAL_OUT = document.getElementById('total-value-output');
+    const CWT_OUT = document.getElementById('mailbox-price-output');
+    
+    // Table Outputs
+    const T_FAT_LBS = document.getElementById('fat-lbs-display');
+    const T_FAT_VAL = document.getElementById('fat-value-display');
+    const T_PROT_LBS = document.getElementById('protein-lbs-display');
+    const T_PROT_VAL = document.getElementById('protein-value-display');
+    const T_SOL_LBS = document.getElementById('solids-lbs-display');
+    const T_SOL_VAL = document.getElementById('solids-value-display');
+    const T_PPD_VAL = document.getElementById('ppd-value-display');
+
+    const fmtMoney = (val) => '$' + val.toLocaleString('en-US', {minimumFractionDigits: 2, maximumFractionDigits: 2});
+    const fmtNum = (val) => val.toLocaleString('en-US', {maximumFractionDigits: 1});
+
+    function calculatePaycheck() {
+        const milkLbs = parseFloat(VOLUME.value) || 0;
+        
+        // Percentages (convert to decimals)
+        const fatDec = (parseFloat(FAT_PCT.value) || 0) / 100;
+        const protDec = (parseFloat(PROT_PCT.value) || 0) / 100;
+        const solDec = (parseFloat(SOL_PCT.value) || 0) / 100;
+        const ppdCwt = parseFloat(PPD_INPUT.value) || 0; // Price per CWT
+        
+        // Prices
+        const fatP = parseFloat(FAT_PRICE.value) || 0;
+        const protP = parseFloat(PROT_PRICE.value) || 0;
+        const solP = parseFloat(SOL_PRICE.value) || 0;
+        
+        // --- 1. Calculate Component Pounds ---
+        const fatLbs = milkLbs * fatDec;
+        const protLbs = milkLbs * protDec;
+        const solLbs = milkLbs * solDec;
+        
+        // --- 2. Calculate Value per Component ---
+        const fatValue = fatLbs * fatP;
+        const protValue = protLbs * protP;
+        const solValue = solLbs * solP;
+        
+        // --- 3. Calculate PPD (Producer Price Differential) ---
+        // PPD is applied per CWT (100 lbs of milk)
+        const cwtCount = milkLbs / 100;
+        const ppdValue = cwtCount * ppdCwt;
+        
+        // --- 4. Totals ---
+        const totalValue = fatValue + protValue + solValue + ppdValue;
+        
+        // Calculate Pay Price per CWT (Mailbox Price approximation)
+        let pricePerCwt = 0;
+        if (cwtCount > 0) {
+            pricePerCwt = totalValue / cwtCount;
+        }
+
+        // --- Output Updates ---
+        
+        // Main Boxes
+        TOTAL_OUT.textContent = fmtMoney(totalValue);
+        CWT_OUT.textContent = fmtMoney(pricePerCwt);
+        
+        // Table Details
+        T_FAT_LBS.textContent = fmtNum(fatLbs);
+        T_FAT_VAL.textContent = fmtMoney(fatValue);
+        
+        T_PROT_LBS.textContent = fmtNum(protLbs);
+        T_PROT_VAL.textContent = fmtMoney(protValue);
+        
+        T_SOL_LBS.textContent = fmtNum(solLbs);
+        T_SOL_VAL.textContent = fmtMoney(solValue);
+        
+        T_PPD_VAL.textContent = fmtMoney(ppdValue);
+    }
+
+    // Initialize
+    window.onload = calculatePaycheck;
+</script>
+</body>
+</html>

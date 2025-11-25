@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Centripetal Force and Acceleration Calculator | Sage Tools</title>
+    <style>
+        /* SAGE TOOLS THEME */
+        :root {
+            --sage-primary: #007bff; /* Blue for action/headers */
+            --sage-accent: #28a745; /* Green for success/results */
+            --sage-neutral: #6c757d; /* Gray for secondary text */
+            --light-bg: #f8f9fa;
+            --calc-bg: #ffffff;
+        }
+
+        body { 
+            font-family: 'Tahoma', sans-serif; 
+            margin: 20px; 
+            background-color: var(--light-bg); 
+        }
+        .calculator { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 30px; 
+            background-color: var(--calc-bg); 
+            border-radius: 8px; 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+        }
+        
+        /* Header Styling */
+        .brand-header { 
+            text-align: center; 
+            margin-bottom: 25px; 
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .brand-header h2 { 
+            color: var(--sage-primary); 
+            font-size: 1.6em; 
+            margin: 0; 
+        }
+        .brand-header .slogan { 
+            color: var(--sage-neutral); 
+            font-size: 0.9em; 
+            margin-top: 5px;
+        }
+
+        h3 { 
+            color: var(--sage-primary); 
+            margin-top: 25px; 
+            border-bottom: 1px dashed #eee; 
+            padding-bottom: 5px; 
+        }
+        .input-group { 
+            margin-bottom: 15px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+            color: #333; 
+        }
+        input[type="number"] { 
+            width: 95%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+        }
+        
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 30px; 
+            background-color: var(--sage-primary); 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 1.05em; 
+            transition: background-color 0.3s; 
+        }
+        button:hover { 
+            background-color: #0056b3; 
+        }
+        
+        /* Result Section */
+        .result-section { 
+            margin-top: 35px; 
+            padding: 20px; 
+            border: 2px solid var(--sage-accent); 
+            border-radius: 6px; 
+            background-color: #e9f7ef; /* Light green success background */
+        }
+        .result-output { 
+            font-size: 1.2em; 
+            margin: 10px 0; 
+        }
+        .result-output strong { 
+            color: #d84315; 
+            font-size: 1.6em; 
+        }
+        
+        /* Footer */
+        .footer-citation {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="brand-header">
+            <h2>Centripetal Force and Acceleration Calculator</h2>
+            <p class="slogan">A Sage Tools Utility for Circular Motion</p>
+        </div>
+
+        <p style="text-align: center;">Calculates the center-seeking force and acceleration ($F_c$, $a_c$) in Newtons and $\text{m/s}^2$. (Requires SI units: kg, m/s, m)</p>
+
+        <h3>Inputs</h3>
+        <div class="input-group">
+            <label for="mass">Mass ($m$, kg):</label>
+            <input type="number" id="mass" value="1500" placeholder="e.g., 1500 (kg)">
+        </div>
+        <div class="input-group">
+            <label for="velocity">Linear Velocity ($v$, m/s):</label>
+            <input type="number" id="velocity" value="15" placeholder="e.g., 15 (m/s)">
+        </div>
+        <div class="input-group">
+            <label for="radius">Radius of Circular Path ($r$, meters):</label>
+            <input type="number" id="radius" value="25" placeholder="e.g., 25 (m)">
+        </div>
+
+        <button onclick="calculateCentripetal()">Calculate Force and Acceleration</button>
+
+        <div class="result-section">
+            <div class="result-output">
+                Centripetal Acceleration ($\mathbf{a_c}$): <strong id="resultAcceleration">-- $\text{m/s}^2$</strong>
+            </div>
+            <div class="result-output">
+                Centripetal Force ($\mathbf{F_c}$): <strong id="resultForce">-- Newtons (N)</strong>
+            </div>
+        </div>
+        
+        <div class="footer-citation">
+            A utility tool forged by Gemini.
+        </div>
+    </div>
+
+    <script>
+        function calculateCentripetal() {
+            const m = parseFloat(document.getElementById('mass').value);
+            const v = parseFloat(document.getElementById('velocity').value);
+            const r = parseFloat(document.getElementById('radius').value);
+
+            if ([m, v, r].some(isNaN) || m <= 0 || r <= 0) {
+                alert('Please enter valid, positive inputs for Mass and Radius.');
+                return;
+            }
+
+            // --- 1. Centripetal Acceleration (a_c = v^2 / r) ---
+            const a_c = (v * v) / r;
+
+            // --- 2. Centripetal Force (F_c = m * a_c) ---
+            const F_c = m * a_c;
+
+            // Output
+            document.getElementById('resultAcceleration').textContent = `${a_c.toFixed(2)} m/s²`;
+            document.getElementById('resultForce').textContent = `${F_c.toFixed(0)} Newtons (N)`;
+        }
+    </script>
+</body>
+</html>

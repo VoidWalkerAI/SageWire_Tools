@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Full Circle Drainage Calculator</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #0c0e14; color: #f4f6f7; }
+        .container { max-width: 600px; margin: 0 auto; background: #1a1e2b; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        
+        /* --- BRANDED HEADER --- */
+        .header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #5dade2;
+        }
+        .header-brand h1 { 
+            color: #f39c12; 
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .header-brand p {
+            color: #aeb6bf;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+        /* --- END BRANDED HEADER --- */
+        
+        h2 { margin-top: 0; color: #5dade2; text-align: center; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 8px; color: #5dade2; font-weight: bold; }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #3498db;
+            border-radius: 5px;
+            background-color: #2c3e50;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2ecc71;
+            background-color: #34495e;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #f39c12;
+            border-bottom: 1px solid #f39c12;
+            padding-bottom: 5px;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #2ecc71;
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34495e;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-brand">
+        <h1>SageWire Tools</h1>
+        <p>We tend the fire while you're out living life.</p>
+    </div>
+    
+    <h2>💧 Full Circle Drainage Calculator</h2>
+    <p>Find the minimum required culvert size based on the acreage and terrain (Wheeling Corrugating data).</p>
+
+    <label for="terrain-select">Drainage Terrain Type</label>
+    <select id="terrain-select" onchange="calculateCulvertSize()">
+        <option value="Steep">Steep/Mountainous Country</option>
+        <option value="Rolling" selected>Rolling Country</option>
+        <option value="Level">Level Country</option>
+    </select>
+
+    <label for="acres-input">Acres to be Drained</label>
+    <input type="number" id="acres-input" value="30" min="0.1" step="0.1" oninput="calculateCulvertSize()">
+
+    <div class="output-box">
+        <h3>Minimum Culvert Required</h3>
+        <span class="value" id="diameter-output">N/A</span>
+        <span class="label" id="area-output">Waterway Area: 0.000 Sq. Ft.</span>
+    </div>
+    
+    <div class="note">
+        This calculation is based on Talbot's formula and the empirical data provided by the original chart.
+    </div>
+</div>
+
+<script>
+    const TERRAIN_SELECT = document.getElementById('terrain-select');
+    const ACRES_INPUT = document.getElementById('acres-input');
+    const DIAMETER_OUTPUT = document.getElementById('diameter-output');
+    const AREA_OUTPUT = document.getElementById('area-output');
+
+    // --- Data Source from the Reference Card (Card 2) ---
+    // Note: Acres are stored as strings for simplicity of data mapping.
+    const DRAINAGE_DATA = [
+        // { Diameter: 12, Area: 0.785, Steep: 0.25, Rolling: 3, Level: 6 },
+        // ... We include the data points from the physical chart
+        { Diameter: 12, Area: 0.785, Steep: 0.25, Rolling: 3, Level: 6 },
+        { Diameter: 15, Area: 1.227, Steep: 1, Rolling: 6, Level: 11 },
+        { Diameter: 18, Area: 1.767, Steep: 2, Rolling: 9, Level: 18 },
+        { Diameter: 24, Area: 3.142, Steep: 5, Rolling: 20, Level: 39 },
+        { Diameter: 30, Area: 4.909, Steep: 8, Rolling: 36, Level: 70 },
+        { Diameter: 36, Area: 7.068, Steep: 14, Rolling: 59, Level: 115 },
+        { Diameter: 42, Area: 9.621, Steep: 22, Rolling: 89, Level: 175 },
+        { Diameter: 48, Area: 12.566, Steep: 29, Rolling: 125, Level: 250 },
+        { Diameter: 54, Area: 16.000, Steep: 40, Rolling: 170, Level: 340 },
+        { Diameter: 60, Area: 19.635, Steep: 55, Rolling: 230, Level: 455 },
+        { Diameter: 66, Area: 23.758, Steep: 78, Rolling: 295, Level: 585 },
+        { Diameter: 72, Area: 28.274, Steep: 89, Rolling: 370, Level: 735 },
+        { Diameter: 78, Area: 33.183, Steep: 105, Rolling: 460, Level: 910 },
+        { Diameter: 84, Area: 38.484, Steep: 130, Rolling: 560, Level: 1110 },
+    ];
+
+    function calculateCulvertSize() {
+        const targetAcres = parseFloat(ACRES_INPUT.value);
+        const terrain = TERRAIN_SELECT.value;
+        
+        let terrainKey = '';
+        if (terrain === 'Steep') terrainKey = 'Steep';
+        else if (terrain === 'Rolling') terrainKey = 'Rolling';
+        else if (terrain === 'Level') terrainKey = 'Level';
+
+        // Validation
+        if (isNaN(targetAcres) || targetAcres <= 0 || !terrainKey) {
+            DIAMETER_OUTPUT.textContent = 'N/A';
+            AREA_OUTPUT.textContent = 'Enter valid Acres.';
+            return;
+        }
+
+        let requiredCulvert = null;
+
+        // 1. Iterate through the data to find the minimum required culvert size
+        for (let i = 0; i < DRAINAGE_DATA.length; i++) {
+            const dataPoint = DRAINAGE_DATA[i];
+            
+            // Look up the acreage capacity for the selected terrain type
+            const capacity = dataPoint[terrainKey]; 
+
+            // Check if this culvert size is large enough for the target acreage
+            if (targetAcres <= capacity) {
+                requiredCulvert = dataPoint;
+                break; // Found the smallest suitable size, stop searching
+            }
+        }
+        
+        // --- Output Results ---
+
+        if (requiredCulvert) {
+            DIAMETER_OUTPUT.textContent = requiredCulvert.Diameter + '"';
+            AREA_OUTPUT.textContent = `Waterway Area: ${requiredCulvert.Area.toFixed(3)} Sq. Ft.`;
+        } else {
+            // If the required acreage is larger than the largest listed culvert (84")
+            DIAMETER_OUTPUT.textContent = '84" +';
+            AREA_OUTPUT.textContent = 'Requires multiple culverts or larger engineering.';
+        }
+    }
+
+    // Initialize the calculation on page load
+    window.onload = function() {
+        calculateCulvertSize();
+    };
+</script>
+</body>
+</html>

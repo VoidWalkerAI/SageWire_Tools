@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SageWire Tools | Heating Fuel Cost</title>
+    
+    <style>
+        /* --- HERDMATE / SAGEWIRE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        
+        /* Header Styling */
+        .header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #5dade2;
+        }
+        .header-brand h1 { 
+            color: #B85C38; /* Rust Accent */
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .header-brand p {
+            color: #aeb6bf;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        h2 { margin-top: 0; color: #5dade2; text-align: center; margin-bottom: 20px; }
+
+        /* Grid for Fuels */
+        .fuel-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .fuel-card {
+            background-color: #34343d;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #7D716A;
+            transition: transform 0.2s;
+        }
+        
+        .fuel-card h3 {
+            margin: 0 0 10px 0;
+            color: #f39c12;
+            font-size: 1.1em;
+            border-bottom: 1px solid #555;
+            padding-bottom: 5px;
+        }
+
+        .input-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .input-group { flex: 1; }
+
+        label { display: block; margin-bottom: 5px; color: #aeb6bf; font-weight: bold; font-size: 0.85em; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 8px;
+            border: 2px solid #7D716A; 
+            border-radius: 5px;
+            background-color: #14141A; 
+            color: #fff;
+            font-size: 1em;
+        }
+
+        .result-display {
+            background-color: #1a1e2b;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            margin-top: 10px;
+        }
+        .result-val { font-size: 1.4em; font-weight: bold; color: #f4f6f7; }
+        .result-label { font-size: 0.8em; color: #aeb6bf; }
+
+        /* Winner Highlighting */
+        .winner {
+            border: 2px solid #5A946E;
+            box-shadow: 0 0 15px rgba(90, 148, 110, 0.3);
+            background-color: #1e2b24;
+        }
+        .winner .result-val { color: #5A946E; }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-brand">
+        <h1>SageWire Tools</h1>
+        <p>We tend the fire while you're out living life.</p>
+    </div>
+    
+    <h2>🔥 Heating Fuel Cost Comparator</h2>
+    <p style="text-align:center; color:#ccc;">Find the cheapest heat source by comparing Cost Per Million BTUs.</p>
+
+    <div class="fuel-grid">
+        
+        <div class="fuel-card" id="card-propane">
+            <h3>Propane (LP)</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Price ($/Gal)</label>
+                    <input type="number" id="price-lp" value="2.50" step="0.01" oninput="calculateHeat()">
+                </div>
+                <div class="input-group">
+                    <label>Furnace Eff. (%)</label>
+                    <input type="number" id="eff-lp" value="90" min="50" max="100" oninput="calculateHeat()">
+                </div>
+            </div>
+            <div class="result-display">
+                <span class="result-val" id="res-lp">$0.00</span>
+                <div class="result-label">Per Million BTUs</div>
+            </div>
+        </div>
+
+        <div class="fuel-card" id="card-ng">
+            <h3>Natural Gas</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Price ($/Therm)</label>
+                    <input type="number" id="price-ng" value="1.10" step="0.01" oninput="calculateHeat()">
+                </div>
+                <div class="input-group">
+                    <label>Furnace Eff. (%)</label>
+                    <input type="number" id="eff-ng" value="80" min="50" max="100" oninput="calculateHeat()">
+                </div>
+            </div>
+            <div class="result-display">
+                <span class="result-val" id="res-ng">$0.00</span>
+                <div class="result-label">Per Million BTUs</div>
+            </div>
+        </div>
+
+        <div class="fuel-card" id="card-elec">
+            <h3>Electricity (Resistance)</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Price ($/kWh)</label>
+                    <input type="number" id="price-elec" value="0.14" step="0.01" oninput="calculateHeat()">
+                </div>
+                <div class="input-group">
+                    <label>Heater Eff. (%)</label>
+                    <input type="number" id="eff-elec" value="100" readonly>
+                </div>
+            </div>
+            <div class="result-display">
+                <span class="result-val" id="res-elec">$0.00</span>
+                <div class="result-label">Per Million BTUs</div>
+            </div>
+        </div>
+
+        <div class="fuel-card" id="card-oil">
+            <h3>Fuel Oil / Diesel</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Price ($/Gal)</label>
+                    <input type="number" id="price-oil" value="3.80" step="0.01" oninput="calculateHeat()">
+                </div>
+                <div class="input-group">
+                    <label>Furnace Eff. (%)</label>
+                    <input type="number" id="eff-oil" value="80" min="50" max="100" oninput="calculateHeat()">
+                </div>
+            </div>
+            <div class="result-display">
+                <span class="result-val" id="res-oil">$0.00</span>
+                <div class="result-label">Per Million BTUs</div>
+            </div>
+        </div>
+
+        <div class="fuel-card" id="card-corn">
+            <h3>Shelled Corn</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Price ($/Bushel)</label>
+                    <input type="number" id="price-corn" value="4.50" step="0.10" oninput="calculateHeat()">
+                </div>
+                <div class="input-group">
+                    <label>Stove Eff. (%)</label>
+                    <input type="number" id="eff-corn" value="75" min="30" max="100" oninput="calculateHeat()">
+                </div>
+            </div>
+            <div class="result-display">
+                <span class="result-val" id="res-corn">$0.00</span>
+                <div class="result-label">Per Million BTUs</div>
+            </div>
+        </div>
+
+        <div class="fuel-card" id="card-wood">
+            <h3>Firewood (Hardwood)</h3>
+            <div class="input-row">
+                <div class="input-group">
+                    <label>Price ($/Cord)</label>
+                    <input type="number" id="price-wood" value="250" step="10" oninput="calculateHeat()">
+                </div>
+                <div class="input-group">
+                    <label>Stove Eff. (%)</label>
+                    <input type="number" id="eff-wood" value="60" min="10" max="100" oninput="calculateHeat()">
+                </div>
+            </div>
+            <div class="result-display">
+                <span class="result-val" id="res-wood">$0.00</span>
+                <div class="result-label">Per Million BTUs</div>
+            </div>
+        </div>
+
+    </div>
+    
+    <div class="note">
+        <strong>Note:</strong> Efficiency matters! An expensive fuel in a 98% efficient heater can sometimes beat cheap fuel in a 50% efficient stove. This calculator finds the true cost of heat delivered.
+    </div>
+</div>
+
+<script>
+    // BTU Constants per Unit
+    const BTU_PROPANE = 91500;      // Per Gallon
+    const BTU_NAT_GAS = 100000;     // Per Therm
+    const BTU_KWH = 3412;           // Per kWh
+    const BTU_OIL = 138500;         // Per Gallon (#2 Oil)
+    const BTU_CORN = 392000;        // Per Bushel (Approx 7000 BTU/lb * 56 lbs)
+    const BTU_WOOD = 24000000;      // Per Cord (Air Dried Oak/Hickory Average)
+
+    function calculateHeat() {
+        const fuels = [
+            { id: 'lp', btu: BTU_PROPANE, card: 'card-propane', res: 'res-lp' },
+            { id: 'ng', btu: BTU_NAT_GAS, card: 'card-ng', res: 'res-ng' },
+            { id: 'elec', btu: BTU_KWH, card: 'card-elec', res: 'res-elec' },
+            { id: 'oil', btu: BTU_OIL, card: 'card-oil', res: 'res-oil' },
+            { id: 'corn', btu: BTU_CORN, card: 'card-corn', res: 'res-corn' },
+            { id: 'wood', btu: BTU_WOOD, card: 'card-wood', res: 'res-wood' }
+        ];
+
+        let lowestCost = Infinity;
+        let winnerId = '';
+
+        fuels.forEach(fuel => {
+            const priceInput = document.getElementById(`price-${fuel.id}`);
+            const effInput = document.getElementById(`eff-${fuel.id}`);
+            const resOutput = document.getElementById(fuel.res);
+            const card = document.getElementById(fuel.card);
+
+            // Remove previous winner status
+            card.classList.remove('winner');
+
+            const price = parseFloat(priceInput.value);
+            const efficiency = parseFloat(effInput.value) / 100;
+
+            if (isNaN(price) || isNaN(efficiency) || price <= 0 || efficiency <= 0) {
+                resOutput.textContent = "---";
+                return;
+            }
+
+            // Calculation:
+            // 1. Effective BTUs per Unit = Raw BTUs * Efficiency
+            // 2. Units needed for 1 Million BTUs = 1,000,000 / Effective BTUs
+            // 3. Cost = Units needed * Price per Unit
+            
+            const effectiveBTU = fuel.btu * efficiency;
+            const unitsForMillion = 1000000 / effectiveBTU;
+            const costPerMillion = unitsForMillion * price;
+
+            resOutput.textContent = '$' + costPerMillion.toFixed(2);
+
+            if (costPerMillion < lowestCost) {
+                lowestCost = costPerMillion;
+                winnerId = fuel.id;
+            }
+        });
+
+        // Highlight Winner
+        if (winnerId) {
+            document.getElementById(`card-${winnerId}`).classList.add('winner');
+        }
+    }
+
+    window.onload = function() {
+        calculateHeat();
+    };
+</script>
+</body>
+</html>

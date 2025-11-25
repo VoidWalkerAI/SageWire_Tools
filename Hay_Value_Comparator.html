@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Hay Value Comparator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: start;
+        }
+
+        .hay-column {
+            background-color: #34343d;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #7D716A;
+        }
+        
+        .hay-column h3 {
+            margin-top: 0;
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; font-size: 0.9em; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #14141A; 
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        .metric-selector {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        #metric-select {
+            width: auto;
+            min-width: 300px;
+            text-align: center;
+            border-color: #B85C38;
+        }
+
+        .result-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            display: block;
+            text-align: center;
+            margin-top: 10px;
+            color: #f4f6f7;
+        }
+        
+        .result-label {
+            font-size: 0.8em;
+            text-transform: uppercase;
+            color: #aeb6bf;
+            text-align: center;
+            display: block;
+        }
+
+        /* Winner/Loser Styles */
+        .winner { border: 2px solid #5A946E; box-shadow: 0 0 15px rgba(90, 148, 110, 0.2); }
+        .winner .result-value { color: #5A946E; }
+        .winner h3 { color: #5A946E; border-bottom-color: #5A946E; }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌾 HerdMate | Hay Comparator</h1>
+    <p>Compare two hay lots by nutrient density to find the true best value.</p>
+
+    <div class="metric-selector">
+        <label for="metric-select">Comparison Metric</label>
+        <select id="metric-select" onchange="calculateValue()">
+            <option value="tdn">TDN (Total Digestible Nutrients %)</option>
+            <option value="cp">Crude Protein (CP %)</option>
+            <option value="rfv">RFV (Relative Feed Value)</option>
+        </select>
+    </div>
+
+    <div class="input-grid">
+        <div class="hay-column" id="col-a">
+            <h3>Option A</h3>
+            
+            <label>Price Per Ton ($)</label>
+            <input type="number" id="price-a" value="180" min="0" oninput="calculateValue()">
+            
+            <label id="metric-label-a">TDN %</label>
+            <input type="number" id="quality-a" value="52" min="0" oninput="calculateValue()">
+            
+            <hr style="border-color: #7D716A; opacity: 0.3;">
+            
+            <span class="label" id="result-label-a">Cost Per Lb TDN</span>
+            <span class="result-value" id="result-a">$0.000</span>
+        </div>
+
+        <div class="hay-column" id="col-b">
+            <h3>Option B</h3>
+            
+            <label>Price Per Ton ($)</label>
+            <input type="number" id="price-b" value="220" min="0" oninput="calculateValue()">
+            
+            <label id="metric-label-b">TDN %</label>
+            <input type="number" id="quality-b" value="68" min="0" oninput="calculateValue()">
+            
+            <hr style="border-color: #7D716A; opacity: 0.3;">
+            
+            <span class="label" id="result-label-b">Cost Per Lb TDN</span>
+            <span class="result-value" id="result-b">$0.000</span>
+        </div>
+    </div>
+    
+    <div class="note" id="recommendation-text">
+        Enter details to see which hay provides cheaper nutrition.
+    </div>
+</div>
+
+<script>
+    const METRIC_SELECT = document.getElementById('metric-select');
+    
+    const PRICE_A = document.getElementById('price-a');
+    const QUAL_A = document.getElementById('quality-a');
+    const RES_A = document.getElementById('result-a');
+    const COL_A = document.getElementById('col-a');
+    
+    const PRICE_B = document.getElementById('price-b');
+    const QUAL_B = document.getElementById('quality-b');
+    const RES_B = document.getElementById('result-b');
+    const COL_B = document.getElementById('col-b');
+    
+    const REC_TEXT = document.getElementById('recommendation-text');
+    
+    // Label Elements
+    const LBL_METRIC_A = document.getElementById('metric-label-a');
+    const LBL_METRIC_B = document.getElementById('metric-label-b');
+    const LBL_RES_A = document.getElementById('result-label-a');
+    const LBL_RES_B = document.getElementById('result-label-b');
+
+    function calculateValue() {
+        const metric = METRIC_SELECT.value;
+        const pA = parseFloat(PRICE_A.value);
+        const qA = parseFloat(QUAL_A.value);
+        const pB = parseFloat(PRICE_B.value);
+        const qB = parseFloat(QUAL_B.value);
+
+        // Update Labels
+        let metricName = "TDN";
+        if (metric === 'cp') metricName = "Protein";
+        if (metric === 'rfv') metricName = "RFV Point";
+        
+        LBL_METRIC_A.textContent = metric === 'rfv' ? "RFV Score" : `${metricName} %`;
+        LBL_METRIC_B.textContent = metric === 'rfv' ? "RFV Score" : `${metricName} %`;
+        
+        const costLabel = metric === 'rfv' ? "Cost Per Point" : `Cost Per Lb ${metricName}`;
+        LBL_RES_A.textContent = costLabel;
+        LBL_RES_B.textContent = costLabel;
+
+        // Validation
+        if (isNaN(pA) || isNaN(qA) || isNaN(pB) || isNaN(qB) || pA <= 0 || pB <= 0 || qA <= 0 || qB <= 0) {
+            RES_A.textContent = "$0.00";
+            RES_B.textContent = "$0.00";
+            return;
+        }
+
+        // --- Calculations ---
+        
+        // Unit: 1 Ton = 2000 lbs
+        // Lbs of Nutrient per Ton = 2000 * (Percent / 100)
+        // RFV is an index, so we just treat it as "Units per Ton" directly for comparison logic
+        
+        let unitsA, unitsB;
+        
+        if (metric === 'rfv') {
+            // RFV Logic: Price / RFV Score (Cost per point of quality)
+            unitsA = qA;
+            unitsB = qB;
+        } else {
+            // Percentage Logic (TDN / Protein)
+            unitsA = 2000 * (qA / 100);
+            unitsB = 2000 * (qB / 100);
+        }
+        
+        const costPerUnitA = pA / unitsA;
+        const costPerUnitB = pB / unitsB;
+
+        // --- Output & Comparison ---
+        
+        RES_A.textContent = '$' + costPerUnitA.toFixed(4);
+        RES_B.textContent = '$' + costPerUnitB.toFixed(4);
+        
+        // Determine Winner (Lowest Cost per Unit)
+        COL_A.classList.remove('winner');
+        COL_B.classList.remove('winner');
+        
+        if (costPerUnitA < costPerUnitB) {
+            COL_A.classList.add('winner');
+            const savings = ((costPerUnitB - costPerUnitA) / costPerUnitB) * 100;
+            REC_TEXT.innerHTML = `<strong>Option A is the better value.</strong> It provides cheaper nutrition by <strong>${savings.toFixed(1)}%</strong>.`;
+        } else if (costPerUnitB < costPerUnitA) {
+            COL_B.classList.add('winner');
+            const savings = ((costPerUnitA - costPerUnitB) / costPerUnitA) * 100;
+            REC_TEXT.innerHTML = `<strong>Option B is the better value.</strong> It provides cheaper nutrition by <strong>${savings.toFixed(1)}%</strong>.`;
+        } else {
+            REC_TEXT.textContent = "Both options offer identical value per unit of nutrient.";
+        }
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculateValue();
+    };
+</script>
+</body>
+</html>

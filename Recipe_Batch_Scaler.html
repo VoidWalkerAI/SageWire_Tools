@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SageWire Tools | Recipe Scaler</title>
+    
+    <style>
+        /* --- SAGEWIRE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        
+        /* Header Styling */
+        .header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #5dade2;
+        }
+        .header-brand h1 { 
+            color: #B85C38; /* Rust Accent */
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .header-brand p {
+            color: #aeb6bf;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        h2 { 
+            color: #5dade2; 
+            text-align: center; 
+            margin-bottom: 20px; 
+            font-size: 1.4em;
+        }
+
+        /* Input Grids */
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #7D716A; /* Aged Bronze */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 18px;
+            text-align: center;
+        }
+        
+        /* Highlight the main converter input */
+        #ingredient-amount {
+            border-color: #5dade2;
+            background-color: #1a1e2b;
+        }
+
+        /* Output Styling */
+        .output-box {
+            margin-top: 20px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 3em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .output-box .label {
+            font-size: 1em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .conversion-factor {
+            text-align: center;
+            color: #f39c12;
+            font-weight: bold;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-brand">
+        <h1>SageWire Tools</h1>
+        <p>We tend the fire while you're out living life.</p>
+    </div>
+    
+    <h2>🍳 Universal Recipe Scaler</h2>
+    <p style="text-align:center; color:#ccc;">Scale any recipe up for a crowd or down for two.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="original-yield">Original Servings</label>
+            <input type="number" id="original-yield" value="4" min="1" oninput="calculateScale()">
+        </div>
+        <div>
+            <label for="desired-yield">Desired Servings</label>
+            <input type="number" id="desired-yield" value="2" min="0.1" step="0.5" oninput="calculateScale()">
+        </div>
+    </div>
+
+    <div class="conversion-factor" id="factor-display">Scaling Factor: 0.5x</div>
+
+    <hr style="border-color: #7D716A; opacity: 0.5; margin: 20px 0;">
+
+    <label for="ingredient-amount" style="text-align:center; color:#5dade2; font-size:1.2em;">Enter Ingredient Amount</label>
+    <input type="number" id="ingredient-amount" placeholder="e.g. 2.5 (cups/tsp/lbs)" oninput="calculateNewAmount()">
+    
+    <div class="output-box">
+        <h3>New Amount Needed</h3>
+        <span class="value" id="new-amount-output">0</span>
+        <span class="label">Unit (Same as input)</span>
+    </div>
+    
+    <div class="note">
+        <strong>Tip:</strong> Set your servings at the top once. Then, just type in each ingredient number from your recipe book to instantly see the new amount.
+    </div>
+</div>
+
+<script>
+    const ORIGINAL_YIELD = document.getElementById('original-yield');
+    const DESIRED_YIELD = document.getElementById('desired-yield');
+    const FACTOR_DISPLAY = document.getElementById('factor-display');
+    
+    const INGREDIENT_INPUT = document.getElementById('ingredient-amount');
+    const NEW_AMOUNT_OUTPUT = document.getElementById('new-amount-output');
+
+    let currentFactor = 1;
+
+    function calculateScale() {
+        const orig = parseFloat(ORIGINAL_YIELD.value);
+        const desired = parseFloat(DESIRED_YIELD.value);
+
+        if (isNaN(orig) || isNaN(desired) || orig <= 0 || desired <= 0) {
+            FACTOR_DISPLAY.textContent = "Invalid Ratio";
+            currentFactor = 0;
+            return;
+        }
+
+        // Calculate the ratio (New / Old)
+        currentFactor = desired / orig;
+        
+        // Display factor (e.g., 0.5x or 2.0x)
+        FACTOR_DISPLAY.textContent = `Scaling Factor: ${currentFactor.toFixed(2)}x`;
+        
+        // Automatically update the bottom calculator if there is a number there
+        if (INGREDIENT_INPUT.value) {
+            calculateNewAmount();
+        }
+    }
+
+    function calculateNewAmount() {
+        const amount = parseFloat(INGREDIENT_INPUT.value);
+
+        if (isNaN(amount) || currentFactor === 0) {
+            NEW_AMOUNT_OUTPUT.textContent = "0";
+            return;
+        }
+
+        const newAmount = amount * currentFactor;
+
+        // Smart formatting: 
+        // If it's a whole number, show no decimals. 
+        // If it's small, show 2 decimals.
+        // If it's really specific, show up to 3.
+        
+        let displayAmount;
+        if (Number.isInteger(newAmount)) {
+            displayAmount = newAmount;
+        } else {
+            displayAmount = parseFloat(newAmount.toFixed(2));
+        }
+
+        NEW_AMOUNT_OUTPUT.textContent = displayAmount;
+    }
+
+    // Initialize on load
+    window.onload = function() {
+        calculateScale();
+    };
+</script>
+</body>
+</html>

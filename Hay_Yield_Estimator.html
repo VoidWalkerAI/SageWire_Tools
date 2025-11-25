@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Hay Yield Estimator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .total-box {
+            grid-column: 1 / span 2;
+            background-color: #1e2b24;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌾 HerdMate | Hay Yield Est.</h1>
+    <p>Estimate standing crop yield using the Sample Frame method before you cut.</p>
+
+    <h3 class="section-title">1. Sample Measurement</h3>
+    <div class="input-grid">
+        <div>
+            <label for="frame-size">Sample Frame Size (Sq. Ft)</label>
+            <select id="frame-size" onchange="calculateYield()">
+                <option value="1">1x1 Ft Square (1 sq ft)</option>
+                <option value="4" selected>2x2 Ft Square (4 sq ft)</option>
+                <option value="9">3x3 Ft Square (9 sq ft)</option>
+                <option value="2.5">Hoop (Standard hula-hoop)</option>
+            </select>
+        </div>
+        <div>
+            <label for="sample-weight">Sample Weight (Ounces)</label>
+            <input type="number" id="sample-weight" value="16" min="1" oninput="calculateYield()">
+        </div>
+    </div>
+
+    <label for="dry-matter">Forage Moisture Condition</label>
+    <select id="dry-matter" onchange="calculateYield()">
+        <option value="0.25" selected>Fresh/Green Standing (Approx 25% DM)</option>
+        <option value="0.40">Wilted (40% DM)</option>
+        <option value="0.60">Dry Standing/Dormant (60% DM)</option>
+        <option value="0.85">Cured/Baled Equivalent (85% DM)</option>
+    </select>
+
+    <h3 class="section-title">2. Field Totals</h3>
+    <div class="input-grid">
+        <div>
+            <label for="acres-input">Field Size (Acres)</label>
+            <input type="number" id="acres-input" value="20" min="1" oninput="calculateYield()">
+        </div>
+        <div>
+            <label for="bale-weight">Target Bale Weight (Lbs)</label>
+            <input type="number" id="bale-weight" value="1200" min="40" oninput="calculateYield()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Yield Per Acre</h3>
+            <span class="value" id="yield-per-acre">0.0 Tons</span>
+            <span class="label">Estimated Hay Equivalent</span>
+        </div>
+        <div class="output-box">
+            <h3>Total Tonnage</h3>
+            <span class="value" id="total-tons">0 Tons</span>
+            <span class="label">Entire Field</span>
+        </div>
+        
+        <div class="output-box total">
+            <h3>Projected Bale Count</h3>
+            <span class="value" id="bale-count">0 Bales</span>
+            <span class="label">At Target Weight</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Method:</strong> Cut all forage inside your frame to the intended harvest height (e.g., 3 inches). Weigh the clippings in ounces (use a kitchen scale). The calculator converts this fresh weight into "Hay Equivalent" (15% moisture).
+    </div>
+</div>
+
+<script>
+    const FRAME_SIZE = document.getElementById('frame-size');
+    const SAMPLE_WEIGHT = document.getElementById('sample-weight');
+    const DRY_MATTER = document.getElementById('dry-matter');
+    const ACRES = document.getElementById('acres-input');
+    const BALE_WT = document.getElementById('bale-weight');
+    
+    const YIELD_OUT = document.getElementById('yield-per-acre');
+    const TOTAL_OUT = document.getElementById('total-tons');
+    const BALES_OUT = document.getElementById('bale-count');
+
+    // Constants
+    const SQ_FT_PER_ACRE = 43560;
+    const OZ_PER_LB = 16;
+    const LBS_PER_TON = 2000;
+    const STANDARD_HAY_DM = 0.85; // We convert everything to 85% Dry Matter (Standard Hay)
+
+    function calculateYield() {
+        const frameSqFt = parseFloat(FRAME_SIZE.value);
+        const sampleOz = parseFloat(SAMPLE_WEIGHT.value);
+        const sampleDM = parseFloat(DRY_MATTER.value); // Current % Dry Matter of sample
+        const acres = parseFloat(ACRES.value);
+        const baleLbs = parseFloat(BALE_WT.value);
+
+        // Validation
+        if (isNaN(sampleOz) || isNaN(acres) || isNaN(baleLbs) || sampleOz <= 0 || acres <= 0 || baleLbs <= 0) {
+            YIELD_OUT.textContent = '0.0 Tons';
+            TOTAL_OUT.textContent = '0 Tons';
+            BALES_OUT.textContent = '0 Bales';
+            return;
+        }
+
+        // 1. Convert Sample to Lbs per Sq Ft (Fresh Weight)
+        const sampleLbs = sampleOz / OZ_PER_LB;
+        const lbsPerSqFt_Fresh = sampleLbs / frameSqFt;
+
+        // 2. Convert Fresh Weight to Dry Matter (DM)
+        const lbsPerSqFt_DM = lbsPerSqFt_Fresh * sampleDM;
+
+        // 3. Convert to Hay Equivalent (15% Moisture / 85% DM)
+        // If we have 0.2 lbs of pure DM, and hay is 85% DM, then Hay Weight = DM / 0.85
+        const lbsPerSqFt_Hay = lbsPerSqFt_DM / STANDARD_HAY_DM;
+
+        // 4. Scale to Acre
+        const lbsPerAcre = lbsPerSqFt_Hay * SQ_FT_PER_ACRE;
+        const tonsPerAcre = lbsPerAcre / LBS_PER_TON;
+
+        // 5. Field Totals
+        const totalFieldTons = tonsPerAcre * acres;
+        const totalFieldLbs = totalFieldTons * LBS_PER_TON;
+        const totalBales = totalFieldLbs / baleLbs;
+
+        // --- Output Results ---
+        
+        YIELD_OUT.textContent = tonsPerAcre.toFixed(2) + " Tons";
+        TOTAL_OUT.textContent = Math.round(totalFieldTons).toLocaleString() + " Tons";
+        BALES_OUT.textContent = Math.floor(totalBales).toLocaleString() + " Bales";
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculateYield();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pulley Speed & Torque Converter</title>
+    <style>
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 20px; background-color: #f0f8ff; }
+        .calculator { max-width: 550px; margin: 0 auto; padding: 25px; background-color: #ffffff; border-radius: 15px; box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1); }
+        h2 { text-align: center; color: #ff9900; border-bottom: 3px solid #ff9900; padding-bottom: 10px; margin-bottom: 30px; }
+        .input-group { margin-bottom: 18px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #333; }
+        input[type="number"] { width: 95%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 1.05em; }
+        button { width: 100%; padding: 15px; margin-top: 25px; background-color: #00bcd4; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 1.1em; font-weight: bold; transition: background-color 0.3s; }
+        button:hover { background-color: #0097a7; }
+        .result-section { margin-top: 35px; padding: 20px; border: 2px dashed #00bcd4; border-radius: 10px; background-color: #e0f7fa; }
+        .result-section h3 { margin-top: 0; color: #00796b; }
+        .output-value { font-size: 1.3em; margin: 10px 0; font-weight: 600; }
+        .output-value strong { color: #d32f2f; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>⚙️ Pulley Speed & Torque Converter</h2>
+        <p>Calculates output speed and torque using the principle of constant power transmission.</p>
+
+        <h3>Driver (Input) Pulley</h3>
+        <div class="input-group">
+            <label for="d1">Driver Diameter ($D_1$, inches/mm):</label>
+            <input type="number" id="d1" value="4" placeholder="e.g., 4.0">
+        </div>
+        <div class="input-group">
+            <label for="n1">Driver Speed ($N_1$, RPM):</label>
+            <input type="number" id="n1" value="1750" placeholder="e.g., 1750">
+        </div>
+        <div class="input-group">
+            <label for="t1">Driver Torque ($\tau_1$, lb·ft/N·m):</label>
+            <input type="number" id="t1" value="20" placeholder="e.g., 20.0">
+        </div>
+        
+        <h3>Driven (Output) Pulley</h3>
+        <div class="input-group">
+            <label for="d2">Driven Diameter ($D_2$, inches/mm):</label>
+            <input type="number" id="d2" value="10" placeholder="e.g., 10.0">
+        </div>
+
+        <button onclick="calculatePulleyOutput()">Calculate Output Speed & Torque</button>
+
+        <div class="result-section">
+            <h3>Calculated Output</h3>
+            <div class="output-value">
+                Output Speed ($N_2$): <strong id="outputSpeed">-- RPM</strong>
+            </div>
+            <div class="output-value">
+                Output Torque ($\tau_2$): <strong id="outputTorque">-- Unit·Unit</strong>
+            </div>
+            <p style="font-size: 0.9em; margin-top: 15px;">Note: Calculations assume 100% efficiency.</p>
+        </div>
+    </div>
+
+    <script>
+        function calculatePulleyOutput() {
+            const D1 = parseFloat(document.getElementById('d1').value);
+            const N1 = parseFloat(document.getElementById('n1').value);
+            const T1 = parseFloat(document.getElementById('t1').value);
+            const D2 = parseFloat(document.getElementById('d2').value);
+
+            if (isNaN(D1) || isNaN(N1) || isNaN(T1) || isNaN(D2) || D1 <= 0 || D2 <= 0) {
+                alert('Please enter valid, non-zero values for all dimensions.');
+                return;
+            }
+
+            // Core Formula 1: Output Speed (N2 = N1 * D1 / D2)
+            const N2 = N1 * (D1 / D2);
+
+            // Core Formula 2: Output Torque (T2 = T1 * D2 / D1)
+            const T2 = T1 * (D2 / D1);
+
+            document.getElementById('outputSpeed').textContent = `${N2.toFixed(2)} RPM`;
+            document.getElementById('outputTorque').textContent = `${T2.toFixed(2)}`;
+
+            // Dynamically adjust torque unit placeholder (simple logic)
+            const t1Label = document.querySelector('label[for="t1"]').textContent;
+            if (t1Label.includes('lb·ft')) {
+                document.getElementById('outputTorque').textContent += ' lb·ft';
+            } else if (t1Label.includes('N·m')) {
+                document.getElementById('outputTorque').textContent += ' N·m';
+            } else {
+                 document.getElementById('outputTorque').textContent += ' Unit·Unit';
+            }
+        }
+    </script>
+</body>
+</html>

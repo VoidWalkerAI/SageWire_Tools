@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Dry Off Calculator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+            font-family: inherit;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5dade2; /* Default Blue Border */
+            background-color: #34343d;
+        }
+
+        .output-box.primary {
+            border-color: #5A946E; /* Forage Green for Main Action */
+            background-color: #26392e;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; /* Rust Accent */
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #f4f6f7;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .output-box.primary .value {
+            color: #5A946E;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🗓️ HerdMate | Dry Off Planner</h1>
+    <p>Calculate critical management dates to ensure optimal rest and transition before calving.</p>
+
+    <label for="breeding-date-input">Select Breeding Date</label>
+    <input type="date" id="breeding-date-input" onchange="calculateDates()">
+
+    <div class="output-grid">
+        <div class="output-box primary">
+            <h3>Dry Off Date (60 Days Pre-Calving)</h3>
+            <span class="value" id="dry-off-output">--/--/----</span>
+            <span class="label">Stop Milking / Start Dry Period</span>
+        </div>
+
+        <div class="output-box">
+            <h3>Steam Up Date (21 Days Pre-Calving)</h3>
+            <span class="value" id="steam-up-output">--/--/----</span>
+            <span class="label">Begin Transition Ration</span>
+        </div>
+
+        <div class="output-box" style="border-color: #7D716A;">
+            <h3>Expected Due Date</h3>
+            <span class="value" id="due-date-output">--/--/----</span>
+            <span class="label">Based on 283 Day Gestation</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Tip:</strong> The "Dry Period" allows the udder tissue to regenerate. Shortening this period below 45 days can significantly reduce milk yield in the next lactation.
+    </div>
+</div>
+
+<script>
+    const BREEDING_INPUT = document.getElementById('breeding-date-input');
+    const DRY_OFF_OUTPUT = document.getElementById('dry-off-output');
+    const STEAM_UP_OUTPUT = document.getElementById('steam-up-output');
+    const DUE_DATE_OUTPUT = document.getElementById('due-date-output');
+
+    // Standard Gestation for Holsteins/Generic Dairy
+    const GESTATION_DAYS = 283; 
+    const DRY_PERIOD_DAYS = 60;
+    const STEAM_UP_DAYS = 21;
+
+    function calculateDates() {
+        const inputDate = BREEDING_INPUT.value;
+        
+        if (!inputDate) return; // Do nothing if empty
+
+        // Create Date object from input (ensure timezone safety by appending time)
+        const breedingDate = new Date(inputDate + 'T12:00:00');
+
+        // 1. Calculate Due Date (Breeding + 283)
+        const dueDate = new Date(breedingDate);
+        dueDate.setDate(breedingDate.getDate() + GESTATION_DAYS);
+
+        // 2. Calculate Dry Off Date (Due Date - 60)
+        const dryOffDate = new Date(dueDate);
+        dryOffDate.setDate(dueDate.getDate() - DRY_PERIOD_DAYS);
+
+        // 3. Calculate Steam Up Date (Due Date - 21)
+        const steamUpDate = new Date(dueDate);
+        steamUpDate.setDate(dueDate.getDate() - STEAM_UP_DAYS);
+
+        // --- Output Formatted Dates ---
+        
+        const options = { year: 'numeric', month: 'long', day: 'numeric' };
+
+        DRY_OFF_OUTPUT.textContent = dryOffDate.toLocaleDateString('en-US', options);
+        STEAM_UP_OUTPUT.textContent = steamUpDate.toLocaleDateString('en-US', options);
+        DUE_DATE_OUTPUT.textContent = dueDate.toLocaleDateString('en-US', options);
+    }
+
+    // Initialize with today's date minus roughly 7 months to show a realistic upcoming dry off
+    window.onload = function() {
+        const today = new Date();
+        today.setMonth(today.getMonth() - 7); // Go back ~7 months
+        
+        // Format as YYYY-MM-DD for the input value
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        
+        BREEDING_INPUT.value = `${year}-${month}-${day}`;
+        
+        calculateDates();
+    };
+</script>
+</body>
+</html>

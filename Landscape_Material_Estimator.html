@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SageWire Tools | Board Feet Calculator</title>
+    <title>SageWire Tools | Landscape Estimator</title>
     
     <style>
         /* --- SAGEWIRE BRANDING CSS --- */
@@ -52,6 +52,7 @@
         }
 
         label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
         input[type="number"] {
             width: 100%;
             padding: 12px;
@@ -63,13 +64,25 @@
             text-align: center;
         }
 
-        .output-box {
+        /* Output Styling */
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
             margin-top: 30px;
+        }
+
+        .output-box {
             padding: 20px;
             border-radius: 8px;
             text-align: center;
             border: 2px solid #5A946E; /* Forage Green Border */
             background-color: #34343d;
+        }
+        
+        .output-box.primary {
+            grid-column: 1 / span 2;
+            background-color: #1e2b24;
         }
 
         .output-box h3 {
@@ -110,94 +123,93 @@
         <p>We tend the fire while you're out living life.</p>
     </div>
     
-    <h2>🪵 Board Feet & Cost Calculator</h2>
-    <p style="text-align:center; color:#ccc;">Calculate total board footage and estimated material cost for lumber orders.</p>
+    <h2>🌿 Landscape Material Estimator</h2>
+    <p style="text-align:center; color:#ccc;">Calculate bulk material needs for mulch, gravel, sand, or topsoil.</p>
 
-    <div class="input-grid">
-        <div>
-            <label>Thickness (Inches)</label>
-            <input type="number" id="thickness-input" value="1" min="0.25" step="0.25" oninput="calculateBoardFeet()">
-        </div>
-        <div>
-            <label>Width (Inches)</label>
-            <input type="number" id="width-input" value="6" min="1" oninput="calculateBoardFeet()">
-        </div>
-    </div>
-    
     <div class="input-grid">
         <div>
             <label>Length (Feet)</label>
-            <input type="number" id="length-input" value="8" min="1" oninput="calculateBoardFeet()">
+            <input type="number" id="length-input" value="20" min="1" oninput="calculateMaterial()">
         </div>
         <div>
-            <label>Quantity (Boards)</label>
-            <input type="number" id="quantity-input" value="10" min="1" oninput="calculateBoardFeet()">
+            <label>Width (Feet)</label>
+            <input type="number" id="width-input" value="10" min="1" oninput="calculateMaterial()">
         </div>
     </div>
+    
+    <label>Desired Depth (Inches)</label>
+    <input type="number" id="depth-input" value="3" min="0.5" step="0.5" placeholder="e.g. 3" oninput="calculateMaterial()">
 
-    <label>Price Per Board Foot ($)</label>
-    <input type="number" id="price-input" value="3.50" min="0" step="0.10" placeholder="e.g. 3.50" oninput="calculateBoardFeet()">
-
-    <div class="output-box">
-        <h3>Total Estimate</h3>
-        <span class="value" id="total-cost-output">$0.00</span>
-        <span class="label" id="total-bf-output">0.0 Board Feet</span>
+    <div class="output-grid">
+        <div class="output-box primary">
+            <h3>Bulk Volume Needed</h3>
+            <span class="value" id="yards-output">0.0 Yards</span>
+            <span class="label">Cubic Yards (cu yd)</span>
+        </div>
+        
+        <div class="output-box">
+            <h3>Bag Count (2 cu ft)</h3>
+            <span class="value" id="bags-2-output">0</span>
+            <span class="label">Standard Bags</span>
+        </div>
+        <div class="output-box">
+            <h3>Bag Count (3 cu ft)</h3>
+            <span class="value" id="bags-3-output">0</span>
+            <span class="label">Large Bags</span>
+        </div>
     </div>
     
     <div class="note">
-        <strong>Note:</strong> A "Board Foot" is a volume measurement equal to 144 cubic inches (12" x 12" x 1").
+        <strong>Tip:</strong> 1 Cubic Yard = 27 Cubic Feet. Most pickup trucks can hold 1-2 yards of mulch or 0.5-1 yard of gravel/soil safely.
     </div>
 </div>
 
 <script>
-    const THICKNESS_INPUT = document.getElementById('thickness-input');
-    const WIDTH_INPUT = document.getElementById('width-input');
     const LENGTH_INPUT = document.getElementById('length-input');
-    const QUANTITY_INPUT = document.getElementById('quantity-input');
-    const PRICE_INPUT = document.getElementById('price-input');
+    const WIDTH_INPUT = document.getElementById('width-input');
+    const DEPTH_INPUT = document.getElementById('depth-input');
     
-    const TOTAL_COST_OUTPUT = document.getElementById('total-cost-output');
-    const TOTAL_BF_OUTPUT = document.getElementById('total-bf-output');
+    const YARDS_OUTPUT = document.getElementById('yards-output');
+    const BAGS_2_OUTPUT = document.getElementById('bags-2-output');
+    const BAGS_3_OUTPUT = document.getElementById('bags-3-output');
 
-    const formatCurrency = (value) => '$' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-
-    function calculateBoardFeet() {
-        const thickness = parseFloat(THICKNESS_INPUT.value);
-        const width = parseFloat(WIDTH_INPUT.value);
+    function calculateMaterial() {
         const length = parseFloat(LENGTH_INPUT.value);
-        const quantity = parseInt(QUANTITY_INPUT.value);
-        const price = parseFloat(PRICE_INPUT.value);
+        const width = parseFloat(WIDTH_INPUT.value);
+        const depthInches = parseFloat(DEPTH_INPUT.value);
 
         // Validation
-        if (isNaN(thickness) || isNaN(width) || isNaN(length) || isNaN(quantity) || 
-            thickness <= 0 || width <= 0 || length <= 0 || quantity <= 0) {
-            TOTAL_COST_OUTPUT.textContent = '$0.00';
-            TOTAL_BF_OUTPUT.textContent = '0.0 Board Feet';
+        if (isNaN(length) || isNaN(width) || isNaN(depthInches) || length <= 0 || width <= 0 || depthInches <= 0) {
+            YARDS_OUTPUT.textContent = '0.0 Yards';
+            BAGS_2_OUTPUT.textContent = '0';
+            BAGS_3_OUTPUT.textContent = '0';
             return;
         }
 
-        // --- 1. Calculate Board Feet per Board ---
-        // Formula: (T_in * W_in * L_ft) / 12
-        const bfPerBoard = (thickness * width * length) / 12;
-        
-        // --- 2. Calculate Total Board Feet ---
-        const totalBF = bfPerBoard * quantity;
-        
-        // --- 3. Calculate Cost ---
-        let totalCost = 0;
-        if (!isNaN(price) && price >= 0) {
-            totalCost = totalBF * price;
-        }
+        // 1. Convert Depth to Feet
+        const depthFeet = depthInches / 12;
+
+        // 2. Calculate Cubic Feet
+        const cubicFeet = length * width * depthFeet;
+
+        // 3. Calculate Cubic Yards
+        // 1 Yard = 27 Cubic Feet
+        const cubicYards = cubicFeet / 27;
+
+        // 4. Calculate Bags
+        const bags2 = Math.ceil(cubicFeet / 2);
+        const bags3 = Math.ceil(cubicFeet / 3);
 
         // --- Output Results ---
         
-        TOTAL_BF_OUTPUT.textContent = totalBF.toFixed(2) + " Board Feet";
-        TOTAL_COST_OUTPUT.textContent = formatCurrency(totalCost);
+        YARDS_OUTPUT.textContent = cubicYards.toFixed(2) + " Yards";
+        BAGS_2_OUTPUT.textContent = bags2;
+        BAGS_3_OUTPUT.textContent = bags3;
     }
 
     // Run calculation on initial page load
     window.onload = function() {
-        calculateBoardFeet();
+        calculateMaterial();
     };
 </script>
 </body>

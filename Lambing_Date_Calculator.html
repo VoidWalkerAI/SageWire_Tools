@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Lambing Date Calc</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="date"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+            font-family: inherit;
+            margin-bottom: 20px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5dade2; 
+            background-color: #34343d;
+        }
+
+        .output-box.primary {
+            border-color: #5A946E; /* Forage Green */
+            background-color: #1e2b24;
+        }
+        
+        .output-box.warning {
+            border-color: #f39c12; /* Orange for Watch Date */
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #f4f6f7;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .output-box.primary .value { color: #5A946E; }
+        .output-box.warning .value { color: #f39c12; }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .days-remaining {
+            margin-top: 5px;
+            font-weight: bold;
+            color: #ccc;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🐑 HerdMate | Lambing Calc</h1>
+    <p>Calculate expected lambing dates based on Ram turnout or exposure date.</p>
+
+    <label for="breeding-date">Ram Turnout / Breeding Date</label>
+    <input type="date" id="breeding-date" onchange="calculateLambing()">
+
+    <div class="output-grid">
+        <div class="output-box primary">
+            <h3>Expected Lambing Date</h3>
+            <span class="value" id="lambing-date-output">--/--/----</span>
+            <span class="label">Day 147 (Standard Gestation)</span>
+            <div class="days-remaining" id="days-left-output"></div>
+        </div>
+
+        <div class="output-box warning">
+            <h3>Start Watch / Move to Barn</h3>
+            <span class="value" id="watch-date-output">--/--/----</span>
+            <span class="label">Day 142 (5 Days Prior)</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Note:</strong> Sheep gestation averages <strong>147 days</strong>, but can range from 142 to 152 days depending on the breed (e.g., Finnsheep often lamb earlier).
+    </div>
+</div>
+
+<script>
+    const BREEDING_INPUT = document.getElementById('breeding-date');
+    const LAMBING_OUTPUT = document.getElementById('lambing-date-output');
+    const WATCH_OUTPUT = document.getElementById('watch-date-output');
+    const DAYS_LEFT_OUTPUT = document.getElementById('days-left-output');
+
+    const GESTATION_DAYS = 147;
+    const WATCH_DAYS_PRIOR = 5; // Start watching 5 days before due date
+
+    function calculateLambing() {
+        const inputDate = BREEDING_INPUT.value;
+        
+        if (!inputDate) return;
+
+        // Create Date object (T12:00:00 prevents timezone offset errors)
+        const breedingDate = new Date(inputDate + 'T12:00:00');
+
+        // 1. Calculate Lambing Date (Day 147)
+        const lambingDate = new Date(breedingDate);
+        lambingDate.setDate(breedingDate.getDate() + GESTATION_DAYS);
+
+        // 2. Calculate Watch Date (Day 142)
+        const watchDate = new Date(lambingDate);
+        watchDate.setDate(lambingDate.getDate() - WATCH_DAYS_PRIOR);
+        
+        // 3. Calculate Days Remaining
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        
+        const diffTime = lambingDate - today;
+        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+        // --- Output Formatted Dates ---
+        
+        const options = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+
+        LAMBING_OUTPUT.textContent = lambingDate.toLocaleDateString('en-US', options);
+        WATCH_OUTPUT.textContent = watchDate.toLocaleDateString('en-US', options);
+        
+        // Status Text
+        if (diffDays > 0) {
+            DAYS_LEFT_OUTPUT.textContent = `(${diffDays} Days Remaining)`;
+            DAYS_LEFT_OUTPUT.style.color = '#f4f6f7';
+        } else if (diffDays === 0) {
+            DAYS_LEFT_OUTPUT.textContent = "(DUE TODAY!)";
+            DAYS_LEFT_OUTPUT.style.color = '#E74C3C';
+        } else {
+            DAYS_LEFT_OUTPUT.textContent = `(Overdue by ${Math.abs(diffDays)} Days)`;
+            DAYS_LEFT_OUTPUT.style.color = '#E74C3C';
+        }
+    }
+
+    // Initialize
+    window.onload = function() {
+        // Set default date to today
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, '0');
+        const day = String(today.getDate()).padStart(2, '0');
+        BREEDING_INPUT.value = `${year}-${month}-${day}`;
+        
+        calculateLambing();
+    };
+</script>
+</body>
+</html>

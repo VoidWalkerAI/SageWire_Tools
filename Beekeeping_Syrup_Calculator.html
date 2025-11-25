@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Bee Syrup Calculator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #f39c12; /* Yellow/Gold for Bees */
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🐝 HerdMate | Syrup Mixer</h1>
+    <p>Calculate the exact Sugar and Water needed to make a specific volume of feed.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="target-volume">Target Volume (Gallons)</label>
+            <input type="number" id="target-volume" value="5" min="1" step="0.5" oninput="calculateSyrup()">
+        </div>
+        <div>
+            <label for="ratio-select">Mix Ratio (Sugar:Water)</label>
+            <select id="ratio-select" onchange="calculateSyrup()">
+                <option value="1">1:1 (Spring / Stimulation)</option>
+                <option value="2">2:1 (Fall / Winter Prep)</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Sugar Needed</h3>
+            <span class="value" id="sugar-output">0 Lbs</span>
+            <span class="label">White Granulated Sugar</span>
+        </div>
+        <div class="output-box">
+            <h3>Water Needed</h3>
+            <span class="value" id="water-output">0 Gal</span>
+            <span class="label">Hot Water</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Safety Tip:</strong> Never feed brown sugar, molasses, or store-bought honey. Use only white sugar to prevent dysentery and disease.
+    </div>
+</div>
+
+<script>
+    const VOLUME_INPUT = document.getElementById('target-volume');
+    const RATIO_SELECT = document.getElementById('ratio-select');
+    
+    const SUGAR_OUTPUT = document.getElementById('sugar-output');
+    const WATER_OUTPUT = document.getElementById('water-output');
+
+    // Density Constants (Approximate)
+    // 1:1 Syrup -> 1 gallon water (8.34 lbs) + 8.34 lbs sugar = ~1.6 Gallons Syrup
+    // 2:1 Syrup -> 1 gallon water (8.34 lbs) + 16.68 lbs sugar = ~2.2 Gallons Syrup
+    
+    const YIELD_FACTOR_1_1 = 1.6;
+    const YIELD_FACTOR_2_1 = 2.2;
+    
+    const LBS_SUGAR_PER_GAL_WATER_1_1 = 8.34;
+    const LBS_SUGAR_PER_GAL_WATER_2_1 = 16.68;
+
+    function calculateSyrup() {
+        const targetGal = parseFloat(VOLUME_INPUT.value);
+        const ratio = parseInt(RATIO_SELECT.value);
+
+        // Validation
+        if (isNaN(targetGal) || targetGal <= 0) {
+            SUGAR_OUTPUT.textContent = '0 Lbs';
+            WATER_OUTPUT.textContent = '0 Gal';
+            return;
+        }
+
+        let waterNeeded = 0;
+        let sugarNeeded = 0;
+
+        if (ratio === 1) {
+            // 1:1 Ratio Logic
+            // Target / Yield Factor = Gallons of Water needed
+            waterNeeded = targetGal / YIELD_FACTOR_1_1;
+            sugarNeeded = waterNeeded * LBS_SUGAR_PER_GAL_WATER_1_1;
+        } else {
+            // 2:1 Ratio Logic
+            waterNeeded = targetGal / YIELD_FACTOR_2_1;
+            sugarNeeded = waterNeeded * LBS_SUGAR_PER_GAL_WATER_2_1;
+        }
+
+        // --- Output Results ---
+        
+        SUGAR_OUTPUT.textContent = Math.round(sugarNeeded) + " Lbs";
+        WATER_OUTPUT.textContent = waterNeeded.toFixed(2) + " Gal";
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateSyrup();
+    };
+</script>
+</body>
+</html>

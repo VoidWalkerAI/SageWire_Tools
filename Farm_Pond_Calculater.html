@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Pond Volume Calc</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box.primary {
+            grid-column: 1 / span 2;
+            background-color: #1e2b24;
+            border-color: #5dade2; /* Water Blue */
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+        
+        .output-box.primary .value { color: #5dade2; }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+        
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌊 HerdMate | Pond Volume</h1>
+    <p>Calculate total water capacity in Gallons and Acre-Feet for irrigation or livestock reserves.</p>
+
+    <label for="shape-select">Pond Shape</label>
+    <select id="shape-select" onchange="toggleInputs()">
+        <option value="rect">Rectangular / Square (Excavated)</option>
+        <option value="round">Circular (Round)</option>
+    </select>
+
+    <div id="rect-inputs" class="input-grid" style="margin-top: 15px;">
+        <div>
+            <label>Surface Length (Feet)</label>
+            <input type="number" id="length-input" value="100" min="1" oninput="calculatePond()">
+        </div>
+        <div>
+            <label>Surface Width (Feet)</label>
+            <input type="number" id="width-input" value="50" min="1" oninput="calculatePond()">
+        </div>
+    </div>
+
+    <div id="round-inputs" class="hidden" style="margin-top: 15px;">
+        <label>Diameter (Feet)</label>
+        <input type="number" id="diameter-input" value="80" min="1" oninput="calculatePond()">
+    </div>
+
+    <label style="margin-top: 15px;">Average Depth (Feet)</label>
+    <input type="number" id="depth-input" value="6" min="1" oninput="calculatePond()">
+
+    <div class="output-grid">
+        <div class="output-box primary">
+            <h3>Total Capacity</h3>
+            <span class="value" id="gallons-output">0 Gal</span>
+            <span class="label">US Gallons</span>
+        </div>
+        
+        <div class="output-box">
+            <h3>Acre-Feet</h3>
+            <span class="value" id="acre-feet-output">0.00</span>
+            <span class="label">Irrigation Units</span>
+        </div>
+        <div class="output-box">
+            <h3>Cubic Volume</h3>
+            <span class="value" id="cubic-ft-output">0 ft³</span>
+            <span class="label">Cubic Feet</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Tip:</strong> For a typical tapered pond (sloping sides), the <strong>Average Depth</strong> is roughly <strong>40%</strong> of the maximum deep-point depth.
+    </div>
+</div>
+
+<script>
+    const SHAPE_SELECT = document.getElementById('shape-select');
+    const LENGTH_INPUT = document.getElementById('length-input');
+    const WIDTH_INPUT = document.getElementById('width-input');
+    const DIAMETER_INPUT = document.getElementById('diameter-input');
+    const DEPTH_INPUT = document.getElementById('depth-input');
+    
+    const RECT_INPUTS = document.getElementById('rect-inputs');
+    const ROUND_INPUTS = document.getElementById('round-inputs');
+    
+    const GALLONS_OUTPUT = document.getElementById('gallons-output');
+    const ACRE_FEET_OUTPUT = document.getElementById('acre-feet-output');
+    const CUBIC_FT_OUTPUT = document.getElementById('cubic-ft-output');
+
+    function toggleInputs() {
+        if (SHAPE_SELECT.value === 'rect') {
+            RECT_INPUTS.classList.remove('hidden');
+            ROUND_INPUTS.classList.add('hidden');
+        } else {
+            RECT_INPUTS.classList.add('hidden');
+            ROUND_INPUTS.classList.remove('hidden');
+        }
+        calculatePond();
+    }
+
+    function calculatePond() {
+        const shape = SHAPE_SELECT.value;
+        const depth = parseFloat(DEPTH_INPUT.value);
+        
+        if (isNaN(depth) || depth <= 0) {
+            resetOutputs();
+            return;
+        }
+
+        let volumeCuFt = 0;
+
+        if (shape === 'rect') {
+            const length = parseFloat(LENGTH_INPUT.value);
+            const width = parseFloat(WIDTH_INPUT.value);
+            
+            if (isNaN(length) || isNaN(width) || length <= 0 || width <= 0) {
+                resetOutputs();
+                return;
+            }
+            // Volume = L * W * D
+            volumeCuFt = length * width * depth;
+
+        } else {
+            const diameter = parseFloat(DIAMETER_INPUT.value);
+            
+            if (isNaN(diameter) || diameter <= 0) {
+                resetOutputs();
+                return;
+            }
+            // Volume = pi * r^2 * D
+            const radius = diameter / 2;
+            volumeCuFt = Math.PI * Math.pow(radius, 2) * depth;
+        }
+
+        // --- Conversions ---
+        // 1 Cubic Foot = 7.48 Gallons
+        const totalGallons = volumeCuFt * 7.48;
+        
+        // 1 Acre-Foot = 43,560 Cubic Feet
+        const acreFeet = volumeCuFt / 43560;
+
+        // --- Output Results ---
+        
+        GALLONS_OUTPUT.textContent = Math.round(totalGallons).toLocaleString() + " Gal";
+        ACRE_FEET_OUTPUT.textContent = acreFeet.toFixed(2) + " ac-ft";
+        CUBIC_FT_OUTPUT.textContent = Math.round(volumeCuFt).toLocaleString() + " ft³";
+    }
+    
+    function resetOutputs() {
+        GALLONS_OUTPUT.textContent = "0 Gal";
+        ACRE_FEET_OUTPUT.textContent = "0.00";
+        CUBIC_FT_OUTPUT.textContent = "0 ft³";
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculatePond();
+    };
+</script>
+</body>
+</html>

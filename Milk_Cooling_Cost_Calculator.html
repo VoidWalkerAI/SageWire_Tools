@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Milk Cooling Cost</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5dade2; /* Default Blue */
+            background-color: #34343d;
+        }
+
+        .output-box.total {
+            grid-column: 1 / span 2;
+            background-color: #1e2b24;
+            border-color: #B85C38;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5dade2; 
+            font-weight: bold;
+            display: block;
+        }
+        
+        .output-box.total .value { color: #B85C38; }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>❄️ HerdMate | Milk Cooling Cost</h1>
+    <p>Estimate the daily electricity cost to cool milk based on volume and pre-cooling efficiency.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="milk-volume">Daily Milk (Lbs)</label>
+            <input type="number" id="milk-volume" value="5000" min="100" step="100" oninput="calculateCooling()">
+        </div>
+        <div>
+            <label for="kwh-rate">Electric Rate ($/kWh)</label>
+            <input type="number" id="kwh-rate" value="0.12" min="0.01" step="0.01" oninput="calculateCooling()">
+        </div>
+    </div>
+
+    <label for="system-type">Cooling System / Inlet Temp</label>
+    <select id="system-type" onchange="calculateCooling()">
+        <option value="100">Direct Load (No Pre-Cooler) - 100°F</option>
+        <option value="75">Plate Cooler (Standard) - 75°F</option>
+        <option value="60">Plate Cooler (High Flow/Well Water) - 60°F</option>
+        <option value="50">Chiller / Glycol Assist - 50°F</option>
+    </select>
+    
+    <div style="margin-top: 15px;">
+        <label for="compressor-eff">Compressor Efficiency (EER)</label>
+        <input type="number" id="compressor-eff" value="10" min="5" max="20" step="0.5" oninput="calculateCooling()">
+        <div style="font-size:0.8em; color:#777; margin-top:3px;">Standard Reciprocating ~8-9, Scroll ~10-12, High Eff ~14+</div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Energy Used</h3>
+            <span class="value" id="kwh-output">0 kWh</span>
+            <span class="label">Daily Consumption</span>
+        </div>
+        <div class="output-box">
+            <h3>Cost Per CWT</h3>
+            <span class="value" id="cost-cwt-output">$0.00</span>
+            <span class="label">Per 100 Lbs Milk</span>
+        </div>
+        
+        <div class="output-box total">
+            <h3>Total Daily Cost</h3>
+            <span class="value" id="daily-cost-output">$0.00</span>
+            <span class="label">Cooling Expense</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Insight:</strong> Using a Plate Cooler to drop milk from 100°F to 75°F before it hits the tank removes <strong>40% of the cooling load</strong>, saving huge amounts of electricity.
+    </div>
+</div>
+
+<script>
+    const VOLUME_INPUT = document.getElementById('milk-volume');
+    const RATE_INPUT = document.getElementById('kwh-rate');
+    const SYSTEM_SELECT = document.getElementById('system-type');
+    const EFF_INPUT = document.getElementById('compressor-eff');
+    
+    const KWH_OUTPUT = document.getElementById('kwh-output');
+    const CWT_OUTPUT = document.getElementById('cost-cwt-output');
+    const DAILY_OUTPUT = document.getElementById('daily-cost-output');
+
+    // Constants
+    const SPECIFIC_HEAT_MILK = 0.93; // BTUs needed to cool 1 lb by 1 deg F
+    const TARGET_TEMP = 38; // Standard bulk tank storage temp
+
+    const formatCurrency = (value) => '$' + value.toFixed(2);
+
+    function calculateCooling() {
+        const lbs = parseFloat(VOLUME_INPUT.value);
+        const rate = parseFloat(RATE_INPUT.value);
+        const startTemp = parseFloat(SYSTEM_SELECT.value);
+        const eer = parseFloat(EFF_INPUT.value);
+
+        // Validation
+        if (isNaN(lbs) || isNaN(rate) || isNaN(eer) || lbs <= 0 || rate <= 0 || eer <= 0) {
+            KWH_OUTPUT.textContent = '0 kWh';
+            CWT_OUTPUT.textContent = '$0.00';
+            DAILY_OUTPUT.textContent = '$0.00';
+            return;
+        }
+
+        // 1. Calculate Temperature Delta
+        let deltaT = startTemp - TARGET_TEMP;
+        if (deltaT < 0) deltaT = 0; // Milk already cold
+
+        // 2. Calculate Total Thermal Load (BTUs)
+        // Formula: Lbs * Specific Heat * Delta T
+        const totalBTUs = lbs * SPECIFIC_HEAT_MILK * deltaT;
+
+        // 3. Calculate kWh Required
+        // Formula: Total BTUs / EER / 1000 (since EER is BTU/Watt-hr, and we need kiloWatt-hr)
+        // Note: This is for the compressor work. We add ~10% for fan/agitator motors overhead.
+        const compressorKwh = totalBTUs / eer / 1000;
+        const totalKwh = compressorKwh * 1.1; // +10% overhead
+
+        // 4. Calculate Costs
+        const dailyCost = totalKwh * rate;
+        
+        // Cost per CWT (100 lbs)
+        const cwt = lbs / 100;
+        const costPerCwt = cwt > 0 ? dailyCost / cwt : 0;
+
+        // --- Output Results ---
+        
+        KWH_OUTPUT.textContent = totalKwh.toFixed(1) + " kWh";
+        DAILY_OUTPUT.textContent = formatCurrency(dailyCost);
+        CWT_OUTPUT.textContent = formatCurrency(costPerCwt); // Often fractional cents, e.g. $0.08
+        
+        // Visual Feedback
+        if (costPerCwt > 0.15) {
+             CWT_OUTPUT.style.color = '#E74C3C'; // Expensive cooling
+        } else {
+             CWT_OUTPUT.style.color = '#5A946E'; // Efficient
+        }
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculateCooling();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Water Medicator Calc</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>💊 HerdMate | Water Medicator</h1>
+    <p>Calculate how much medication to add to your stock solution bucket for Dosatrons/Injectors.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="ratio-select">Medicator Ratio</label>
+            <select id="ratio-select" onchange="calculateStock()">
+                <option value="128" selected>1:128 (1 oz/Gal) - Standard</option>
+                <option value="100">1:100 (1%)</option>
+                <option value="50">1:50 (2%)</option>
+                <option value="64">1:64</option>
+                <option value="256">1:256</option>
+            </select>
+        </div>
+        <div>
+            <label for="stock-vol-input">Stock Bucket Volume (Gal)</label>
+            <input type="number" id="stock-vol-input" value="5" min="1" oninput="calculateStock()">
+        </div>
+    </div>
+
+    <div class="input-grid">
+        <div>
+            <label for="label-rate-input">Label Rate (Amount)</label>
+            <input type="number" id="label-rate-input" value="4" min="0.1" step="0.1" placeholder="e.g., 4" oninput="calculateStock()">
+        </div>
+        <div>
+            <label for="unit-select">Rate Unit (Per Gallon Water)</label>
+            <select id="unit-select" onchange="calculateStock()">
+                <option value="oz">Ounces (oz)</option>
+                <option value="tsp">Teaspoons (tsp)</option>
+                <option value="tbsp">Tablespoons (tbsp)</option>
+                <option value="ml">Milliliters (mL)</option>
+                <option value="packs">Packets</option>
+            </select>
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Add to Stock Bucket</h3>
+            <span class="value" id="amount-needed-output">0</span>
+            <span class="label" id="unit-label-output">Ounces</span>
+        </div>
+        <div class="output-box">
+            <h3>Total Water Treated</h3>
+            <span class="value" id="treated-gal-output">0 Gal</span>
+            <span class="label">Drinking Water Volume</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>How to Mix:</strong> Fill bucket halfway with warm water. Add the calculated amount of medication. Stir until dissolved. Fill bucket to the final stock volume level.
+    </div>
+</div>
+
+<script>
+    const RATIO_SELECT = document.getElementById('ratio-select');
+    const STOCK_VOL_INPUT = document.getElementById('stock-vol-input');
+    const LABEL_RATE_INPUT = document.getElementById('label-rate-input');
+    const UNIT_SELECT = document.getElementById('unit-select');
+    
+    const AMOUNT_NEEDED_OUTPUT = document.getElementById('amount-needed-output');
+    const TREATED_GAL_OUTPUT = document.getElementById('treated-gal-output');
+    const UNIT_LABEL_OUTPUT = document.getElementById('unit-label-output');
+
+    const UNITS = {
+        'oz': 'Ounces',
+        'tsp': 'Teaspoons',
+        'tbsp': 'Tablespoons',
+        'ml': 'Milliliters',
+        'packs': 'Packets'
+    };
+
+    function calculateStock() {
+        const ratio = parseFloat(RATIO_SELECT.value);
+        const stockVol = parseFloat(STOCK_VOL_INPUT.value);
+        const rate = parseFloat(LABEL_RATE_INPUT.value);
+        const unitKey = UNIT_SELECT.value;
+
+        // Validation
+        if (isNaN(ratio) || isNaN(stockVol) || isNaN(rate) || stockVol <= 0 || rate <= 0) {
+            AMOUNT_NEEDED_OUTPUT.textContent = '0';
+            TREATED_GAL_OUTPUT.textContent = '0 Gal';
+            return;
+        }
+
+        // 1. Calculate Total Drinking Water Treated
+        // Formula: Stock Volume * Ratio
+        // Example: 5 gallons stock * 128 ratio = 640 gallons of drinking water treated
+        const totalTreatedGallons = stockVol * ratio;
+
+        // 2. Calculate Amount of Product Needed
+        // Formula: Total Treated Gallons * Label Rate (per gallon)
+        // NOTE: Label rate is typically "per gallon of drinking water"
+        const amountNeeded = totalTreatedGallons * rate;
+        
+        // If using packets, usually label says "1 pack per X gallons". 
+        // If the user selects "Packets", the input logic is tricky. 
+        // Let's stick to "Amount per Gallon". If a pack treats 128 gallons, rate is 1/128 = 0.0078 packs/gal.
+        // Or user calculates oz. Let's assume the input is "Amount of product per 1 gallon of water" which is standard.
+
+        // --- Output Results ---
+        
+        // Format large numbers with commas
+        let displayAmount = amountNeeded;
+        
+        // Rounding logic based on unit
+        if (unitKey === 'packs') {
+             displayAmount = amountNeeded.toFixed(2);
+        } else {
+             displayAmount = Math.round(amountNeeded * 10) / 10; // Round to 1 decimal
+        }
+
+        AMOUNT_NEEDED_OUTPUT.textContent = displayAmount.toLocaleString();
+        UNIT_LABEL_OUTPUT.textContent = UNITS[unitKey];
+        
+        TREATED_GAL_OUTPUT.textContent = Math.round(totalTreatedGallons).toLocaleString() + " Gal";
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateStock();
+    };
+</script>
+</body>
+</html>

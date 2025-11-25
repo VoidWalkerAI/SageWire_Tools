@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Structural Beam Sizer</title>
+    <style>
+        body { font-family: 'Arial', sans-serif; margin: 20px; background-color: #f0f7ff; }
+        .calculator { max-width: 650px; margin: 0 auto; padding: 30px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); }
+        h2 { text-align: center; color: #4CAF50; border-bottom: 3px solid #4CAF50; padding-bottom: 10px; margin-bottom: 25px; }
+        h3 { color: #007bff; margin-top: 25px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        .input-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 15px; }
+        .full-width { grid-column: 1 / 3; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: #555; }
+        input[type="number"], select { width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 14px; margin-top: 30px; background-color: #FF5722; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 1.1em; transition: background-color 0.3s; }
+        button:hover { background-color: #e64a19; }
+        .result-section { margin-top: 35px; padding: 20px; border: 2px solid #4CAF50; border-radius: 8px; background-color: #e8f5e9; }
+        .result-output { font-size: 1.2em; margin: 10px 0; }
+        .result-output strong { color: #00796b; }
+        .governing-note { font-style: italic; margin-top: 15px; color: #333; }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <h2>🏗️ Structural Beam Sizer</h2>
+        <p style="text-align: center;">Calculates the minimum required Section Modulus (S) and Moment of Inertia (I).</p>
+
+        <h3>1. Loading and Geometry (Simply Supported Beam)</h3>
+        <div class="input-grid">
+            <div>
+                <label for="spanLength">Span Length (L, inches):</label>
+                <input type="number" id="spanLength" value="240" placeholder="e.g., 240 (20 ft)">
+            </div>
+            <div>
+                <label for="allowableDeflectionRatio">Allowable Deflection Ratio (L/X):</label>
+                <input type="number" id="allowableDeflectionRatio" value="360" placeholder="e.g., 360 (L/360)">
+            </div>
+            <div class="full-width">
+                <label for="loadingCondition">Loading Condition:</label>
+                <select id="loadingCondition">
+                    <option value="W_UNIFORM">Uniform Distributed Load (w)</option>
+                    <option value="P_CENTER">Point Load (P) at Center</option>
+                </select>
+            </div>
+            <div>
+                <label for="totalLoad">Total Load (P in lbs OR w in lbs/in):</label>
+                <input type="number" id="totalLoad" value="100" placeholder="e.g., 100">
+            </div>
+        </div>
+
+        <h3>2. Material Properties</h3>
+        <div class="input-grid">
+            <div>
+                <label for="allowableStress">Allowable Stress ($\sigma_{\text{allow}}$, psi):</label>
+                <input type="number" id="allowableStress" value="20000" placeholder="e.g., 20000">
+            </div>
+            <div>
+                <label for="modulusElasticity">Modulus of Elasticity (E, psi):</label>
+                <input type="number" id="modulusElasticity" value="29000000" placeholder="e.g., 29,000,000 (Steel)">
+            </div>
+        </div>
+        
+        <button onclick="calculateRequiredSections()">Calculate Required Sections</button>
+
+        <div class="result-section">
+            <h3>Minimum Required Properties</h3>
+            <div class="result-output">
+                **Required Section Modulus ($\mathbf{S}_{\text{req}}$):** <strong id="requiredS">-- in³</strong>
+                <p class="governing-note">(Governs by Strength/Stress)</p>
+            </div>
+            <div class="result-output">
+                **Required Moment of Inertia ($\mathbf{I}_{\text{req}}$):** <strong id="requiredI">-- in⁴</strong>
+                <p class="governing-note">(Governs by Stiffness/Deflection)</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function calculateRequiredSections() {
+            const L = parseFloat(document.getElementById('spanLength').value);
+            const sigma_allow = parseFloat(document.getElementById('allowableStress').value);
+            const E = parseFloat(document.getElementById('modulusElasticity').value);
+            const load = parseFloat(document.getElementById('totalLoad').value);
+            const condition = document.getElementById('loadingCondition').value;
+            const ratio = parseFloat(document.getElementById('allowableDeflectionRatio').value);
+
+            if ([L, sigma_allow, E, load, ratio].some(isNaN) || L <= 0 || E <= 0 || load <= 0) {
+                alert('Please enter valid, non-zero values for all inputs.');
+                return;
+            }
+
+            // 1. Calculate Max Bending Moment (M_max)
+            let M_max = 0;
+            let deflectionCoefficient = 0;
+            const delta_allow = L / ratio;
+
+            if (condition === 'W_UNIFORM') {
+                // Uniform Load (w): M_max = w * L^2 / 8
+                M_max = (load * L * L) / 8;
+                // Deflection Coefficient for Uniform Load is 5 / 384
+                deflectionCoefficient = 5 / 384;
+            } else if (condition === 'P_CENTER') {
+                // Point Load (P): M_max = P * L / 4
+                M_max = (load * L) / 4;
+                // Deflection Coefficient for Center Point Load is 1 / 48
+                deflectionCoefficient = 1 / 48;
+            }
+
+            // --- A. Required Section Modulus (S_req) ---
+            // S_req = M_max / sigma_allow
+            const S_req = M_max / sigma_allow;
+
+            // --- B. Required Moment of Inertia (I_req) ---
+            // I_req = (Coefficient * Load * L^3) / (E * delta_allow)
+            const I_req = (deflectionCoefficient * load * L * L * L) / (E * delta_allow);
+
+            // Output
+            document.getElementById('requiredS').textContent = `${S_req.toFixed(2)} in³`;
+            document.getElementById('requiredI').textContent = `${I_req.toFixed(2)} in⁴`;
+        }
+    </script>
+</body>
+</html>

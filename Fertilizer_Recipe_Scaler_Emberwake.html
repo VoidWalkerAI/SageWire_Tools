@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Emberwake Hydro-Scaler</title>
+    <style>
+        /* BRAND PALETTE: Ember (Gold/Orange) and Deep Blue/Green */
+        :root {
+            --ember-main: #FFB300; /* Key Accent */
+            --deep-green: #008000; /* Primary Text/Borders */
+            --calc-bg: #f0fff0; /* Light Green Background */
+            --text-color: #333;
+        }
+
+        body { font-family: 'Arial', sans-serif; margin: 20px; background-color: var(--calc-bg); }
+        .calculator { max-width: 550px; margin: 0 auto; padding: 30px; background-color: #ffffff; border-radius: 12px; box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1); }
+        
+        /* Branding Header */
+        .brand-header { text-align: center; margin-bottom: 25px; }
+        .brand-header h2 { 
+            color: var(--deep-green); 
+            font-size: 1.8em; 
+            margin: 0; 
+            padding-bottom: 5px; 
+        }
+        .brand-header .slogan { 
+            color: var(--ember-main); 
+            font-style: italic; 
+            font-size: 0.9em; 
+        }
+        .logo-placeholder {
+            font-size: 2.5em;
+            color: var(--ember-main);
+            margin-bottom: 5px;
+        }
+
+        h3 { color: var(--ember-main); margin-top: 25px; border-bottom: 1px dashed #ccc; padding-bottom: 5px; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; color: var(--text-color); }
+        input[type="number"], input[type="text"] { width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        
+        button { 
+            width: 100%; 
+            padding: 14px; 
+            margin-top: 30px; 
+            background-color: var(--deep-green); 
+            color: white; 
+            border: none; 
+            border-radius: 6px; 
+            cursor: pointer; 
+            font-size: 1.1em; 
+            transition: background-color 0.3s; 
+        }
+        button:hover { background-color: #006400; }
+        
+        /* Result Section */
+        .result-section { 
+            margin-top: 35px; 
+            padding: 20px; 
+            border: 2px solid var(--ember-main); 
+            border-radius: 8px; 
+            background-color: #fff8e1; /* Light contrast background */
+            text-align: center; 
+        }
+        .output-value { font-size: 1.4em; margin: 10px 0; font-weight: 600; color: var(--deep-green); }
+        .note { font-size: 0.9em; color: #777; margin-top: 15px; }
+
+        /* Footer */
+        .footer-citation {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        
+        <div class="brand-header">
+            <div class="logo-placeholder">💧</div>
+            <h2>THE EMBERWAKE HYDRO-SCALER</h2>
+            <p class="slogan">Precision PPM, Perfect Grow.</p>
+        </div>
+
+        <h3>1. Recipe Parameters</h3>
+        <div class="input-group">
+            <label for="originalVolume">Original Recipe Volume ($V_{\text{original}}$):</label>
+            <input type="number" id="originalVolume" value="10" placeholder="e.g., 10 (Gallons/Liters)">
+        </div>
+        <div class="input-group">
+            <label for="originalAmount">Original Ingredient Amount ($A_{\text{original}}$):</label>
+            <input type="number" id="originalAmount" value="20" placeholder="e.g., 20 (mL/grams)">
+        </div>
+        <div class="input-group">
+            <label for="amountUnit">Unit of Ingredient (e.g., mL, grams):</label>
+            <input type="text" id="amountUnit" value="mL" placeholder="mL">
+        </div>
+
+        <h3>2. Target Parameters</h3>
+        <div class="input-group">
+            <label for="targetVolume">New Target Volume ($V_{\text{target}}$):</label>
+            <input type="number" id="targetVolume" value="50" placeholder="e.g., 50 (Gallons/Liters)">
+        </div>
+        
+        <button onclick="scaleRecipe()">Calculate Scaled Amount</button>
+
+        <div class="result-section">
+            <h3>Required Ingredient Amount</h3>
+            <div class="output-value" id="scaledAmount">--</div>
+            
+            <p class="note">Scaling Factor: <span id="scalingFactor">--</span></p>
+        </div>
+
+        <div class="footer-citation">
+            Created by Angryamishman74 for the citizens of Emberwake.
+        </div>
+    </div>
+
+    <script>
+        function scaleRecipe() {
+            const V_original = parseFloat(document.getElementById('originalVolume').value);
+            const A_original = parseFloat(document.getElementById('originalAmount').value);
+            const V_target = parseFloat(document.getElementById('targetVolume').value);
+            const unit = document.getElementById('amountUnit').value;
+
+            const resultDiv = document.getElementById('scaledAmount');
+            const factorDiv = document.getElementById('scalingFactor');
+
+            if (isNaN(V_original) || isNaN(A_original) || isNaN(V_target) || V_original <= 0 || V_target <= 0) {
+                resultDiv.innerHTML = 'Error: Invalid Inputs';
+                factorDiv.textContent = '0';
+                return;
+            }
+
+            // Core Formula 1: Scaling Factor (SF) = V_target / V_original
+            const SF = V_target / V_original;
+
+            // Core Formula 2: Scaled Amount (A_scaled) = A_original * SF
+            const A_scaled = A_original * SF;
+
+            // Output
+            resultDiv.innerHTML = `${A_scaled.toFixed(2)} ${unit}`;
+            factorDiv.textContent = SF.toFixed(2);
+        }
+    </script>
+</body>
+</html>

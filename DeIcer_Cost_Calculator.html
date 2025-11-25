@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | De-Icer Cost Calc</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+        
+        .output-box.total {
+            grid-column: 1 / span 2;
+            background-color: #1e2b24;
+            border-color: #E74C3C;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+        
+        .output-box.total .value { color: #E74C3C; }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>❄️ HerdMate | De-Icer Cost</h1>
+    <p>Calculate the electricity cost of running tank heaters to prevent winter "bill shock".</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="watts-input">Heater Wattage (Watts)</label>
+            <input type="number" id="watts-input" value="1500" min="100" step="100" oninput="calculateCost()">
+        </div>
+        <div>
+            <label for="kwh-cost-input">Electric Rate ($/kWh)</label>
+            <input type="number" id="kwh-cost-input" value="0.14" min="0.01" step="0.01" oninput="calculateCost()">
+        </div>
+    </div>
+    
+    <label for="hours-input">Estimated Run Time (Hours/Day)</label>
+    <input type="number" id="hours-input" value="12" min="1" max="24" oninput="calculateCost()">
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Daily Cost</h3>
+            <span class="value" id="daily-cost-output">$0.00</span>
+            <span class="label">Per 24 Hours</span>
+        </div>
+        <div class="output-box total">
+            <h3>Monthly Cost</h3>
+            <span class="value" id="monthly-cost-output">$0.00</span>
+            <span class="label">Added to Electric Bill</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Tip:</strong> A 1,500W heater running 24/7 is 36 kWh per day. Thermostatic heaters only run when water temp drops (usually 12-16 hours/day in freezing weather).
+    </div>
+</div>
+
+<script>
+    const WATTS_INPUT = document.getElementById('watts-input');
+    const RATE_INPUT = document.getElementById('kwh-cost-input');
+    const HOURS_INPUT = document.getElementById('hours-input');
+    
+    const DAILY_OUT = document.getElementById('daily-cost-output');
+    const MONTHLY_OUT = document.getElementById('monthly-cost-output');
+
+    const formatCurrency = (value) => '$' + value.toFixed(2);
+
+    function calculateCost() {
+        const watts = parseFloat(WATTS_INPUT.value);
+        const rate = parseFloat(RATE_INPUT.value);
+        const hours = parseFloat(HOURS_INPUT.value);
+
+        // Validation
+        if (isNaN(watts) || isNaN(rate) || isNaN(hours) || watts <= 0 || rate <= 0 || hours < 0) {
+            DAILY_OUT.textContent = '$0.00';
+            MONTHLY_OUT.textContent = '$0.00';
+            return;
+        }
+
+        // 1. Calculate Kilowatts (kW)
+        // Formula: Watts / 1000
+        const kilowatts = watts / 1000;
+
+        // 2. Calculate Daily Consumption (kWh)
+        const dailyKwh = kilowatts * hours;
+
+        // 3. Calculate Costs
+        const dailyCost = dailyKwh * rate;
+        const monthlyCost = dailyCost * 30; // Standard billing month
+
+        // --- Output Results ---
+        
+        DAILY_OUT.textContent = formatCurrency(dailyCost);
+        MONTHLY_OUT.textContent = formatCurrency(monthlyCost);
+        
+        // Visual Feedback for High Cost
+        if (monthlyCost > 50) {
+             MONTHLY_OUT.style.color = '#E74C3C'; // Expensive!
+        } else {
+             MONTHLY_OUT.style.color = '#5A946E'; // Manageable
+        }
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateCost();
+    };
+</script>
+</body>
+</html>

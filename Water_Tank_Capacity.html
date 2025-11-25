@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Water Tank Capacity</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; /* Rust Accent */
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #5A946E; /* Forage Green Value */
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+
+        /* Helper class to hide inputs based on selection */
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>💧 HerdMate | Water Capacity</h1>
+    <p>Calculate the total water volume in stock tanks or troughs to ensure herd requirements are met.</p>
+
+    <div class="input-group">
+        <label for="shape-select">Tank / Trough Shape</label>
+        <select id="shape-select" onchange="toggleInputs()">
+            <option value="round" selected>Round Stock Tank</option>
+            <option value="rect">Rectangular Trough</option>
+        </select>
+    </div>
+
+    <div id="round-inputs">
+        <div class="input-group">
+            <label for="diameter-input">Diameter (Feet)</label>
+            <input type="number" id="diameter-input" value="8" min="1" oninput="calculateVolume()">
+        </div>
+    </div>
+
+    <div id="rect-inputs" class="hidden">
+        <div class="input-group">
+            <label for="length-input">Length (Feet)</label>
+            <input type="number" id="length-input" value="10" min="1" oninput="calculateVolume()">
+        </div>
+        <div class="input-group">
+            <label for="width-input">Width (Feet)</label>
+            <input type="number" id="width-input" value="4" min="1" oninput="calculateVolume()">
+        </div>
+    </div>
+
+    <div class="input-group">
+        <label for="depth-input">Water Depth (Inches) - *Actual water level*</label>
+        <input type="number" id="depth-input" value="24" min="1" oninput="calculateVolume()">
+    </div>
+
+    <div class="output-box">
+        <h3>Total Water Capacity</h3>
+        <span class="value" id="gallons-output">0 Gal</span>
+        <span class="label">US Gallons</span>
+    </div>
+    
+    <div class="note">
+        Calculation uses the standard conversion: 1 Cubic Foot = 7.48 Gallons.
+    </div>
+</div>
+
+<script>
+    const SHAPE_SELECT = document.getElementById('shape-select');
+    const DIAMETER_INPUT = document.getElementById('diameter-input');
+    const LENGTH_INPUT = document.getElementById('length-input');
+    const WIDTH_INPUT = document.getElementById('width-input');
+    const DEPTH_INPUT = document.getElementById('depth-input');
+    const GALLONS_OUTPUT = document.getElementById('gallons-output');
+
+    const ROUND_INPUTS = document.getElementById('round-inputs');
+    const RECT_INPUTS = document.getElementById('rect-inputs');
+
+    // Function to show/hide relevant inputs
+    function toggleInputs() {
+        const shape = SHAPE_SELECT.value;
+        if (shape === 'round') {
+            ROUND_INPUTS.classList.remove('hidden');
+            RECT_INPUTS.classList.add('hidden');
+        } else {
+            ROUND_INPUTS.classList.add('hidden');
+            RECT_INPUTS.classList.remove('hidden');
+        }
+        calculateVolume(); // Recalculate immediately on switch
+    }
+
+    function calculateVolume() {
+        const shape = SHAPE_SELECT.value;
+        const depthInches = parseFloat(DEPTH_INPUT.value);
+        
+        // Convert depth to feet
+        const depthFeet = depthInches / 12;
+
+        if (isNaN(depthInches) || depthInches <= 0) {
+            GALLONS_OUTPUT.textContent = '0 Gal';
+            return;
+        }
+
+        let volumeCuFt = 0;
+
+        if (shape === 'round') {
+            const diameter = parseFloat(DIAMETER_INPUT.value);
+            if (isNaN(diameter) || diameter <= 0) {
+                GALLONS_OUTPUT.textContent = '0 Gal';
+                return;
+            }
+            const radius = diameter / 2;
+            // Volume = pi * r^2 * height
+            volumeCuFt = Math.PI * (radius * radius) * depthFeet;
+
+        } else {
+            const length = parseFloat(LENGTH_INPUT.value);
+            const width = parseFloat(WIDTH_INPUT.value);
+            if (isNaN(length) || length <= 0 || isNaN(width) || width <= 0) {
+                GALLONS_OUTPUT.textContent = '0 Gal';
+                return;
+            }
+            // Volume = L * W * H
+            volumeCuFt = length * width * depthFeet;
+        }
+
+        // Convert Cubic Feet to Gallons (1 cu ft = 7.48 gallons)
+        const totalGallons = volumeCuFt * 7.48;
+
+        // Output Result (rounded to nearest whole gallon)
+        GALLONS_OUTPUT.textContent = Math.round(totalGallons).toLocaleString() + " Gal";
+    }
+
+    // Initialize on load
+    window.onload = function() {
+        calculateVolume();
+    };
+</script>
+</body>
+</html>

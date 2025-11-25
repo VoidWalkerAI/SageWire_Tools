@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | IOFC Calculator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; /* Rust Accent */
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🥛 HerdMate | IOFC Calculator</h1>
+    <p>Calculate the daily profit margin per cow after feed costs are paid.</p>
+
+    <div class="input-grid">
+        <div>
+            <label for="milk-price-input">Milk Price ($/cwt)</label>
+            <input type="number" id="milk-price-input" value="21.50" min="0" step="0.01" oninput="calculateIOFC()">
+        </div>
+        <div>
+            <label for="production-input">Daily Production (Lbs/Cow)</label>
+            <input type="number" id="production-input" value="75" min="0" oninput="calculateIOFC()">
+        </div>
+    </div>
+    
+    <div class="input-grid">
+        <div>
+            <label for="feed-cost-input">Daily Feed Cost ($/Head)</label>
+            <input type="number" id="feed-cost-input" value="6.50" min="0" step="0.01" oninput="calculateIOFC()">
+        </div>
+        <div>
+            <label for="herd-size-input">Milking Herd Size (Head)</label>
+            <input type="number" id="herd-size-input" value="100" min="1" oninput="calculateIOFC()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>IOFC Per Cow</h3>
+            <span class="value" id="iofc-per-cow-output">$0.00</span>
+            <span class="label">Daily Margin</span>
+        </div>
+        <div class="output-box">
+            <h3>Total Herd IOFC</h3>
+            <span class="value" id="herd-iofc-output">$0.00</span>
+            <span class="label">Total Daily Margin</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Income Over Feed Cost (IOFC)</strong> is the money left over to pay for labor, repairs, debt, and overhead. Monitor this daily.
+    </div>
+</div>
+
+<script>
+    const MILK_PRICE_INPUT = document.getElementById('milk-price-input');
+    const PRODUCTION_INPUT = document.getElementById('production-input');
+    const FEED_COST_INPUT = document.getElementById('feed-cost-input');
+    const HERD_SIZE_INPUT = document.getElementById('herd-size-input');
+    
+    const IOFC_PER_COW_OUTPUT = document.getElementById('iofc-per-cow-output');
+    const HERD_IOFC_OUTPUT = document.getElementById('herd-iofc-output');
+
+    const formatCurrency = (value) => '$' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    function calculateIOFC() {
+        const milkPriceCwt = parseFloat(MILK_PRICE_INPUT.value);
+        const dailyProduction = parseFloat(PRODUCTION_INPUT.value);
+        const dailyFeedCost = parseFloat(FEED_COST_INPUT.value);
+        const herdSize = parseInt(HERD_SIZE_INPUT.value);
+
+        // Validation
+        if (isNaN(milkPriceCwt) || isNaN(dailyProduction) || isNaN(dailyFeedCost) || isNaN(herdSize) ||
+            milkPriceCwt < 0 || dailyProduction < 0 || dailyFeedCost < 0 || herdSize < 0) {
+            IOFC_PER_COW_OUTPUT.textContent = '$0.00';
+            HERD_IOFC_OUTPUT.textContent = '$0.00';
+            return;
+        }
+
+        // 1. Calculate Gross Milk Income Per Cow
+        // Milk Price is per CWT (100 lbs), so divide by 100 to get price per lb
+        const pricePerLb = milkPriceCwt / 100;
+        const grossIncomePerCow = dailyProduction * pricePerLb;
+
+        // 2. Calculate IOFC Per Cow
+        // Formula: Gross Income - Feed Cost
+        const iofcPerCow = grossIncomePerCow - dailyFeedCost;
+
+        // 3. Calculate Total Herd IOFC
+        const totalHerdIOFC = iofcPerCow * herdSize;
+
+        // --- Output Results ---
+        
+        IOFC_PER_COW_OUTPUT.textContent = formatCurrency(iofcPerCow);
+        HERD_IOFC_OUTPUT.textContent = formatCurrency(totalHerdIOFC);
+        
+        // Visual Logic: Color code the margin
+        if (iofcPerCow >= 8.00) {
+             IOFC_PER_COW_OUTPUT.style.color = '#5A946E'; // Excellent
+        } else if (iofcPerCow >= 5.00) {
+             IOFC_PER_COW_OUTPUT.style.color = '#f39c12'; // Okay
+        } else {
+             IOFC_PER_COW_OUTPUT.style.color = '#E74C3C'; // Warning
+        }
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateIOFC();
+    };
+</script>
+</body>
+</html>

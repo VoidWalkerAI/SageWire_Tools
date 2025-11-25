@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SageWire Tools | Tank Volume</title>
+    
+    <style>
+        /* --- SAGEWIRE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        
+        /* Header Styling */
+        .header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #5dade2;
+        }
+        .header-brand h1 { 
+            color: #B85C38; /* Rust Accent */
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .header-brand p {
+            color: #aeb6bf;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        h2 { margin-top: 0; color: #5dade2; text-align: center; margin-bottom: 20px; }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+            text-align: center;
+        }
+
+        /* Output Styling */
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .fill-bar-container {
+            margin-top: 20px;
+            width: 100%;
+            height: 20px;
+            background-color: #14141A;
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid #7D716A;
+        }
+        
+        #fill-bar {
+            height: 100%;
+            width: 0%;
+            background-color: #5A946E;
+            transition: width 0.3s ease;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-brand">
+        <h1>SageWire Tools</h1>
+        <p>We tend the fire while you're out living life.</p>
+    </div>
+    
+    <h2>⛽ Horizontal Tank Volume</h2>
+    <p style="text-align:center; color:#ccc;">Calculate gallons remaining in a round tank lying on its side.</p>
+
+    <div class="input-grid">
+        <div>
+            <label>Tank Length (Feet)</label>
+            <input type="number" id="length-ft" value="10" min="1" oninput="calculateVolume()">
+        </div>
+        <div>
+            <label>Tank Diameter (Feet)</label>
+            <input type="number" id="diameter-ft" value="4" min="1" oninput="calculateVolume()">
+        </div>
+    </div>
+    
+    <label>Liquid Depth (Inches) - *Dipstick Reading*</label>
+    <input type="number" id="depth-in" value="24" min="0" oninput="calculateVolume()">
+
+    <div class="output-grid">
+        <div class="output-box" style="grid-column: 1 / span 2; background-color:#1e2b24;">
+            <h3>Gallons Remaining</h3>
+            <span class="value" id="gallons-output">0 Gal</span>
+            <span class="label" id="capacity-label">Total Capacity: 0 Gal</span>
+        </div>
+        
+        <div class="output-box">
+            <h3>Percentage Full</h3>
+            <span class="value" id="percent-output">0%</span>
+            <span class="label">Volume</span>
+        </div>
+        <div class="output-box">
+            <h3>Empty Space</h3>
+            <span class="value" id="empty-output">0 Gal</span>
+            <span class="label">Room to Fill</span>
+        </div>
+    </div>
+    
+    <div class="fill-bar-container">
+        <div id="fill-bar"></div>
+    </div>
+    
+    <div class="note">
+        <strong>Tip:</strong> Standard 1,000 Gallon propane/fuel tanks are typically 41" diameter x 16' length, or 48" diameter x 10'6" length.
+    </div>
+</div>
+
+<script>
+    const LEN_FT = document.getElementById('length-ft');
+    const DIA_FT = document.getElementById('diameter-ft');
+    const DEPTH_IN = document.getElementById('depth-in');
+    
+    const GAL_OUT = document.getElementById('gallons-output');
+    const CAP_LBL = document.getElementById('capacity-label');
+    const PCT_OUT = document.getElementById('percent-output');
+    const EMPTY_OUT = document.getElementById('empty-output');
+    const FILL_BAR = document.getElementById('fill-bar');
+
+    function calculateVolume() {
+        const length = parseFloat(LEN_FT.value);
+        const diameter = parseFloat(DIA_FT.value);
+        const depthInches = parseFloat(DEPTH_IN.value);
+
+        // Validation
+        if (isNaN(length) || isNaN(diameter) || isNaN(depthInches) || length <= 0 || diameter <= 0 || depthInches < 0) {
+            resetOutputs();
+            return;
+        }
+
+        // Convert inputs to feet for calculation
+        const radius = diameter / 2;
+        const depth = depthInches / 12;
+        
+        // Safety check: Depth cannot exceed Diameter
+        if (depth > diameter) {
+            // Assume full
+            var h = diameter; 
+        } else {
+            var h = depth;
+        }
+
+        // --- 1. Calculate Total Capacity (Full Cylinder) ---
+        // Volume = Pi * r^2 * Length
+        const totalVolCuFt = Math.PI * Math.pow(radius, 2) * length;
+        const totalGallons = totalVolCuFt * 7.48;
+
+        // --- 2. Calculate Liquid Volume (Partial Cylinder) ---
+        // Formula for area of a circular segment:
+        // Area = r^2 * acos((r-h)/r) - (r-h) * sqrt(2rh - h^2)
+        
+        let liquidVolCuFt = 0;
+        
+        if (h >= diameter) {
+            liquidVolCuFt = totalVolCuFt; // Full
+        } else if (h <= 0) {
+            liquidVolCuFt = 0; // Empty
+        } else {
+            const term1 = Math.pow(radius, 2) * Math.acos((radius - h) / radius);
+            const term2 = (radius - h) * Math.sqrt((2 * radius * h) - Math.pow(h, 2));
+            const segmentArea = term1 - term2;
+            liquidVolCuFt = segmentArea * length;
+        }
+
+        const liquidGallons = liquidVolCuFt * 7.48;
+        const percentFull = (liquidGallons / totalGallons) * 100;
+        const emptyGallons = totalGallons - liquidGallons;
+
+        // --- Output Results ---
+        
+        GAL_OUT.textContent = Math.round(liquidGallons).toLocaleString() + " Gal";
+        CAP_LBL.textContent = "Total Capacity: " + Math.round(totalGallons).toLocaleString() + " Gal";
+        
+        PCT_OUT.textContent = percentFull.toFixed(1) + "%";
+        EMPTY_OUT.textContent = Math.round(emptyGallons).toLocaleString() + " Gal";
+        
+        // Update Fill Bar
+        FILL_BAR.style.width = percentFull + "%";
+        
+        // Color logic for fill bar
+        if (percentFull < 20) {
+            FILL_BAR.style.backgroundColor = '#E74C3C'; // Red (Low)
+        } else if (percentFull > 90) {
+            FILL_BAR.style.backgroundColor = '#5dade2'; // Blue (Full)
+        } else {
+            FILL_BAR.style.backgroundColor = '#5A946E'; // Green (Good)
+        }
+    }
+    
+    function resetOutputs() {
+        GAL_OUT.textContent = '0 Gal';
+        CAP_LBL.textContent = 'Total Capacity: 0 Gal';
+        PCT_OUT.textContent = '0%';
+        EMPTY_OUT.textContent = '0 Gal';
+        FILL_BAR.style.width = '0%';
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculateVolume();
+    };
+</script>
+</body>
+</html>

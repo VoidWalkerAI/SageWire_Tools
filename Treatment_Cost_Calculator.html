@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Treatment Protocol Cost</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>💉 HerdMate | Treatment Cost</h1>
+    <p>Calculate the total volume and cost for a herd health protocol based on drug price and dosage.</p>
+
+    <h3 class="section-title">1. Medication Details</h3>
+    <div class="input-grid">
+        <div>
+            <label for="bottle-cost-input">Cost per Bottle ($)</label>
+            <input type="number" id="bottle-cost-input" value="150.00" min="0" step="0.01" oninput="calculateTreatment()">
+        </div>
+        <div>
+            <label for="bottle-size-input">Bottle Size (mL)</label>
+            <input type="number" id="bottle-size-input" value="500" min="1" oninput="calculateTreatment()">
+        </div>
+    </div>
+
+    <h3 class="section-title">2. Protocol Details</h3>
+    <div class="input-grid">
+        <div>
+            <label for="dose-input">Dose per Head (mL)</label>
+            <input type="number" id="dose-input" value="20" min="0.1" step="0.1" oninput="calculateTreatment()">
+        </div>
+        <div>
+            <label for="head-count-input">Number of Head to Treat</label>
+            <input type="number" id="head-count-input" value="50" min="1" oninput="calculateTreatment()">
+        </div>
+    </div>
+    
+    <label for="treatments-input">Number of Treatments (e.g., 1 shot or 3 days)</label>
+    <input type="number" id="treatments-input" value="1" min="1" oninput="calculateTreatment()">
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Total Protocol Cost</h3>
+            <span class="value" id="total-cost-output">$0.00</span>
+            <span class="label" id="cost-per-head-output">($0.00 per Head)</span>
+        </div>
+        <div class="output-box">
+            <h3>Volume & Bottles</h3>
+            <span class="value" id="total-volume-output">0 mL</span>
+            <span class="label" id="bottles-needed-output">Requires 0 Bottles</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        Always round up when purchasing bottles to account for slight waste or spills during administration.
+    </div>
+</div>
+
+<script>
+    const BOTTLE_COST_INPUT = document.getElementById('bottle-cost-input');
+    const BOTTLE_SIZE_INPUT = document.getElementById('bottle-size-input');
+    const DOSE_INPUT = document.getElementById('dose-input');
+    const HEAD_COUNT_INPUT = document.getElementById('head-count-input');
+    const TREATMENTS_INPUT = document.getElementById('treatments-input');
+    
+    const TOTAL_COST_OUTPUT = document.getElementById('total-cost-output');
+    const COST_PER_HEAD_OUTPUT = document.getElementById('cost-per-head-output');
+    const TOTAL_VOLUME_OUTPUT = document.getElementById('total-volume-output');
+    const BOTTLES_NEEDED_OUTPUT = document.getElementById('bottles-needed-output');
+
+    const formatCurrency = (value) => '$' + value.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+
+    function calculateTreatment() {
+        const bottleCost = parseFloat(BOTTLE_COST_INPUT.value);
+        const bottleSize = parseFloat(BOTTLE_SIZE_INPUT.value);
+        const dose = parseFloat(DOSE_INPUT.value);
+        const headCount = parseInt(HEAD_COUNT_INPUT.value);
+        const treatments = parseInt(TREATMENTS_INPUT.value);
+
+        // Validation
+        if (isNaN(bottleCost) || isNaN(bottleSize) || isNaN(dose) || isNaN(headCount) || isNaN(treatments) ||
+            bottleSize <= 0 || dose <= 0 || headCount <= 0 || treatments <= 0) {
+            TOTAL_COST_OUTPUT.textContent = '$0.00';
+            COST_PER_HEAD_OUTPUT.textContent = '($0.00 per Head)';
+            TOTAL_VOLUME_OUTPUT.textContent = '0 mL';
+            BOTTLES_NEEDED_OUTPUT.textContent = 'Requires 0 Bottles';
+            return;
+        }
+
+        // 1. Calculate Cost Per mL
+        const costPerML = bottleCost / bottleSize;
+
+        // 2. Calculate Total Volume Required
+        // Formula: Dose * Head * Treatments
+        const totalVolume = dose * headCount * treatments;
+
+        // 3. Calculate Bottles Needed
+        // We must round UP (ceil) because you can't buy half a bottle
+        const bottlesNeeded = Math.ceil(totalVolume / bottleSize);
+
+        // 4. Calculate Financials
+        const totalCost = totalVolume * costPerML;
+        const costPerHead = totalCost / headCount;
+
+        // --- Output Results ---
+        
+        TOTAL_COST_OUTPUT.textContent = formatCurrency(totalCost);
+        COST_PER_HEAD_OUTPUT.textContent = `(${formatCurrency(costPerHead)} per Head)`;
+        
+        TOTAL_VOLUME_OUTPUT.textContent = totalVolume.toLocaleString() + " mL";
+        BOTTLES_NEEDED_OUTPUT.textContent = `Requires ${bottlesNeeded} Bottle(s)`;
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateTreatment();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SageWire Tools | Firewood Calc</title>
+    
+    <style>
+        /* --- SAGEWIRE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        
+        /* Header Styling */
+        .header-brand {
+            text-align: center;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px dashed #5dade2;
+        }
+        .header-brand h1 { 
+            color: #B85C38; /* Rust Accent */
+            margin: 0;
+            font-size: 1.8em;
+        }
+        .header-brand p {
+            color: #aeb6bf;
+            margin: 5px 0 0;
+            font-size: 0.9em;
+            font-style: italic;
+        }
+
+        h2 { margin-top: 0; color: #5dade2; text-align: center; margin-bottom: 20px; }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; 
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; 
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .storage-visual {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #1a1e2b;
+            border-left: 5px solid #f39c12;
+            color: #ccc;
+        }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5dade2;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header-brand">
+        <h1>SageWire Tools</h1>
+        <p>We tend the fire while you're out living life.</p>
+    </div>
+    
+    <h2>🌲 Firewood BTU & Storage</h2>
+    <p style="text-align:center; color:#ccc;">Estimate heat value and storage space required for your woodpile.</p>
+
+    <div class="input-grid">
+        <div>
+            <label>Wood Species</label>
+            <select id="species-select" onchange="calculateFirewood()">
+                <option value="29.1">Osage Orange (Hedge) - 29.1 M BTU</option>
+                <option value="26.8">Hickory (Shagbark) - 26.8 M BTU</option>
+                <option value="24.6" selected>Oak (White/Red) - 24.6 M BTU</option>
+                <option value="23.5">Locust (Black) - 23.5 M BTU</option>
+                <option value="22.7">Beech / Ash - 22.7 M BTU</option>
+                <option value="20.0">Maple (Hard) - 20.0 M BTU</option>
+                <option value="19.0">Cherry / Elm - 19.0 M BTU</option>
+                <option value="17.0">Pine / Spruce - 17.0 M BTU</option>
+                <option value="14.5">Cottonwood / Willow - 14.5 M BTU</option>
+            </select>
+        </div>
+        <div>
+            <label>Quantity (Cords)</label>
+            <input type="number" id="quantity-input" value="3" min="0.1" step="0.25" oninput="calculateFirewood()">
+            <div style="font-size:0.7em; color:#777; margin-top:3px;">(1 Cord = 4'x4'x8' Stack)</div>
+        </div>
+    </div>
+    
+    <div class="input-grid">
+        <div>
+            <label>Pickup Truck Loads (Optional)</label>
+            <input type="number" id="truck-input" placeholder="Est. Loads" min="0" oninput="convertTruckToCords()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Total Heat Value</h3>
+            <span class="value" id="btu-output">0 M</span>
+            <span class="label">Million BTUs</span>
+        </div>
+        <div class="output-box">
+            <h3>Storage Needed</h3>
+            <span class="value" id="volume-output">0 ft³</span>
+            <span class="label">Stacked Volume</span>
+        </div>
+    </div>
+    
+    <div class="storage-visual" id="storage-desc">
+        Dimensions: To store this amount, you need a stack roughly...
+    </div>
+    
+    <div class="note">
+        <strong>Heat Comparison:</strong> 1 Cord of Oak contains the heat energy of approximately <strong>160 Gallons</strong> of Propane or <strong>100 Gallons</strong> of Fuel Oil.
+    </div>
+</div>
+
+<script>
+    const SPECIES_SELECT = document.getElementById('species-select');
+    const QTY_INPUT = document.getElementById('quantity-input');
+    const TRUCK_INPUT = document.getElementById('truck-input');
+    
+    const BTU_OUTPUT = document.getElementById('btu-output');
+    const VOL_OUTPUT = document.getElementById('volume-output');
+    const STORAGE_DESC = document.getElementById('storage-desc');
+
+    // Standard: Full size pickup (8ft bed) tossed/loose = ~1/2 cord (optimistic) or 1/3 cord.
+    // Stacked tight in 8ft bed = 1/2 cord.
+    // Let's assume loose thrown 6ft bed = 1/3 cord.
+    const TRUCK_FACTOR = 0.33; 
+    const CORD_CU_FT = 128; // 4x4x8 feet
+
+    function convertTruckToCords() {
+        const trucks = parseFloat(TRUCK_INPUT.value);
+        if (!isNaN(trucks) && trucks > 0) {
+            const cords = trucks * TRUCK_FACTOR;
+            QTY_INPUT.value = cords.toFixed(2);
+            calculateFirewood();
+        }
+    }
+
+    function calculateFirewood() {
+        const btuPerCord = parseFloat(SPECIES_SELECT.value);
+        const cords = parseFloat(QTY_INPUT.value);
+
+        // Validation
+        if (isNaN(btuPerCord) || isNaN(cords) || cords <= 0) {
+            BTU_OUTPUT.textContent = '0 M';
+            VOL_OUTPUT.textContent = '0 ft³';
+            STORAGE_DESC.textContent = 'Enter quantity...';
+            return;
+        }
+
+        // 1. Calculate Total BTUs (Millions)
+        const totalBTU = btuPerCord * cords;
+
+        // 2. Calculate Storage Volume (Cubic Feet)
+        const totalVolume = cords * CORD_CU_FT;
+
+        // --- Output Results ---
+        BTU_OUTPUT.textContent = totalBTU.toFixed(1) + " M";
+        VOL_OUTPUT.textContent = Math.ceil(totalVolume) + " ft³";
+        
+        // Calculate visual dimensions (assuming 4ft high stack)
+        // Volume = L * W * H. If H=4 and W=4 (standard cord depth/height), L = Volume / 16.
+        const stackLength = totalVolume / 16; 
+        
+        STORAGE_DESC.innerHTML = `<strong>Stacking Guide:</strong> This requires a stack <strong>4 feet high</strong> and <strong>4 feet deep</strong> that is approximately <strong>${Math.ceil(stackLength)} feet long</strong>.`;
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculateFirewood();
+    };
+</script>
+</body>
+</html>

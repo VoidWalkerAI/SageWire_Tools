@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Ventilation Estimator</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 15px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌬️ HerdMate | Ventilation</h1>
+    <p>Calculate required fan capacity (CFM) for barns, greenhouses, or high tunnels.</p>
+
+    <h3 class="section-title">1. Structure Dimensions</h3>
+    <div class="input-grid">
+        <div>
+            <label>Length (Feet)</label>
+            <input type="number" id="length-input" value="96" min="1" oninput="calculateVentilation()">
+        </div>
+        <div>
+            <label>Width (Feet)</label>
+            <input type="number" id="width-input" value="30" min="1" oninput="calculateVentilation()">
+        </div>
+    </div>
+    <label>Average Ceiling/Peak Height (Feet)</label>
+    <input type="number" id="height-input" value="12" min="1" oninput="calculateVentilation()">
+
+    <h3 class="section-title">2. Ventilation Goal</h3>
+    <label>Air Exchange Rate (Minutes per Change)</label>
+    <select id="exchange-select" onchange="calculateVentilation()">
+        <option value="1.0" selected>1 Minute (Summer Cooling / Heat Stress)</option>
+        <option value="2.0">2 Minutes (Warm Spring/Fall)</option>
+        <option value="4.0">4 Minutes (Cold Weather / Moisture Control)</option>
+        <option value="10.0">10 Minutes (Winter Minimum)</option>
+    </select>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Required Airflow</h3>
+            <span class="value" id="cfm-output">0 CFM</span>
+            <span class="label">Cubic Feet per Minute</span>
+        </div>
+        <div class="output-box">
+            <h3>Total Volume</h3>
+            <span class="value" id="volume-output">0 ft³</span>
+            <span class="label">Internal Air Space</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Rule of Thumb:</strong> For summer cooling, you must exchange the entire volume of air once every minute. Ensure your total fan rating meets or exceeds the CFM shown.
+    </div>
+</div>
+
+<script>
+    const LENGTH_INPUT = document.getElementById('length-input');
+    const WIDTH_INPUT = document.getElementById('width-input');
+    const HEIGHT_INPUT = document.getElementById('height-input');
+    const EXCHANGE_SELECT = document.getElementById('exchange-select');
+    
+    const CFM_OUTPUT = document.getElementById('cfm-output');
+    const VOLUME_OUTPUT = document.getElementById('volume-output');
+
+    function calculateVentilation() {
+        const length = parseFloat(LENGTH_INPUT.value);
+        const width = parseFloat(WIDTH_INPUT.value);
+        const height = parseFloat(HEIGHT_INPUT.value);
+        const exchangeRate = parseFloat(EXCHANGE_SELECT.value);
+
+        // Validation
+        if (isNaN(length) || isNaN(width) || isNaN(height) || isNaN(exchangeRate) || 
+            length <= 0 || width <= 0 || height <= 0 || exchangeRate <= 0) {
+            CFM_OUTPUT.textContent = '0 CFM';
+            VOLUME_OUTPUT.textContent = '0 ft³';
+            return;
+        }
+
+        // 1. Calculate Total Volume (Cubic Feet)
+        // Formula: Length * Width * Height
+        const totalVolume = length * width * height;
+
+        // 2. Calculate Required CFM
+        // Formula: Volume / Minutes per Exchange
+        const requiredCFM = totalVolume / exchangeRate;
+
+        // --- Output Results ---
+        
+        // Format with commas
+        CFM_OUTPUT.textContent = Math.round(requiredCFM).toLocaleString() + " CFM";
+        VOLUME_OUTPUT.textContent = Math.round(totalVolume).toLocaleString() + " ft³";
+        
+        // Visual Logic: Color Code High CFM requirements (might need multiple fans)
+        if (requiredCFM > 20000) {
+             CFM_OUTPUT.style.color = '#E74C3C'; // High demand
+        } else {
+             CFM_OUTPUT.style.color = '#5A946E'; // Standard
+        }
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculateVentilation();
+    };
+</script>
+</body>
+</html>

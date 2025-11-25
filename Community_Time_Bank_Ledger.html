@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Time Bank Ledger</title>
+    <style>
+        body { font-family: 'Georgia', serif; margin: 20px; background-color: #e0f2f1; }
+        .ledger-app { max-width: 800px; margin: 0 auto; padding: 30px; background-color: #ffffff; border-radius: 15px; box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2); }
+        h2 { text-align: center; color: #00897b; border-bottom: 3px solid #00897b; padding-bottom: 10px; margin-bottom: 25px; }
+        .section-header { margin-top: 30px; margin-bottom: 15px; padding-bottom: 5px; border-bottom: 1px solid #ddd; color: #00796b; font-size: 1.2em; font-weight: bold; }
+        
+        /* Member List & Balance */
+        #memberBalances { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        #memberBalances th, #memberBalances td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        #memberBalances th { background-color: #b2dfdb; color: #004d40; }
+        .positive { color: #2e7d32; font-weight: bold; }
+        .negative { color: #d32f2f; font-weight: bold; }
+        .zero-sum { text-align: center; font-style: italic; margin-top: 10px; }
+
+        /* Transaction Input */
+        .transaction-input { display: flex; flex-wrap: wrap; gap: 10px; align-items: flex-end; }
+        .transaction-input div { flex: 1; min-width: 150px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; color: #555; }
+        input[type="number"], select { width: 95%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; }
+        button { padding: 10px 15px; background-color: #4db6ac; color: white; border: none; border-radius: 5px; cursor: pointer; transition: background-color 0.3s; }
+        button:hover { background-color: #00897b; }
+    </style>
+</head>
+<body>
+    <div class="ledger-app">
+        <h2>⏳ Community Time Bank Ledger</h2>
+        <p style="text-align: center;">Rule: 1 Hour Provided = 1 Time Credit Earned.</p>
+
+        <div class="section-header">Current Member Balances</div>
+        <table id="memberBalances">
+            <thead>
+                <tr>
+                    <th>Member ID</th>
+                    <th>Member Name</th>
+                    <th>Current Balance (Hours)</th>
+                </tr>
+            </thead>
+            <tbody id="balanceTableBody">
+                </tbody>
+        </table>
+        <div class="zero-sum" id="zeroSumCheck">Ledger Status: Balanced (0.00 Hours Total)</div>
+
+        <div class="section-header">Record New Transaction</div>
+        <div class="transaction-input">
+            <div>
+                <label for="providerId">Provider (Giver):</label>
+                <select id="providerId">
+                    </select>
+            </div>
+            <div>
+                <label for="receiverId">Receiver (Getter):</label>
+                <select id="receiverId">
+                    </select>
+            </div>
+            <div>
+                <label for="timeCredits">Time Credits (Hours):</label>
+                <input type="number" id="timeCredits" value="1.0" min="0.1" step="0.1">
+            </div>
+            <button onclick="recordTransaction()">Record Transaction</button>
+        </div>
+    </div>
+
+    <script>
+        // Store balances in an object keyed by ID
+        let balances = {
+            'M001': { name: 'Alice (Gardener)', balance: 0.0 },
+            'M002': { name: 'Bob (Tech Support)', balance: 0.0 },
+            'M003': { name: 'Community Fund', balance: 0.0 }
+        };
+
+        function updateDisplay() {
+            const tbody = document.getElementById('balanceTableBody');
+            const providerSelect = document.getElementById('providerId');
+            const receiverSelect = document.getElementById('receiverId');
+            
+            tbody.innerHTML = '';
+            providerSelect.innerHTML = '';
+            receiverSelect.innerHTML = '';
+
+            let totalBalance = 0;
+
+            for (const id in balances) {
+                const member = balances[id];
+                totalBalance += member.balance;
+
+                // Update Table
+                const row = tbody.insertRow();
+                row.insertCell().textContent = id;
+                row.insertCell().textContent = member.name;
+                
+                const balanceCell = row.insertCell();
+                const balanceValue = member.balance.toFixed(2);
+                balanceCell.textContent = balanceValue + ' hrs';
+                balanceCell.className = balanceValue > 0 ? 'positive' : (balanceValue < 0 ? 'negative' : '');
+                
+                // Update Selects (Transaction Dropdowns)
+                const option = document.createElement('option');
+                option.value = id;
+                option.textContent = `${member.name} (${balanceValue > 0 ? '+' : ''}${balanceValue} hrs)`;
+                
+                providerSelect.appendChild(option.cloneNode(true));
+                receiverSelect.appendChild(option.cloneNode(true));
+            }
+
+            // Zero-Sum Check
+            const checkDiv = document.getElementById('zeroSumCheck');
+            const zeroSumStatus = totalBalance.toFixed(2);
+            checkDiv.textContent = `Ledger Status: ${Math.abs(zeroSumStatus) < 0.01 ? 'Balanced' : 'UNBALANCED'} (${zeroSumStatus} Hours Total)`;
+            checkDiv.style.color = Math.abs(zeroSumStatus) < 0.01 ? '#2e7d32' : '#d32f2f';
+        }
+
+        function recordTransaction() {
+            const providerId = document.getElementById('providerId').value;
+            const receiverId = document.getElementById('receiverId').value;
+            const credits = parseFloat(document.getElementById('timeCredits').value);
+
+            if (providerId === receiverId) {
+                alert('Error: Provider and Receiver cannot be the same person.');
+                return;
+            }
+            if (isNaN(credits) || credits <= 0) {
+                alert('Error: Please enter a positive amount of time credits.');
+                return;
+            }
+
+            // 1. Provider (Giver) Balance Update: increases
+            balances[providerId].balance += credits;
+
+            // 2. Receiver (Getter) Balance Update: decreases
+            balances[receiverId].balance -= credits;
+
+            alert(`Transaction Recorded: ${balances[providerId].name} gave ${credits.toFixed(2)} hrs to ${balances[receiverId].name}.`);
+            
+            // Reset input and refresh display
+            document.getElementById('timeCredits').value = '1.0';
+            updateDisplay();
+        }
+
+        // Initialize the app
+        updateDisplay();
+    </script>
+</body>
+</html>

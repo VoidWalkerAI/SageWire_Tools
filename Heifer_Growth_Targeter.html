@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Heifer Growth Targeter</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 650px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+        
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 15px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #5A946E;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+        
+        /* Warning color for high ADG */
+        .warning { color: #E74C3C !important; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🐄 HerdMate | Heifer Growth</h1>
+    <p>Calculate the required Average Daily Gain (ADG) to ensure heifers hit their target calving weight on time.</p>
+
+    <h3 class="section-title">Current Status</h3>
+    <div class="input-grid">
+        <div>
+            <label for="current-age-input">Current Age (Months)</label>
+            <input type="number" id="current-age-input" value="6" min="1" oninput="calculateADG()">
+        </div>
+        <div>
+            <label for="current-weight-input">Current Weight (Lbs)</label>
+            <input type="number" id="current-weight-input" value="400" min="50" oninput="calculateADG()">
+        </div>
+    </div>
+
+    <h3 class="section-title">Development Goals</h3>
+    <div class="input-grid">
+        <div>
+            <label for="target-age-input">Target Calving Age (Months)</label>
+            <input type="number" id="target-age-input" value="24" min="18" oninput="calculateADG()">
+        </div>
+        <div>
+            <label for="target-weight-input">Target Weight (Lbs) - *Approx. 85% Mature Wt.*</label>
+            <input type="number" id="target-weight-input" value="1350" min="500" oninput="calculateADG()">
+        </div>
+    </div>
+
+    <div class="output-box">
+        <h3>Required Daily Gain (ADG)</h3>
+        <span class="value" id="required-adg-output">0.00 Lbs/Day</span>
+        <span class="label" id="total-gain-output">Total Gain Needed: 0 Lbs</span>
+    </div>
+    
+    <div class="note">
+        <strong>Benchmark:</strong> Holstein heifers typically require 1.7 to 2.0 lbs/day. Gains consistently over 2.5 lbs/day may lead to excessive fattening.
+    </div>
+</div>
+
+<script>
+    const CURRENT_AGE_INPUT = document.getElementById('current-age-input');
+    const CURRENT_WEIGHT_INPUT = document.getElementById('current-weight-input');
+    const TARGET_AGE_INPUT = document.getElementById('target-age-input');
+    const TARGET_WEIGHT_INPUT = document.getElementById('target-weight-input');
+    
+    const REQUIRED_ADG_OUTPUT = document.getElementById('required-adg-output');
+    const TOTAL_GAIN_OUTPUT = document.getElementById('total-gain-output');
+
+    // Average days per month
+    const DAYS_PER_MONTH = 30.44;
+
+    function calculateADG() {
+        const currentAge = parseFloat(CURRENT_AGE_INPUT.value);
+        const currentWeight = parseFloat(CURRENT_WEIGHT_INPUT.value);
+        const targetAge = parseFloat(TARGET_AGE_INPUT.value);
+        const targetWeight = parseFloat(TARGET_WEIGHT_INPUT.value);
+
+        // Validation
+        if (isNaN(currentAge) || isNaN(currentWeight) || isNaN(targetAge) || isNaN(targetWeight) ||
+            currentAge < 0 || currentWeight < 0 || targetAge <= currentAge || targetWeight <= currentWeight) {
+            REQUIRED_ADG_OUTPUT.textContent = '0.00 Lbs/Day';
+            TOTAL_GAIN_OUTPUT.textContent = 'Total Gain Needed: 0 Lbs';
+            return;
+        }
+
+        // 1. Calculate Time Remaining (Days)
+        const monthsRemaining = targetAge - currentAge;
+        const daysRemaining = monthsRemaining * DAYS_PER_MONTH;
+
+        // 2. Calculate Weight Gain Needed
+        const weightGainNeeded = targetWeight - currentWeight;
+
+        // 3. Calculate Required ADG
+        // Formula: Gain Needed / Days Remaining
+        const requiredADG = weightGainNeeded / daysRemaining;
+
+        // --- Output Results ---
+        
+        REQUIRED_ADG_OUTPUT.textContent = requiredADG.toFixed(2) + " Lbs/Day";
+        TOTAL_GAIN_OUTPUT.textContent = `Total Gain Needed: ${Math.round(weightGainNeeded)} Lbs in ${Math.round(daysRemaining)} Days`;
+        
+        // Visual Logic: Color code if ADG is too high (hard to achieve)
+        if (requiredADG > 2.2) {
+             REQUIRED_ADG_OUTPUT.style.color = '#E74C3C'; // Red Warning (Aggressive gain needed)
+             REQUIRED_ADG_OUTPUT.textContent += " ⚠️";
+        } else {
+             REQUIRED_ADG_OUTPUT.style.color = '#5A946E'; // Green (Manageable)
+        }
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateADG();
+    };
+</script>
+</body>
+</html>

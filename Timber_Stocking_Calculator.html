@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Timber Stocking</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 700px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .section-title {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+        
+        .output-box.status-box {
+            grid-column: 1 / span 2;
+            border-width: 3px;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 2em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        /* Status Colors */
+        .status-under { border-color: #f39c12; color: #f39c12; }
+        .status-good { border-color: #5A946E; color: #5A946E; }
+        .status-over { border-color: #E74C3C; color: #E74C3C; }
+
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌲 HerdMate | Timber Stocking</h1>
+    <p>Calculate forest density metrics to determine if your stand needs thinning or planting.</p>
+
+    <h3 class="section-title">1. Tree Measurements</h3>
+    <div class="input-grid">
+        <div>
+            <label for="diameter-input">Avg. Tree Diameter (DBH)</label>
+            <input type="number" id="diameter-input" value="12" min="1" placeholder="Inches" oninput="calculateStocking()">
+        </div>
+        <div>
+            <label for="spacing-input">Avg. Spacing Between Trees</label>
+            <input type="number" id="spacing-input" value="15" min="1" placeholder="Feet" oninput="calculateStocking()">
+        </div>
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Trees Per Acre</h3>
+            <span class="value" id="tpa-output">0</span>
+            <span class="label">TPA (Density)</span>
+        </div>
+        <div class="output-box">
+            <h3>Basal Area</h3>
+            <span class="value" id="ba-output">0 sq ft</span>
+            <span class="label">Per Acre</span>
+        </div>
+        
+        <div class="output-box status-box" id="status-container">
+            <h3>Stocking Status</h3>
+            <span class="value" id="status-output">Waiting...</span>
+            <span class="label" id="status-desc">Based on general hardwood standards</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Basal Area (BA):</strong> This is the cross-sectional area of all trees at breast height. 
+        <br>• <strong>&lt; 60:</strong> Understocked (Wasted space, trees branch out).
+        <br>• <strong>60 - 100:</strong> Fully Stocked (Ideal growth).
+        <br>• <strong>&gt; 100:</strong> Overstocked (Crowded, slow growth, needs thinning).
+    </div>
+</div>
+
+<script>
+    const DIA_INPUT = document.getElementById('diameter-input');
+    const SPACE_INPUT = document.getElementById('spacing-input');
+    
+    const TPA_OUTPUT = document.getElementById('tpa-output');
+    const BA_OUTPUT = document.getElementById('ba-output');
+    const STATUS_OUTPUT = document.getElementById('status-output');
+    const STATUS_BOX = document.getElementById('status-container');
+    const STATUS_DESC = document.getElementById('status-desc');
+
+    // Constant for Basal Area calculation: 0.005454
+    const BA_CONSTANT = 0.005454;
+    // Square feet in an acre
+    const SQ_FT_ACRE = 43560;
+
+    function calculateStocking() {
+        const dbh = parseFloat(DIA_INPUT.value);
+        const spacing = parseFloat(SPACE_INPUT.value);
+
+        // Validation
+        if (isNaN(dbh) || isNaN(spacing) || dbh <= 0 || spacing <= 0) {
+            TPA_OUTPUT.textContent = '0';
+            BA_OUTPUT.textContent = '0 sq ft';
+            setStatus('Waiting...', 'normal');
+            return;
+        }
+
+        // 1. Calculate Trees Per Acre (TPA)
+        // Formula: 43560 / (Spacing * Spacing)
+        // Assumes square spacing approximation
+        const tpa = SQ_FT_ACRE / (spacing * spacing);
+
+        // 2. Calculate Basal Area Per Tree
+        // Formula: 0.005454 * DBH^2
+        const baPerTree = BA_CONSTANT * Math.pow(dbh, 2);
+
+        // 3. Calculate Total Basal Area Per Acre
+        const totalBA = baPerTree * tpa;
+
+        // --- Output Results ---
+        
+        TPA_OUTPUT.textContent = Math.round(tpa);
+        BA_OUTPUT.textContent = Math.round(totalBA) + " sq ft";
+        
+        // --- Determine Stocking Status ---
+        // General Rule of Thumb for established stands
+        
+        if (totalBA < 60) {
+            setStatus("UNDERSTOCKED", "under");
+            STATUS_DESC.textContent = "Trees have too much room. Branchy, poor quality lumber.";
+        } else if (totalBA >= 60 && totalBA <= 110) {
+            setStatus("FULLY STOCKED", "good");
+            STATUS_DESC.textContent = "Optimal density for growth and health.";
+        } else {
+            setStatus("OVERSTOCKED", "over");
+            STATUS_DESC.textContent = "Growth slowing due to competition. Needs thinning.";
+        }
+    }
+    
+    function setStatus(text, type) {
+        STATUS_OUTPUT.textContent = text;
+        
+        // Reset classes
+        STATUS_BOX.classList.remove('status-under', 'status-good', 'status-over');
+        
+        if (type === 'under') {
+            STATUS_BOX.classList.add('status-under');
+        } else if (type === 'good') {
+            STATUS_BOX.classList.add('status-good');
+        } else if (type === 'over') {
+            STATUS_BOX.classList.add('status-over');
+        }
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateStocking();
+    };
+</script>
+</body>
+</html>

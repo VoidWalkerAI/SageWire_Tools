@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | Pearson Square Balancer</title>
+    
+    <style>
+        /* --- HERDMATE BRANDING CSS --- */
+        body { 
+            font-family: sans-serif; 
+            padding: 20px; 
+            background-color: #14141A; /* Ranch Slate */
+            color: #f4f6f7; 
+            font-size: 1.05em;
+        }
+        .container { 
+            max-width: 750px; 
+            margin: 0 auto; 
+            background: #292930; /* Soil/Dark Taupe */
+            padding: 30px; 
+            border-radius: 10px; 
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5); 
+        }
+        h1 { 
+            color: #B85C38; /* Primary Accent (Rust) */
+            text-align: center; 
+            margin-bottom: 5px; 
+        }
+        p { 
+            color: #ccc; 
+            text-align: center; 
+            margin-bottom: 25px; 
+        }
+
+        .section-header {
+            color: #5dade2;
+            border-bottom: 1px solid #5dade2;
+            padding-bottom: 5px;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+        }
+
+        /* Input Grids */
+        .ingredient-grid {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: end;
+        }
+
+        label { display: block; margin-bottom: 8px; color: #aeb6bf; font-weight: bold; }
+        
+        input[type="number"], input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #7D716A; /* Aged Bronze Border */
+            border-radius: 5px;
+            background-color: #34343d; 
+            color: #fff;
+            font-size: 16px;
+        }
+        
+        /* Target Input Styling */
+        #target-input {
+            border-color: #B85C38;
+            background-color: #1a1e2b;
+            font-size: 1.2em;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #5A946E; /* Forage Green Border */
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            margin-top: 0;
+            color: #B85C38; 
+            border-bottom: 1px solid #7D716A;
+            padding-bottom: 5px;
+            font-size: 1.1em;
+        }
+
+        .output-box .value {
+            font-size: 1.5em;
+            color: #5A946E; 
+            font-weight: bold;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .output-box .sub-value {
+            font-size: 1.1em;
+            color: #f4f6f7;
+            display: block;
+        }
+
+        .error-msg {
+            color: #E74C3C;
+            text-align: center;
+            font-weight: bold;
+            margin-top: 10px;
+            min-height: 24px;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+            color: #f4f6f7;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🌾 HerdMate | Pearson Square</h1>
+    <p>Calculate the exact mix of two ingredients to hit a specific nutrient target (Protein, TDN, etc.).</p>
+
+    <div class="section-header">1. Define Your Goal</div>
+    <label for="target-input">Target Nutrient Percentage (%)</label>
+    <input type="number" id="target-input" value="16" min="0" max="100" step="0.1" oninput="calculateRation()">
+
+    <div class="section-header">2. Your Ingredients</div>
+    
+    <div class="ingredient-grid">
+        <div>
+            <label>Ingredient A Name</label>
+            <input type="text" id="name-a" value="Corn" placeholder="e.g. Corn">
+        </div>
+        <div>
+            <label>Value (%)</label>
+            <input type="number" id="val-a" value="9" min="0" max="100" step="0.1" oninput="calculateRation()">
+        </div>
+    </div>
+
+    <div class="ingredient-grid">
+        <div>
+            <label>Ingredient B Name</label>
+            <input type="text" id="name-b" value="Soybean Meal" placeholder="e.g. Supplement">
+        </div>
+        <div>
+            <label>Value (%)</label>
+            <input type="number" id="val-b" value="48" min="0" max="100" step="0.1" oninput="calculateRation()">
+        </div>
+    </div>
+
+    <div class="section-header">3. Batch Size (Optional)</div>
+    <label for="batch-size-input">Total Batch Weight (Lbs)</label>
+    <input type="number" id="batch-size-input" value="2000" min="1" oninput="calculateRation()">
+
+    <div class="error-msg" id="error-display"></div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <h3>Mix Amount: Ingredient A</h3>
+            <span class="value" id="result-a-percent">0%</span>
+            <span class="sub-value" id="result-a-lbs">0 Lbs</span>
+        </div>
+        <div class="output-box">
+            <h3>Mix Amount: Ingredient B</h3>
+            <span class="value" id="result-b-percent">0%</span>
+            <span class="sub-value" id="result-b-lbs">0 Lbs</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        <strong>Rule:</strong> Your target percentage must be <em>between</em> the values of Ingredient A and Ingredient B for the math to work.
+    </div>
+</div>
+
+<script>
+    const TARGET_INPUT = document.getElementById('target-input');
+    const VAL_A_INPUT = document.getElementById('val-a');
+    const VAL_B_INPUT = document.getElementById('val-b');
+    const BATCH_INPUT = document.getElementById('batch-size-input');
+    const ERROR_DISPLAY = document.getElementById('error-display');
+    
+    const RES_A_PCT = document.getElementById('result-a-percent');
+    const RES_A_LBS = document.getElementById('result-a-lbs');
+    const RES_B_PCT = document.getElementById('result-b-percent');
+    const RES_B_LBS = document.getElementById('result-b-lbs');
+
+    function calculateRation() {
+        const target = parseFloat(TARGET_INPUT.value);
+        const valA = parseFloat(VAL_A_INPUT.value);
+        const valB = parseFloat(VAL_B_INPUT.value);
+        const batchSize = parseFloat(BATCH_INPUT.value) || 0;
+
+        // Clear previous results
+        ERROR_DISPLAY.textContent = '';
+        RES_A_PCT.textContent = '0%';
+        RES_B_PCT.textContent = '0%';
+        RES_A_LBS.textContent = '0 Lbs';
+        RES_B_LBS.textContent = '0 Lbs';
+
+        // Validation
+        if (isNaN(target) || isNaN(valA) || isNaN(valB)) return;
+
+        // Check mathematical possibility (Pearson Square Rule)
+        // Target must be between the two ingredient values
+        const minVal = Math.min(valA, valB);
+        const maxVal = Math.max(valA, valB);
+
+        if (target <= minVal || target >= maxVal) {
+            ERROR_DISPLAY.textContent = `⚠️ Impossible: Target (${target}%) must be between ${minVal}% and ${maxVal}%`;
+            return;
+        }
+
+        // --- Pearson Square Logic ---
+        
+        // 1. Subtract diagonally (Absolute values)
+        // Parts of A = |Target - B|
+        const partsA = Math.abs(target - valB);
+        
+        // Parts of B = |Target - A|
+        const partsB = Math.abs(target - valA);
+        
+        // 2. Total Parts
+        const totalParts = partsA + partsB;
+
+        // 3. Calculate Percentages
+        const percentA = (partsA / totalParts) * 100;
+        const percentB = (partsB / totalParts) * 100;
+
+        // 4. Calculate Batch Weights
+        const weightA = (percentA / 100) * batchSize;
+        const weightB = (percentB / 100) * batchSize;
+
+        // --- Output Results ---
+        
+        RES_A_PCT.textContent = percentA.toFixed(1) + '%';
+        RES_B_PCT.textContent = percentB.toFixed(1) + '%';
+        
+        if (batchSize > 0) {
+            RES_A_LBS.textContent = Math.round(weightA).toLocaleString() + ' Lbs';
+            RES_B_LBS.textContent = Math.round(weightB).toLocaleString() + ' Lbs';
+        }
+    }
+
+    // Initialize
+    window.onload = function() {
+        calculateRation();
+    };
+</script>
+</body>
+</html>

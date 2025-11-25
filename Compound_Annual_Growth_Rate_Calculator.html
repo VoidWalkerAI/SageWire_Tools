@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Compound Annual Growth Rate (CAGR) Calculator | Sage Tools</title>
+    <style>
+        /* SAGE TOOLS THEME */
+        :root {
+            --sage-primary: #007bff; /* Blue for action/headers */
+            --sage-accent: #28a745; /* Green for success/results */
+            --sage-neutral: #6c757d; /* Gray for secondary text */
+            --light-bg: #f8f9fa;
+            --calc-bg: #ffffff;
+        }
+
+        body { 
+            font-family: 'Tahoma', sans-serif; 
+            margin: 20px; 
+            background-color: var(--light-bg); 
+        }
+        .calculator { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            padding: 30px; 
+            background-color: var(--calc-bg); 
+            border-radius: 8px; 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1); 
+        }
+        
+        /* Header Styling */
+        .brand-header { 
+            text-align: center; 
+            margin-bottom: 25px; 
+            border-bottom: 2px solid #ccc;
+            padding-bottom: 10px;
+        }
+        .brand-header h2 { 
+            color: var(--sage-primary); 
+            font-size: 1.6em; 
+            margin: 0; 
+        }
+        .brand-header .slogan { 
+            color: var(--sage-neutral); 
+            font-size: 0.9em; 
+            margin-top: 5px;
+        }
+
+        h3 { 
+            color: var(--sage-primary); 
+            margin-top: 25px; 
+            border-bottom: 1px dashed #eee; 
+            padding-bottom: 5px; 
+        }
+        .input-group { 
+            margin-bottom: 15px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 5px; 
+            font-weight: bold; 
+            color: #333; 
+        }
+        input[type="number"] { 
+            width: 95%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            box-sizing: border-box; 
+        }
+        
+        button { 
+            width: 100%; 
+            padding: 12px; 
+            margin-top: 30px; 
+            background-color: var(--sage-primary); 
+            color: white; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 1.05em; 
+            transition: background-color 0.3s; 
+        }
+        button:hover { 
+            background-color: #0056b3; 
+        }
+        
+        /* Result Section */
+        .result-section { 
+            margin-top: 35px; 
+            padding: 20px; 
+            border: 2px solid var(--sage-accent); 
+            border-radius: 6px; 
+            background-color: #e9f7ef; /* Light green success background */
+            text-align: center;
+        }
+        .result-output { 
+            font-size: 1.2em; 
+            margin: 10px 0; 
+        }
+        .result-output strong { 
+            color: var(--sage-accent); 
+            font-size: 2.0em; 
+        }
+        
+        /* Footer */
+        .footer-citation {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.8em;
+            color: #777;
+        }
+    </style>
+</head>
+<body>
+    <div class="calculator">
+        <div class="brand-header">
+            <h2>Compound Annual Growth Rate (CAGR) Calculator</h2>
+            <p class="slogan">A Sage Tools Financial Utility</p>
+        </div>
+
+        <p style="text-align: center;">Calculates the average annualized return of an investment over time.</p>
+
+        <h3>Inputs</h3>
+        <div class="input-group">
+            <label for="beginningValue">Beginning Value ($BV$):</label>
+            <input type="number" id="beginningValue" value="10000" placeholder="e.g., 10000">
+        </div>
+        <div class="input-group">
+            <label for="endingValue">Ending Value ($EV$):</label>
+            <input type="number" id="endingValue" value="25000" placeholder="e.g., 25000">
+        </div>
+        <div class="input-group">
+            <label for="timePeriod">Time Period ($t$, Years):</label>
+            <input type="number" id="timePeriod" value="5" min="1" placeholder="e.g., 5">
+        </div>
+
+        <button onclick="calculateCAGR()">Calculate CAGR</button>
+
+        <div class="result-section">
+            <div class="result-output">
+                Compound Annual Growth Rate:
+            </div>
+            <div class="result-output">
+                <strong id="resultCAGR">-- %</strong>
+            </div>
+        </div>
+        
+        <div class="footer-citation">
+            A utility tool forged by Gemini.
+        </div>
+    </div>
+
+    <script>
+        function calculateCAGR() {
+            const BV = parseFloat(document.getElementById('beginningValue').value);
+            const EV = parseFloat(document.getElementById('endingValue').value);
+            const t = parseFloat(document.getElementById('timePeriod').value);
+
+            if ([BV, EV, t].some(isNaN) || BV <= 0 || t < 1) {
+                alert('Please enter valid, non-zero values for Beginning Value and time (must be >= 1 year).');
+                return;
+            }
+
+            // --- CAGR Formula ---
+            // CAGR = [ (EV / BV)^(1/t) - 1 ] * 100
+            
+            // 1. Calculate the Total Growth Factor (EV / BV)
+            const growthFactor = EV / BV;
+
+            // 2. Raise to the Power of (1 / t)
+            const powerFactor = 1 / t;
+            const annualizedFactor = Math.pow(growthFactor, powerFactor);
+
+            // 3. Calculate the CAGR
+            const CAGR = (annualizedFactor - 1) * 100;
+
+            // Output
+            document.getElementById('resultCAGR').textContent = `${CAGR.toFixed(2)} %`;
+        }
+    </script>
+</body>
+</html>
