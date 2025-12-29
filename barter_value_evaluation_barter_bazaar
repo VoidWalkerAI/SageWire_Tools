@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barter Bazaar - Pro Trade Evaluator</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --accent: #27ae60;
+            --warning: #f39c12;
+            --danger: #c0392b;
+            --light: #ecf0f1;
+            --border-radius: 8px;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f7f6;
+            color: #333;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            padding: 30px;
+            border-radius: var(--border-radius);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.1);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid var(--accent);
+            padding-bottom: 15px;
+        }
+
+        header h1 { margin: 0; color: var(--primary); }
+        header p { color: #7f8c8d; margin-top: 5px; }
+
+        /* --- Help Section --- */
+        .help-box {
+            background-color: #e8f8f5;
+            border-left: 5px solid var(--accent);
+            padding: 15px;
+            margin-bottom: 25px;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+        .help-box h4 { margin-top: 0; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .help-toggle { cursor: pointer; color: #2980b9; text-decoration: underline; font-size: 0.9em; float: right;}
+
+        /* --- Input Grid --- */
+        .trade-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .trade-grid { grid-template-columns: 1fr; }
+        }
+
+        .trade-side {
+            background: #fafafa;
+            padding: 20px;
+            border: 1px solid #e0e0e0;
+            border-radius: var(--border-radius);
+            position: relative;
+        }
+
+        .side-header {
+            font-size: 1.2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary);
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 8px;
+        }
+        
+        .side-header.left { color: #2980b9; } /* Blue for "You" */
+        .side-header.right { color: var(--accent); } /* Green for "Them" */
+
+        label { display: block; margin-top: 12px; font-weight: 600; font-size: 0.9em; color: #555; }
+        
+        input[type="text"], input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box; /* Fix padding issues */
+            font-size: 1em;
+        }
+
+        .mode-toggle {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            background: #e0e0e0;
+            padding: 4px;
+            border-radius: 20px;
+        }
+
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            border: none;
+            border-radius: 16px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.85em;
+            transition: all 0.2s;
+            background: transparent;
+            color: #666;
+        }
+
+        .mode-btn.active {
+            background: white;
+            color: var(--primary);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* --- Results Section --- */
+        .results-area {
+            margin-top: 40px;
+            background: #fff;
+            border-top: 2px dashed #ccc;
+            padding-top: 20px;
+        }
+
+        .calculate-btn {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: background 0.3s;
+            margin-top: 20px;
+        }
+        .calculate-btn:hover { background-color: #34495e; }
+
+        .meter-container {
+            margin: 30px 0;
+            text-align: center;
+        }
+
+        .meter-bar {
+            height: 25px;
+            background: linear-gradient(90deg, #e74c3c 0%, #f1c40f 45%, #2ecc71 50%, #f1c40f 55%, #e74c3c 100%);
+            border-radius: 15px;
+            position: relative;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+        }
+
+        .meter-needle {
+            width: 4px;
+            height: 35px;
+            background: #333;
+            position: absolute;
+            top: -5px;
+            left: 50%; /* Starts in middle */
+            transform: translateX(-50%);
+            transition: left 0.5s ease-out;
+            border: 1px solid white;
+        }
+
+        .meter-labels {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 8px;
+            font-size: 0.8em;
+            color: #7f8c8d;
+        }
+
+        .verdict-box {
+            background: #fdfefe;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: var(--border-radius);
+            text-align: center;
+        }
+
+        .verdict-title { font-size: 1.4em; font-weight: bold; margin-bottom: 10px; color: var(--primary); }
+        .verdict-detail { font-size: 1.1em; line-height: 1.6; }
+        .cash-kicker { 
+            display: inline-block;
+            margin-top: 15px;
+            padding: 10px 20px;
+            background-color: var(--accent);
+            color: white;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>⚖️ Barter Bazaar Trade Evaluator</h1>
+        <p>Pro-Grade Value Assessment & Fairness Calculator</p>
+    </header>
+
+    <div class="help-box">
+        <h4>
+            <span>❓ How to use this tool</span>
+            <span class="help-toggle" onclick="toggleHelp()">[Hide/Show]</span>
+        </h4>
+        <div id="helpContent">
+            <p><strong>1. Choose Type:</strong> Select "Goods" (physical items) or "Services" (time/labor) for each side.</p>
+            <p><strong>2. Enter Base Value:</strong> For goods, enter the Fair Market Value (what it sells for used). For services, enter hourly rate.</p>
+            <p><strong>3. Adjust Factors:</strong> Use the dropdowns to adjust for condition (Is it new?) and your desire (Do you really need it?).</p>
+            <p><strong>4. Check the Meter:</strong> Click "Evaluate Trade" to see if the deal is balanced or if cash is needed to make it fair.</p>
+        </div>
+    </div>
+
+    <div class="trade-grid">
+        <div class="trade-side">
+            <div class="side-header left">Your Offer (Side A)</div>
+            
+            <div class="mode-toggle">
+                <button class="mode-btn active" onclick="setMode('A', 'goods', this)">📦 Goods</button>
+                <button class="mode-btn" onclick="setMode('A', 'service', this)">🛠️ Service</button>
+            </div>
+            <input type="hidden" id="modeA" value="goods">
+
+            <label for="nameA">Item/Service Name:</label>
+            <input type="text" id="nameA" placeholder="e.g. Vintage Lamp">
+
+            <label id="labelValA" for="valA">Fair Market Value ($ per item):</label>
+            <input type="number" id="valA" placeholder="0.00">
+
+            <label id="labelQtyA" for="qtyA">Quantity:</label>
+            <input type="number" id="qtyA" value="1" placeholder="1">
+
+            <label for="condA">Condition / Quality:</label>
+            <select id="condA">
+                <option value="1.0">Mint / Like New (100%)</option>
+                <option value="0.8" selected>Good / Used (80%)</option>
+                <option value="0.5">Fair / Worn (50%)</option>
+                <option value="0.2">Poor / For Parts (20%)</option>
+            </select>
+        </div>
+
+        <div class="trade-side">
+            <div class="side-header right">Their Offer (Side B)</div>
+
+            <div class="mode-toggle">
+                <button class="mode-btn active" onclick="setMode('B', 'goods', this)">📦 Goods</button>
+                <button class="mode-btn" onclick="setMode('B', 'service', this)">🛠️ Service</button>
+            </div>
+            <input type="hidden" id="modeB" value="goods">
+
+            <label for="nameB">Item/Service Name:</label>
+            <input type="text" id="nameB" placeholder="e.g. 3 Hours Carpentry">
+
+            <label id="labelValB" for="valB">Fair Market Value ($ per item):</label>
+            <input type="number" id="valB" placeholder="0.00">
+
+            <label id="labelQtyB" for="qtyB">Quantity:</label>
+            <input type="number" id="qtyB" value="1" placeholder="1">
+
+            <label for="condB">Condition / Quality:</label>
+            <select id="condB">
+                <option value="1.0">Mint / Like New (100%)</option>
+                <option value="0.8" selected>Good / Used (80%)</option>
+                <option value="0.5">Fair / Worn (50%)</option>
+                <option value="0.2">Poor / For Parts (20%)</option>
+            </select>
+        </div>
+    </div>
+
+    <button class="calculate-btn" onclick="evaluateTrade()">Evaluate Trade Balance</button>
+
+    <div class="results-area" id="resultsArea" style="display:none;">
+        <div class="meter-container">
+            <div style="margin-bottom:5px; font-weight:bold;">Fairness Meter</div>
+            <div class="meter-bar">
+                <div class="meter-needle" id="meterNeedle"></div>
+            </div>
+            <div class="meter-labels">
+                <span>You Lose</span>
+                <span>Fair Trade</span>
+                <span>You Win</span>
+            </div>
+        </div>
+
+        <div class="verdict-box">
+            <div class="verdict-title" id="verdictTitle">Calculating...</div>
+            <div class="verdict-detail" id="verdictDetail"></div>
+            <div id="cashKickerArea"></div>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // --- UI Logic: Toggle Goods vs Services ---
+    function setMode(side, mode, btnElement) {
+        // Update hidden input
+        document.getElementById(`mode${side}`).value = mode;
+
+        // Update button styles
+        const btns = btnElement.parentElement.getElementsByClassName('mode-btn');
+        Array.from(btns).forEach(b => b.classList.remove('active'));
+        btnElement.classList.add('active');
+
+        // Update Labels
+        const labelVal = document.getElementById(`labelVal${side}`);
+        const labelQty = document.getElementById(`labelQty${side}`);
+
+        if (mode === 'service') {
+            labelVal.innerText = 'Hourly Rate ($):';
+            labelQty.innerText = 'Hours of Labor:';
+        } else {
+            labelVal.innerText = 'Fair Market Value ($ per item):';
+            labelQty.innerText = 'Quantity:';
+        }
+    }
+
+    function toggleHelp() {
+        const content = document.getElementById('helpContent');
+        if (content.style.display === 'none') {
+            content.style.display = 'block';
+        } else {
+            content.style.display = 'none';
+        }
+    }
+
+    // --- Core Logic: The Calculation ---
+    function evaluateTrade() {
+        // 1. Get Values Side A
+        const valA = parseFloat(document.getElementById('valA').value) || 0;
+        const qtyA = parseFloat(document.getElementById('qtyA').value) || 0;
+        const condA = parseFloat(document.getElementById('condA').value);
+        const nameA = document.getElementById('nameA').value || 'Your Item';
+
+        // 2. Get Values Side B
+        const valB = parseFloat(document.getElementById('valB').value) || 0;
+        const qtyB = parseFloat(document.getElementById('qtyB').value) || 0;
+        const condB = parseFloat(document.getElementById('condB').value);
+        const nameB = document.getElementById('nameB').value || 'Their Item';
+
+        // 3. Calculate Total "True Value"
+        // Formula: (Base Value * Quantity) * Condition Multiplier
+        const totalA = (valA * qtyA) * condA;
+        const totalB = (valB * qtyB) * condB;
+
+        // Show Results Area
+        document.getElementById('resultsArea').style.display = 'block';
+        
+        // 4. Update Fairness Meter
+        // We want a percentage difference relative to the total pot
+        // 50% is perfectly even. <50% means A is low, >50% means A is high.
+        let totalPot = totalA + totalB;
+        if (totalPot === 0) totalPot = 1; // Prevent divide by zero
+
+        const percentageA = (totalA / totalPot) * 100;
+        
+        // Move needle: 0% = left, 100% = right. 
+        // We clamp it between 5% and 95% so it stays visible inside the bar.
+        const clampedPercent = Math.max(5, Math.min(95, percentageA));
+        document.getElementById('meterNeedle').style.left = clampedPercent + "%";
+
+        // 5. Generate Verdict
+        const verdictTitle = document.getElementById('verdictTitle');
+        const verdictDetail = document.getElementById('verdictDetail');
+        const cashKickerArea = document.getElementById('cashKickerArea');
+
+        let diff = totalA - totalB;
+        let diffAbs = Math.abs(diff);
+
+        // Define "Fair" as within 10% difference
+        const threshold = totalPot * 0.05; 
+
+        if (Math.abs(diff) <= threshold) {
+            // Fair Trade
+            verdictTitle.innerText = "✅ It's a Fair Trade!";
+            verdictTitle.style.color = "#27ae60";
+            verdictDetail.innerHTML = `Both sides are bringing roughly equal value (~$${totalA.toFixed(2)} vs ~$${totalB.toFixed(2)}).`;
+            cashKickerArea.innerHTML = "";
+        } else {
+            // Unfair Trade
+            verdictTitle.innerText = "⚠️ Values are Unbalanced";
+            verdictTitle.style.color = "#d35400";
+            
+            if (totalA > totalB) {
+                // You are giving too much
+                verdictDetail.innerHTML = `You are offering more value ($${totalA.toFixed(2)}) than you are receiving ($${totalB.toFixed(2)}).`;
+                cashKickerArea.innerHTML = `<div class='cash-kicker'>Ask them to add <strong>$${diffAbs.toFixed(2)}</strong> cash to make it even.</div>`;
+            } else {
+                // They are giving too much
+                verdictDetail.innerHTML = `You are receiving more value ($${totalB.toFixed(2)}) than you are offering ($${totalA.toFixed(2)}).`;
+                cashKickerArea.innerHTML = `<div class='cash-kicker'>You should add <strong>$${diffAbs.toFixed(2)}</strong> cash to make it even.</div>`;
+            }
+        }
+    }
+</script>
+
+</body>
+</html>
