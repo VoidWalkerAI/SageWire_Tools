@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>HerdMate | Summer Command</title>
+    <style>
+        :root { 
+            --neon: #39ff14; 
+            --amber: #ffaa00; 
+            --red: #ff4444; 
+            --blue: #00ccff; 
+            --bg: #050505; 
+            --card: #151515; 
+            --input: #222;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: white; font-family: system-ui, -apple-system, sans-serif; margin: 0; padding: 15px; padding-bottom: 90px; }
+        
+        /* HEADERS */
+        .app-header { background: #000; border-bottom: 2px solid var(--neon); padding: 15px; text-align: center; position: sticky; top: 0; z-index: 100; margin: -15px -15px 15px -15px; }
+        .app-header h1 { margin: 0; font-size: 1.1rem; letter-spacing: 2px; color: var(--neon); text-transform: uppercase; font-weight: 900; }
+        
+        /* CARDS */
+        .card { background: var(--card); border: 1px solid #333; border-radius: 12px; padding: 15px; margin-bottom: 15px; }
+        .section-title { color: var(--amber); font-size: 0.8rem; font-weight: bold; text-transform: uppercase; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; }
+
+        /* INPUTS */
+        label { display: block; font-size: 0.7rem; color: #888; margin-bottom: 5px; font-weight: bold; text-transform: uppercase; }
+        input { width: 100%; padding: 14px; background: var(--input); border: 1px solid #444; color: white; border-radius: 8px; font-size: 1.2rem; outline: none; transition: 0.2s; }
+        input:focus { border-color: var(--neon); background: #000; }
+
+        /* STATUS DISPLAY */
+        .status-val { font-size: 1.8rem; font-weight: 900; color: var(--neon); text-align: right; }
+        .longevity-disp { font-size: 2.2rem; color: var(--amber); font-weight: 900; text-align: center; }
+
+        /* BAG RESULTS */
+        .bag-result { background: var(--blue); color: black; padding: 20px; border-radius: 10px; text-align: center; margin-top: 15px; box-shadow: 0 0 15px rgba(0, 204, 255, 0.3); }
+        .bag-count { font-size: 3.5rem; font-weight: 900; line-height: 1; display: block; }
+        .bag-sub { font-size: 0.9rem; font-weight: 900; text-transform: uppercase; }
+
+        /* BUTTONS */
+        .btn-action { width: 100%; padding: 18px; background: var(--neon); color: black; font-size: 1.1rem; font-weight: 900; border: none; border-radius: 10px; cursor: pointer; text-transform: uppercase; margin-top: 15px; }
+        .btn-blue { background: var(--blue); }
+        .btn-confirm { background: #222; color: #fff; border: 1px solid #444; }
+
+        /* NAVIGATION FOOTER */
+        .nav-bar { position: fixed; bottom: 0; left: 0; width: 100%; background: #111; border-top: 1px solid #333; display: flex; justify-content: space-around; padding: 15px 0; z-index: 200; }
+        .nav-btn { background: none; border: none; color: #666; font-size: 0.9rem; font-weight: bold; text-transform: uppercase; cursor: pointer; }
+        .nav-btn.active { color: var(--neon); }
+
+        .hidden { display: none; }
+        .flex-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+
+<div class="app-header">
+    <h1>HerdMate | Summer Command</h1>
+</div>
+
+<div id="view-grain" class="container">
+    <div class="card">
+        <div class="section-title">15-Ton Bin Inventory</div>
+        <div class="flex-row">
+            <div>
+                <label>Inventory (Tons)</label>
+                <input type="number" id="binLevel" value="12.5" oninput="updateBin()">
+            </div>
+            <div style="text-align:right;">
+                <label>Est. Bags Left</label>
+                <div class="status-val" id="binBagsLeft">--</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card" style="border-left: 5px solid var(--blue);">
+        <div class="section-title" style="color: var(--blue);">Hand-Bag Calculator</div>
+        
+        <div class="flex-row">
+            <div>
+                <label>Bag Size (Lbs)</label>
+                <input type="number" id="bagSize" value="40" oninput="calcBags()">
+            </div>
+            <div>
+                <label>Lbs / Head</label>
+                <input type="number" id="grainRate" value="3" oninput="calcBags()">
+            </div>
+        </div>
+        <div>
+            <label>Head Count</label>
+            <input type="number" id="bagHead" placeholder="Enter Head" oninput="calcBags()">
+        </div>
+
+        <div id="bagOutput" class="hidden">
+            <div class="bag-result">
+                <span class="bag-count" id="resBags">0</span>
+                <span class="bag-sub">Bags to Fill</span>
+                <div style="font-size:0.75rem; margin-top:5px; font-weight: bold;">(Total Load: <span id="resLbs">0</span> lbs)</div>
+            </div>
+            <button class="btn-action btn-confirm" onclick="deductInventory()">Confirm & Deduct Inventory</button>
+        </div>
+    </div>
+</div>
+
+<div id="view-creep" class="container hidden">
+    <div class="card">
+        <div class="section-title">Creep Feeder Tracking</div>
+        <label>Last Delivery Date</label>
+        <input type="date" id="creepDate">
+        
+        <div class="flex-row" style="margin-top:12px;">
+            <div>
+                <label>Tons Delivered</label>
+                <input type="number" id="creepTons" value="5">
+            </div>
+            <div>
+                <label>Avg. Intake (lbs)</label>
+                <input type="number" id="creepIntake" value="6">
+            </div>
+        </div>
+        <label>Calf Head Count</label>
+        <input type="number" id="creepHead" value="45">
+
+        <button class="btn-action" onclick="checkCreep()">Check Feeder Status</button>
+
+        <div id="creepStatus" style="margin-top:20px;"></div>
+    </div>
+</div>
+
+<div class="nav-bar">
+    <button class="nav-btn active" id="nav-grain" onclick="switchTab('grain')">1. Grain & Bags</button>
+    <button class="nav-btn" id="nav-creep" onclick="switchTab('creep')">2. Creep Feeder</button>
+</div>
+
+<script>
+    // --- APP LOGIC ---
+    function switchTab(tab) {
+        document.getElementById('view-grain').classList.toggle('hidden', tab !== 'grain');
+        document.getElementById('view-creep').classList.toggle('hidden', tab !== 'creep');
+        document.getElementById('nav-grain').classList.toggle('active', tab === 'grain');
+        document.getElementById('nav-creep').classList.toggle('active', tab === 'creep');
+        if(tab === 'grain') updateBin();
+    }
+
+    function updateBin() {
+        const tons = parseFloat(document.getElementById('binLevel').value) || 0;
+        const bSize = parseFloat(document.getElementById('bagSize').value) || 1;
+        const bags = Math.floor((tons * 2000) / bSize);
+        document.getElementById('binBagsLeft').innerText = bags.toLocaleString();
+    }
+
+    function calcBags() {
+        const size = parseFloat(document.getElementById('bagSize').value) || 1;
+        const rate = parseFloat(document.getElementById('grainRate').value) || 0;
+        const head = parseFloat(document.getElementById('bagHead').value) || 0;
+        
+        if (head <= 0) {
+            document.getElementById('bagOutput').classList.add('hidden');
+            return;
+        }
+
+        const totalLbs = head * rate;
+        const bagsNeeded = Math.ceil(totalLbs / size);
+
+        document.getElementById('resBags').innerText = bagsNeeded;
+        document.getElementById('resLbs').innerText = totalLbs.toLocaleString();
+        document.getElementById('bagOutput').classList.remove('hidden');
+        updateBin();
+    }
+
+    function deductInventory() {
+        const totalLbs = parseFloat(document.getElementById('resLbs').innerText.replace(/,/g, ''));
+        const currentTons = parseFloat(document.getElementById('binLevel').value);
+        const newLevel = currentTons - (totalLbs / 2000);
+        
+        document.getElementById('binLevel').value = newLevel.toFixed(2);
+        updateBin();
+        document.getElementById('bagOutput').classList.add('hidden');
+        document.getElementById('bagHead').value = '';
+        alert("Inventory Updated. Bin at " + newLevel.toFixed(2) + " tons.");
+    }
+
+    function checkCreep() {
+        const deliveredLbs = (parseFloat(document.getElementById('creepTons').value) || 0) * 2000;
+        const intake = parseFloat(document.getElementById('creepIntake').value) || 0;
+        const head = parseFloat(document.getElementById('creepHead').value) || 0;
+        const dateInput = document.getElementById('creepDate').value;
+
+        if(!dateInput) return alert("Select delivery date.");
+        
+        const daysGone = Math.ceil(Math.abs(new Date() - new Date(dateInput)) / (1000 * 60 * 60 * 24)); 
+        const remainingLbs = deliveredLbs - (intake * head * daysGone);
+        const daysLeft = Math.round(remainingLbs / (intake * head));
+
+        const div = document.getElementById('creepStatus');
+        if (remainingLbs <= 0) {
+            div.innerHTML = `<div class="longevity-disp" style="color:var(--red);">EMPTY</div><div style="text-align:center; color:#888;">RAN OUT APPROX. ${Math.abs(daysLeft)} DAYS AGO</div>`;
+        } else {
+            div.innerHTML = `<div class="longevity-disp">${daysLeft} Days</div><div style="text-align:center; color:#888;">REMAINING UNTIL EMPTY</div>`;
+        }
+    }
+
+    // Default Date
+    document.getElementById('creepDate').valueAsDate = new Date();
+    updateBin();
+</script>
+
+</body>
+</html>
+
