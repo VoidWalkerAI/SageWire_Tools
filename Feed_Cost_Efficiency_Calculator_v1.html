@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feed Cost Efficiency Calculator</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #34343d; color: #fff; }
+        .container { max-width: 700px; margin: 0 auto; background: #14141A; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #B85C38; text-align: center; margin-bottom: 5px; }
+        p { text-align: center; color: #aeb6bf; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 5px; color: #f39c12; font-weight: bold; }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #B85C38;
+            border-radius: 5px;
+            background-color: #34343d;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2ecc71;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #f39c12;
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #fff;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>HerdMate | 💲 Feed Cost Efficiency Analyzer</h1>
+    <p>Calculate your Cost of Gain (COG) and daily feed expense for efficient ranch management.</p>
+
+    <div class="input-group">
+        <label for="total-feed-cost-input">Total Feed Cost for Period ($)</label>
+        <input type="number" id="total-feed-cost-input" value="5000" min="0" oninput="calculateFeedCost()">
+    </div>
+
+    <div class="input-group">
+        <label for="days-input">Number of Days in Feeding Period</label>
+        <input type="number" id="days-input" value="60" min="1" oninput="calculateFeedCost()">
+    </div>
+    
+    <div class="input-group">
+        <label for="head-count-input">Number of Head in the Group</label>
+        <input type="number" id="head-count-input" value="50" min="1" oninput="calculateFeedCost()">
+    </div>
+    
+    <div class="input-group">
+        <label for="total-gain-input">Total Pounds of Weight Gained by Entire Group (Lbs)</label>
+        <input type="number" id="total-gain-input" value="6000" min="0" oninput="calculateFeedCost()">
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <span class="value" id="cost-per-day-output">$0.00</span>
+            <span class="label">Feed Cost per Head per Day</span>
+        </div>
+        <div class="output-box">
+            <span class="value" id="cog-output">$0.00</span>
+            <span class="label">Cost of Gain ($/Lb)</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        Cost of Gain is the primary metric used to compare different feed rations. Lower COG is better.
+    </div>
+</div>
+
+<script>
+    const TOTAL_FEED_COST_INPUT = document.getElementById('total-feed-cost-input');
+    const DAYS_INPUT = document.getElementById('days-input');
+    const HEAD_COUNT_INPUT = document.getElementById('head-count-input');
+    const TOTAL_GAIN_INPUT = document.getElementById('total-gain-input');
+    const COST_PER_DAY_OUTPUT = document.getElementById('cost-per-day-output');
+    const COG_OUTPUT = document.getElementById('cog-output');
+
+    function calculateFeedCost() {
+        const totalCost = parseFloat(TOTAL_FEED_COST_INPUT.value);
+        const days = parseFloat(DAYS_INPUT.value);
+        const headCount = parseFloat(HEAD_COUNT_INPUT.value);
+        const totalGain = parseFloat(TOTAL_GAIN_INPUT.value);
+        
+        // Basic Validation
+        if (isNaN(totalCost) || isNaN(days) || isNaN(headCount) || isNaN(totalGain) || 
+            days <= 0 || headCount <= 0 || totalCost < 0 || totalGain < 0) {
+            COST_PER_DAY_OUTPUT.textContent = '$0.00';
+            COG_OUTPUT.textContent = '$0.00';
+            return;
+        }
+
+        // --- 1. Cost per Head per Day Calculation ---
+        
+        // Total Cost for the Entire Period
+        const totalDaysInPeriod = days * headCount;
+        
+        // Formula: Cost/Day = Total Feed Cost / Total Days in Period (e.g., 60 days * 50 head)
+        const costPerHeadPerDay = totalCost / totalDaysInPeriod;
+
+        // --- 2. Cost of Gain (COG) Calculation ---
+        
+        // Formula: COG = Total Feed Cost / Total Pounds Gained
+        const costOfGain = totalGain > 0 ? totalCost / totalGain : 0;
+        
+        // --- Output Results ---
+        
+        // Display Cost per Day (formatted as currency)
+        COST_PER_DAY_OUTPUT.textContent = '$' + costPerHeadPerDay.toFixed(2);
+        
+        // Display COG (formatted as currency)
+        COG_OUTPUT.textContent = '$' + costOfGain.toFixed(2);
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateFeedCost();
+    };
+</script>
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>HerdMate | BCS Management Tool</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #34343d; color: #fff; }
+        .container { max-width: 700px; margin: 0 auto; background: #14141A; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #B85C38; text-align: center; margin-bottom: 5px; }
+        p { text-align: center; color: #aeb6bf; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 5px; color: #f4f6f7; font-weight: bold; }
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #B85C38;
+            border-radius: 5px;
+            background-color: #34343d;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            border: 2px solid #2ecc71;
+            background-color: #34343d;
+        }
+
+        .output-box h3 {
+            color: #f39c12;
+            border-bottom: 1px solid #f39c12;
+            padding-bottom: 5px;
+            margin-top: 0;
+        }
+        
+        #bcs-status {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        #bcs-recommendation {
+            font-size: 1.1em;
+        }
+
+        .status-danger { color: #e74c3c; } /* Red for too thin/fat */
+        .status-ideal { color: #2ecc71; } /* Green for ideal */
+        .status-caution { color: #f1c40f; } /* Yellow for caution */
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #292930;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>🐂 HerdMate | BCS Management Reference</h1>
+    <p>Select the visually assessed Body Condition Score (1-9) to view its meaning and management recommendation.</p>
+
+    <label for="bcs-select">Select Body Condition Score (BCS)</label>
+    <select id="bcs-select" onchange="displayBCSInfo()">
+        <option value="5" selected>5 - Ideal (Baseline)</option>
+        <option value="1">1 - Emaciated (Extreme)</option>
+        <option value="2">2 - Very Thin</option>
+        <option value="3">3 - Thin</option>
+        <option value="4">4 - Borderline</option>
+        <option value="6">6 - Good</option>
+        <option value="7">7 - Fleshy</option>
+        <option value="8">8 - Fat</option>
+        <option value="9">9 - Obese (Extreme)</option>
+    </select>
+
+    <div class="output-box">
+        <h3>BCS Assessment & Action</h3>
+        <div id="bcs-status" class="status-ideal"></div>
+        <p id="bcs-recommendation"></p>
+    </div>
+    
+    <div class="note">
+        BCS is the most accurate predictor of reproductive performance. Aim for a BCS of 5 or 6 prior to calving.
+    </div>
+</div>
+
+<script>
+    const bcsSelect = document.getElementById('bcs-select');
+    const bcsStatusEl = document.getElementById('bcs-status');
+    const bcsRecommendationEl = document.getElementById('bcs-recommendation');
+
+    // Data Source: BCS Definitions and Recommendations (Based on industry standards)
+    const BCS_DATA = {
+        '1': {
+            status: "EMACIATED / EXTREME DANGER",
+            class: "status-danger",
+            recommendation: "Animal is critically weak. IMMEDIATE aggressive nutritional intervention is required. Fat reserves are exhausted. High risk of death, no chance of rebreeding."
+        },
+        '2': {
+            status: "VERY THIN / EMERGENCY",
+            class: "status-danger",
+            recommendation: "Requires major increase in feed quality and quantity. Ribs and backbone highly visible. High risk of calving difficulty and little to no chance of rebreeding."
+        },
+        '3': {
+            status: "THIN / CRITICAL",
+            class: "status-caution",
+            recommendation: "Feed supplementation is necessary. Improve diet quality immediately. Reproduction may be severely delayed or halted. Increase energy intake significantly."
+        },
+        '4': {
+            status: "BORDERLINE / NEEDS ATTENTION",
+            class: "status-caution",
+            recommendation: "Slightly below ideal. Increase energy/protein for a slight gain, especially 60 days pre-calving. Monitor closely to ensure rebreeding success."
+        },
+        '5': {
+            status: "IDEAL / OPTIMAL",
+            class: "status-ideal",
+            recommendation: "Excellent condition. Ribs are not visible, but a slight fat cover is present. Maintain current nutritional program for best reproductive performance."
+        },
+        '6': {
+            status: "GOOD / SLIGHTLY FAT",
+            class: "status-ideal",
+            recommendation: "Good fat reserve, slightly above ideal. No change needed unless weight becomes excessive. Excellent body reserve for cold weather or temporary forage deficit."
+        },
+        '7': {
+            status: "FLESHY / MILD OVERCONDITION",
+            class: "status-caution",
+            recommendation: "No immediate danger, but monitor feed intake to prevent excess weight. Expensive and inefficient, but reproductive success remains high."
+        },
+        '8': {
+            status: "FAT / EXCESSIVE",
+            class: "status-danger",
+            recommendation: "Animal is overly fat. Reduce feed intake. High cost of feed and increased risk of calving difficulty (dystocia). Wastes money."
+        },
+        '9': {
+            status: "OBESE / HIGH DANGER",
+            class: "status-danger",
+            recommendation: "Critically obese. Severe feed restriction needed. High risk of calving problems, potential for reduced milk production, and inefficient use of resources."
+        }
+    };
+
+    function displayBCSInfo() {
+        const selectedBCS = bcsSelect.value;
+        const data = BCS_DATA[selectedBCS];
+
+        if (data) {
+            // Update status text and apply appropriate color class
+            bcsStatusEl.textContent = `Score ${selectedBCS}: ${data.status}`;
+            bcsStatusEl.className = data.class;
+            
+            // Update recommendation text
+            bcsRecommendationEl.textContent = data.recommendation;
+        }
+    }
+
+    // Run the display function on initial page load
+    window.onload = function() {
+        displayBCSInfo();
+    };
+</script>
+</body>
+</html>

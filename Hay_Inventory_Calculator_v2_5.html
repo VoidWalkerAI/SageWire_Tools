@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hay Inventory Days-on-Hand V2</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #34343d; color: #fff; }
+        .container { max-width: 700px; margin: 0 auto; background: #14141A; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #B85C38; text-align: center; margin-bottom: 5px; }
+        p { color: #aeb6bf; text-align: center; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 5px; color: #f39c12; font-weight: bold; }
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #B85C38;
+            border-radius: 5px;
+            background-color: #34343d;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        /* Input Toggle Styling */
+        .toggle-switch {
+            display: flex;
+            justify-content: space-around;
+            background-color: #34343d;
+            padding: 5px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .toggle-switch button {
+            flex-grow: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            background-color: transparent;
+            color: #aeb6bf;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        .toggle-switch button.active {
+            background-color: #f39c12;
+            color: #34343d;
+        }
+
+        .output-box {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2ecc71;
+            background-color: #34343d;
+        }
+
+        .output-box .value {
+            font-size: 3em;
+            color: #f39c12;
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 1em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+        /* Hide classes for toggling inputs */
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>HerdMate | 🗓️ Hay Inventory DOH (V2)</h1>
+    <p>Calculate feed longevity by Tons OR by Bales and Weight.</p>
+
+    <div class="toggle-switch">
+        <button id="tons-btn" class="active" onclick="setInventoryMode('tons')">By Total Tons</button>
+        <button id="bales-btn" onclick="setInventoryMode('bales')">By Bales + Weight</button>
+    </div>
+
+    <div id="tons-input-group" class="input-group">
+        <label for="inventory-input">Total Hay Inventory (Tons)</label>
+        <input type="number" id="inventory-input" value="100" min="0" oninput="calculateDOH()">
+    </div>
+
+    <div id="bales-input-group" class="input-group hidden">
+        <label for="bale-count-input">Total Number of Bales</label>
+        <input type="number" id="bale-count-input" value="150" min="0" oninput="calculateDOH()">
+
+        <label for="bale-weight-input">Average Bale Weight (Lbs)</label>
+        <input type="number" id="bale-weight-input" value="1200" min="10" oninput="calculateDOH()">
+    </div>
+
+    <div class="input-group">
+        <label for="herd-size-input">Herd Size (Number of Head)</label>
+        <input type="number" id="herd-size-input" value="50" min="1" oninput="calculateDOH()">
+    </div>
+    
+    <div class="input-group">
+        <label for="rate-input">Consumption Rate (Lbs/Head/Day)</label>
+        <input type="number" id="rate-input" value="30" min="1" oninput="calculateDOH()">
+    </div>
+
+    <div class="output-box">
+        <span class="value" id="doh-output">0</span>
+        <span class="label">Days Remaining (Days on Hand)</span>
+    </div>
+    
+    <div class="note">
+        Formula: (Total Lbs / 2000) / (Herd Size x Lbs/Day).
+    </div>
+</div>
+
+<script>
+    // Inputs for Consumption and Herd Size
+    const HERD_SIZE_INPUT = document.getElementById('herd-size-input');
+    const RATE_INPUT = document.getElementById('rate-input');
+    const DOH_OUTPUT = document.getElementById('doh-output');
+    
+    // Inputs for Inventory
+    const TONS_INPUT = document.getElementById('inventory-input');
+    const BALE_COUNT_INPUT = document.getElementById('bale-count-input');
+    const BALE_WEIGHT_INPUT = document.getElementById('bale-weight-input');
+
+    // Toggle Elements
+    const TONS_BTN = document.getElementById('tons-btn');
+    const BALES_BTN = document.getElementById('bales-btn');
+    const TONS_GROUP = document.getElementById('tons-input-group');
+    const BALES_GROUP = document.getElementById('bales-input-group');
+
+    // Constants
+    const LBS_PER_TON = 2000;
+    let inventoryMode = 'tons'; // Default mode
+
+    // --- Toggle Logic ---
+
+    function setInventoryMode(mode) {
+        inventoryMode = mode;
+        
+        // Update button appearance
+        TONS_BTN.classList.remove('active');
+        BALES_BTN.classList.remove('active');
+        document.getElementById(mode + '-btn').classList.add('active');
+
+        // Toggle input visibility
+        TONS_GROUP.classList.toggle('hidden', mode !== 'tons');
+        BALES_GROUP.classList.toggle('hidden', mode !== 'bales');
+
+        // Recalculate immediately when mode changes
+        calculateDOH();
+    }
+
+
+    // --- Core Calculation ---
+
+    function calculateDOH() {
+        const herdSize = parseFloat(HERD_SIZE_INPUT.value);
+        const consumptionRate = parseFloat(RATE_INPUT.value);
+        let totalLbs = 0;
+        
+        // 1. Calculate Total Lbs based on the selected mode
+        if (inventoryMode === 'tons') {
+            const totalTons = parseFloat(TONS_INPUT.value);
+            if (!isNaN(totalTons) && totalTons >= 0) {
+                totalLbs = totalTons * LBS_PER_TON;
+            }
+        } else if (inventoryMode === 'bales') {
+            const baleCount = parseFloat(BALE_COUNT_INPUT.value);
+            const baleWeight = parseFloat(BALE_WEIGHT_INPUT.value);
+
+            if (!isNaN(baleCount) && !isNaN(baleWeight) && baleCount >= 0 && baleWeight >= 0) {
+                totalLbs = baleCount * baleWeight;
+            }
+        }
+
+        // Basic Validation for Consumption and Inventory
+        if (totalLbs <= 0 || isNaN(herdSize) || isNaN(consumptionRate) || herdSize <= 0 || consumptionRate <= 0) {
+            DOH_OUTPUT.textContent = '0';
+            return;
+        }
+
+        // 2. Calculate Total Daily Consumption for the entire herd
+        // Formula: Daily Lbs Consumed = Herd Size * Consumption Rate
+        const dailyConsumptionLbs = herdSize * consumptionRate;
+        
+        // 3. Calculate Days on Hand (DOH)
+        // Formula: DOH = Total Lbs / Daily Lbs Consumed
+        const daysOnHand = totalLbs / dailyConsumptionLbs;
+        
+        // --- Output Result ---
+        
+        // Display result (rounded down to the nearest whole day)
+        if (isFinite(daysOnHand) && daysOnHand > 0) {
+            DOH_OUTPUT.textContent = Math.floor(daysOnHand);
+        } else {
+             DOH_OUTPUT.textContent = '0';
+        }
+    }
+
+    // --- Initialization ---
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        // Set initial mode to tons (default) and calculate
+        setInventoryMode('tons');
+        calculateDOH();
+        
+        // Attach event listeners to all relevant inputs
+        TONS_INPUT.addEventListener('input', calculateDOH);
+        BALE_COUNT_INPUT.addEventListener('input', calculateDOH);
+        BALE_WEIGHT_INPUT.addEventListener('input', calculateDOH);
+        HERD_SIZE_INPUT.addEventListener('input', calculateDOH);
+        RATE_INPUT.addEventListener('input', calculateDOH);
+    };
+</script>
+</body>
+</html>

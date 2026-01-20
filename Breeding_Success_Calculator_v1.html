@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Breeding Season Success Predictor</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #34343d; color: #fff; }
+        .container { max-width: 700px; margin: 0 auto; background: #14141A; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #B85C38; text-align: center; margin-bottom: 5px; }
+        p { color: #fff; text-align: center; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 5px; color: #fff; font-weight: bold; }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #B85C38;
+            border-radius: 5px;
+            background-color: #34343d;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #2ecc71;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #f39c12;
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #e74c3c;
+            font-size: 0.9em;
+        }
+        
+        .input-group {
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>HerdMate | 🧬 Breeding Season Planner</h1>
+    <p>Predict necessary bull power and estimate the final calf crop percentage based on herd size.</p>
+
+    <div class="input-group">
+        <label for="cow-count-input">Number of Cows to Expose</label>
+        <input type="number" id="cow-count-input" value="100" min="1" oninput="calculateBreeding()">
+    </div>
+    
+    <div class="input-group">
+        <label for="bull-ratio-select">Target Bull-to-Cow Ratio</label>
+        <select id="bull-ratio-select" onchange="calculateBreeding()">
+            <option value="25">1:25 (Typical Pasture)</option>
+            <option value="20">1:20 (Young Bull / Rough Terrain)</option>
+            <option value="35">1:35 (Small Pasture / Mature Bull)</option>
+        </select>
+    </div>
+
+    <div class="input-group">
+        <label for="success-rate-input">Expected Calving Success Rate (%)</label>
+        <input type="number" id="success-rate-input" value="92" min="50" max="100" oninput="calculateBreeding()">
+    </div>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <span class="value" id="bulls-required-output">0</span>
+            <span class="label">Minimum Bulls Required</span>
+        </div>
+        <div class="output-box">
+            <span class="value" id="calf-crop-output">0.0%</span>
+            <span class="label">Expected Calf Crop %</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        **Formula:** Bulls Required = Cows / Ratio. Calf Crop % = Success Rate - (Risk Factor).
+    </div>
+</div>
+
+<script>
+    const COW_COUNT_INPUT = document.getElementById('cow-count-input');
+    const BULL_RATIO_SELECT = document.getElementById('bull-ratio-select');
+    const SUCCESS_RATE_INPUT = document.getElementById('success-rate-input');
+    const BULLS_REQUIRED_OUTPUT = document.getElementById('bulls-required-output');
+    const CALF_CROP_OUTPUT = document.getElementById('calf-crop-output');
+
+    function calculateBreeding() {
+        const cowCount = parseFloat(COW_COUNT_INPUT.value);
+        const ratio = parseFloat(BULL_RATIO_SELECT.value);
+        const successRate = parseFloat(SUCCESS_RATE_INPUT.value);
+        
+        // Basic Validation
+        if (isNaN(cowCount) || isNaN(ratio) || isNaN(successRate) || 
+            cowCount <= 0 || ratio <= 0 || successRate <= 0) {
+            BULLS_REQUIRED_OUTPUT.textContent = '0';
+            CALF_CROP_OUTPUT.textContent = '0.0%';
+            return;
+        }
+
+        // --- 1. Minimum Bulls Required Calculation ---
+        
+        // Formula: Bulls Required = Cows Exposed / Ratio
+        const rawBullsRequired = cowCount / ratio;
+        
+        // Always round up (ceil) since you can't have a fraction of a bull
+        const minimumBulls = Math.ceil(rawBullsRequired);
+
+        // --- 2. Expected Calf Crop Percentage Calculation ---
+        
+        // Formula: Calf Crop % = Success Rate % - Risk Factors
+        // Convert success rate to decimal for math
+        const successRateDecimal = successRate / 100;
+        
+        // Simple prediction: Calves = Cows Exposed * Success Rate %
+        const expectedCalves = cowCount * successRateDecimal;
+        
+        // Final Calf Crop Percentage is the total expected calves divided by the total cows exposed
+        const finalCalfCropPercent = (expectedCalves / cowCount) * 100;
+
+        // --- Output Results ---
+        
+        BULLS_REQUIRED_OUTPUT.textContent = minimumBulls;
+        
+        // Display percentage (rounded to 1 decimal place)
+        CALF_CROP_OUTPUT.textContent = finalCalfCropPercent.toFixed(1) + '%';
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateBreeding();
+    };
+</script>
+</body>
+</html>

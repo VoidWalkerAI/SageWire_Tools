@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cattle Nutrition Calculator</title>
+    
+    <style>
+        body { font-family: sans-serif; padding: 20px; background-color: #34343d; color: #fff; }
+        .container { max-width: 700px; margin: 0 auto; background: #14141A; padding: 30px; border-radius: 10px; box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        h1 { color: #B85C38; text-align: center; margin-bottom: 5px; }
+        p { text-align: center; color: #aeb6bf; margin-bottom: 25px; }
+
+        label { display: block; margin-bottom: 5px; color: #f39c12; font-weight: bold; }
+        input[type="number"], select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 2px solid #B85C38;
+            border-radius: 5px;
+            background-color: #34343d;
+            color: #fff;
+            font-size: 16px;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: background-color 0.2s ease;
+            margin-top: 10px;
+        }
+        button:hover { background-color: #27ae60; }
+
+        .output-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 30px;
+        }
+
+        .output-box {
+            background-color: #34495e;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            border: 2px solid #f39c12;
+        }
+
+        .output-box .value {
+            font-size: 2.5em;
+            color: #2ecc71;
+            font-weight: bold;
+            display: block;
+        }
+
+        .output-box .label {
+            font-size: 0.9em;
+            color: #aeb6bf;
+            text-transform: uppercase;
+        }
+        
+        .note {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #34343d;
+            border-left: 5px solid #B85C38;
+            font-size: 0.9em;
+        }
+
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>HerdMate | 🐄 Cattle Nutrition Planner</h1>
+    <p>Estimate daily dry matter intake (DMI) and total protein needs for supplemental feeding decisions.</p>
+
+    <label for="weight-input">Cattle Weight (Lbs)</label>
+    <input type="number" id="weight-input" value="1200" min="100" oninput="calculateNutrition()">
+
+    <label for="phase-select">Production Phase</label>
+    <select id="phase-select" onchange="calculateNutrition()">
+        <option value="1">Maintenance / Dry Cow</option>
+        <option value="2">Early Gestation</option>
+        <option value="3">Late Gestation (Last 60 Days)</option>
+        <option value="4">Lactation (Peak Milk)</option>
+        <option value="5">Growing Steer</option>
+    </select>
+
+    <div class="output-grid">
+        <div class="output-box">
+            <span class="value" id="dmi-output">0.0</span>
+            <span class="label">Dry Matter Intake (Lbs/Day)</span>
+        </div>
+        <div class="output-box">
+            <span class="value" id="protein-output">0.0</span>
+            <span class="label">Crude Protein Required (Lbs/Day)</span>
+        </div>
+    </div>
+    
+    <div class="note">
+        Calculations are simplified estimates based on industry standard formulas (NRC/ASAS) for quick field use.
+    </div>
+</div>
+
+<script>
+    const weightInput = document.getElementById('weight-input');
+    const phaseSelect = document.getElementById('phase-select');
+    const dmiOutput = document.getElementById('dmi-output');
+    const proteinOutput = document.getElementById('protein-output');
+
+    // --- Core Formulas and Constants ---
+    
+    // Intake Factors (used for DMI calculation)
+    // DMI is typically calculated as a percentage of Body Weight (BW)
+    // These factors represent the % of BW consumed daily.
+    const DMI_FACTORS = {
+        '1': 2.0, // Maintenance / Dry Cow (2.0% of BW)
+        '2': 2.2, // Early Gestation (2.2% of BW)
+        '3': 2.5, // Late Gestation (2.5% of BW) - Intake often restricted by calf size
+        '4': 3.0, // Lactation (3.0% of BW) - Highest intake demand
+        '5': 2.5  // Growing Steer (2.5% of BW)
+    };
+    
+    // Protein Requirement (Crude Protein, CP)
+    // These factors represent the % of DMI that must be CP
+    const CP_PERCENTAGES = {
+        '1': 0.07, // Maintenance (7.0% of DMI)
+        '2': 0.08, // Early Gestation (8.0% of DMI)
+        '3': 0.10, // Late Gestation (10.0% of DMI)
+        '4': 0.12, // Lactation (12.0% of DMI) - Highest protein demand
+        '5': 0.11 // Growing Steer (11.0% of DMI)
+    };
+
+    function calculateNutrition() {
+        const weight = parseFloat(weightInput.value);
+        const phase = phaseSelect.value;
+
+        // Validation
+        if (isNaN(weight) || weight <= 0) {
+            dmiOutput.textContent = '0.0';
+            proteinOutput.textContent = '0.0';
+            return;
+        }
+
+        // --- 1. Dry Matter Intake (DMI) Calculation ---
+        const dmiFactor = DMI_FACTORS[phase] || 2.0;
+        // Formula: DMI (Lbs) = (Body Weight * DMI Factor) / 100
+        const dryMatterIntake = (weight * dmiFactor) / 100;
+
+        // --- 2. Crude Protein (CP) Requirement Calculation ---
+        const cpPercentage = CP_PERCENTAGES[phase] || 0.07;
+        // Formula: CP (Lbs) = DMI * CP Percentage
+        const totalProteinRequired = dryMatterIntake * cpPercentage;
+        
+        // --- Output Results ---
+        
+        // Display DMI (rounded to 1 decimal place)
+        dmiOutput.textContent = dryMatterIntake.toFixed(1);
+        
+        // Display Protein Required (rounded to 2 decimal places)
+        proteinOutput.textContent = totalProteinRequired.toFixed(2);
+    }
+
+    // Run calculation on initial page load
+    window.onload = function() {
+        calculateNutrition();
+    };
+</script>
+</body>
+</html>
